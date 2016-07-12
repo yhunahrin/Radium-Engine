@@ -35,7 +35,6 @@ elseif (UNIX OR MINGW)
     set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3 ${MATH_FLAG}")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 -ggdb ${CMAKE_CXX_FLAGS_RELEASE}")
 
-  add_definitions( -Wno-deprecated-declarations ) # Do not warn for eigen bind being deprecated
   if (MINGW)
       add_definitions( -static-libgcc -static-libstdc++) # Compile with static libs
   endif()
@@ -61,7 +60,7 @@ elseif (MSVC)
 
     set(CMAKE_CXX_FLAGS	               "/arch:AVX2 /GR- /EHs-c- /MP ${OMP_FLAG} ${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG		   "/D_DEBUG /DCORE_DEBUG /Od /Zi ${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    set(CMAKE_CXX_FLAGS_RELEASE		   "/DNDEBUG /Ox /fp:fast /GL /MT")
+    set(CMAKE_CXX_FLAGS_RELEASE		   "/DNDEBUG /Ox /fp:fast /MT")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
