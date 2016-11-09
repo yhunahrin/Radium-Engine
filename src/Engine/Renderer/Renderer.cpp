@@ -64,6 +64,10 @@ namespace Ra
 
         void Renderer::initialize()
         {
+            GLenum fformat = GL_RGB32F;
+            GLenum iformat = GL_RGB32I;
+            GLenum dformat = GL_DEPTH_COMPONENT24;
+
             // Initialize managers
             m_assetMgr = AssetManager::getInstance();
             m_roMgr = RadiumEngine::getInstance()->getRenderObjectManager();
@@ -73,20 +77,20 @@ namespace Ra
             m_pickingShader    = m_assetMgr->shaderProgram(m_assetMgr->createShaderProgram("../Shaders/Picking.vert.glsl", "../Shaders/Picking.frag.glsl"));
 
             m_depthTexture = m_assetMgr->texture(m_assetMgr->createTexture("Depth"));
-            m_depthTexture->internalFormat = GL_DEPTH_COMPONENT24;
+            m_depthTexture->internalFormat = dformat;
             m_depthTexture->dataType = GL_UNSIGNED_INT;
 
             // Picking
             m_pickingFbo.reset(new FBO(FBO::Component( FBO::Component_Color | FBO::Component_Depth ), m_width, m_height));
             m_pickingTexture = m_assetMgr->texture(m_assetMgr->createTexture("Picking"));
-            m_pickingTexture->internalFormat = GL_RGBA32I;
-            m_pickingTexture->dataType = GL_INT;
-            m_pickingTexture->minFilter = GL_NEAREST;
-            m_pickingTexture->magFilter = GL_NEAREST;
+            m_pickingTexture->internalFormat = iformat;
+            m_pickingTexture->dataType 	= GL_UNSIGNED_INT;
+            m_pickingTexture->minFilter = GL_LINEAR;
+            m_pickingTexture->magFilter = GL_LINEAR;
 
             // Final texture
             m_fancyTexture = m_assetMgr->texture(m_assetMgr->createTexture("Final"));
-            m_fancyTexture->internalFormat = GL_RGBA32F;
+            m_fancyTexture->internalFormat = fformat;
             m_fancyTexture->dataType = GL_FLOAT;
 
             m_displayedTexture = m_fancyTexture;
@@ -99,9 +103,8 @@ namespace Ra
             m_quadMesh->loadGeometry( mesh );
             m_quadMesh->updateGL();
 
+            GL_CHECK_ERROR;
             initializeInternal();
-
-            resize( m_width, m_height );
         }
 
         void Renderer::render( const RenderData& data )
@@ -258,10 +261,10 @@ namespace Ra
                     shader->setUniform( "transform.view", renderData.viewMatrix );
                     shader->setUniform( "transform.model", M );
 
-                    ro->getRenderTechnique()->material->bind( shader );
+                    ro->renderTechnique->material->bind( shader );
 
                     // render
-                    ro->getMesh()->render();
+                    ro->mesh->render();
                 }
             }
 
@@ -281,10 +284,10 @@ namespace Ra
                         shader->setUniform( "transform.view", renderData.viewMatrix );
                         shader->setUniform( "transform.model", M );
 
-                        ro->getRenderTechnique()->material->bind( shader );
+                        ro->renderTechnique->material->bind( shader );
 
                         // render
-                        ro->getMesh()->render();
+                        ro->mesh->render();
                     }
                 }
             }
@@ -305,14 +308,13 @@ namespace Ra
                         shader->setUniform( "transform.view", renderData.viewMatrix );
                         shader->setUniform( "transform.model", M );
 
-                        ro->getRenderTechnique()->material->bind( shader );
+                        ro->renderTechnique->material->bind( shader );
 
                         // render
-                        ro->getMesh()->render();
+                        ro->mesh->render();
                     }
                 }
             }
-
 
             // Always draw ui stuff on top of everything
             GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
@@ -336,10 +338,10 @@ namespace Ra
                     shader->setUniform( "transform.view", renderData.viewMatrix );
                     shader->setUniform( "transform.model", M );
 
-                    ro->getRenderTechnique()->material->bind( shader );
+                    ro->renderTechnique->material->bind( shader );
 
                     // render
-                    ro->getMesh()->render();
+                    ro->mesh->render();
                 }
             }
 
@@ -600,6 +602,5 @@ namespace Ra
                 }
             }
         }
-
     }
 } // namespace Ra

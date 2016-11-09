@@ -17,7 +17,13 @@ namespace Ra
 
     void Engine::Texture::Generate(uint w, uint format, void* data)
     {
-        if (!glIsTexture(m_textureId)) GL_ASSERT(glGenTextures(1, &m_textureId));
+        CORE_ASSERT(target == GL_TEXTURE_1D, "Wrong texture target");
+
+        if (m_textureId == 0)
+        {
+            GL_ASSERT(glGenTextures(1, &m_textureId));
+        }
+
         GL_ASSERT(glBindTexture(target, m_textureId));
         GL_ASSERT(glTexImage1D(target, 0, internalFormat, w, 0, format, dataType, data));
 
@@ -35,7 +41,10 @@ namespace Ra
     {
         CORE_ASSERT(target == GL_TEXTURE_2D, "Wrong texture target");
 
-        if (!glIsTexture(m_textureId)) GL_ASSERT(glGenTextures(1, &m_textureId));
+        if (m_textureId == 0)
+        {
+            GL_ASSERT(glGenTextures(1, &m_textureId));
+        }
 
         GL_ASSERT(glBindTexture(target, m_textureId));
         GL_ASSERT(glTexImage2D(target, 0, internalFormat, w, h, 0, format, dataType, data));
@@ -56,7 +65,11 @@ namespace Ra
     {
         CORE_ASSERT(target == GL_TEXTURE_3D, "Wrong texture target");
 
-        if (!glIsTexture(m_textureId)) GL_ASSERT(glGenTextures(1, &m_textureId));
+        if (m_textureId == 0)
+        {
+            GL_ASSERT(glGenTextures(1, &m_textureId));
+        }
+
         GL_ASSERT(glBindTexture(target, m_textureId));
         GL_ASSERT(glTexImage3D(target, 0, internalFormat, w, h, d, 0, format, dataType, data));
 
@@ -77,7 +90,12 @@ namespace Ra
     void Engine::Texture::GenerateCube(uint w, uint h, uint format, void** data)
     {
         CORE_ASSERT(target == GL_TEXTURE_CUBE_MAP, "Wrong texture target");
-        if (!glIsTexture(m_textureId)) GL_ASSERT(glGenTextures(1, &m_textureId));
+
+        if (m_textureId == 0)
+        {
+            GL_ASSERT(glGenTextures(1, &m_textureId));
+        }
+
         GL_ASSERT(glBindTexture(target, m_textureId));
 
         // FIXME Type was forced to GL_Scalar, check calls for this method.
@@ -110,7 +128,7 @@ namespace Ra
 
     void Engine::Texture::deleteGL()
     {
-        if (glIsTexture(m_textureId))
+        if (m_textureId != 0)
         {
             GL_ASSERT( glDeleteTextures( 1, &m_textureId ) );
         }

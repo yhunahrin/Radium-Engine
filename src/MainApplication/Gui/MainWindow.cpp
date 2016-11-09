@@ -125,7 +125,6 @@ namespace Ra
 
         mainApp->m_engine->getSignalManager()->m_roAddedCallbacks.push_back(add);
         mainApp->m_engine->getSignalManager()->m_roRemovedCallbacks.push_back(del);
-
     }
 
     void Gui::MainWindow::loadFile()
@@ -231,7 +230,7 @@ namespace Ra
                 m_materialEditor->changeRenderObject(ent.m_roIndex);
                 const std::string& shaderName = mainApp->m_engine->getRenderObjectManager()->getRenderObject(
                                                                ent.m_roIndex)
-                                                       ->getRenderTechnique()->shader->getBasicConfiguration().m_name;
+                                                       ->renderTechnique->shader->getBasicConfiguration().m_name;
 
 
                 if (m_currentShaderBox->findText(shaderName.c_str()) == -1)
@@ -291,12 +290,12 @@ namespace Ra
         }
 
         const auto& ro = mainApp->m_engine->getRenderObjectManager()->getRenderObject(item.m_roIndex);
-        if (ro->getRenderTechnique()->shader->getBasicConfiguration().m_name == name)
+        if (ro->renderTechnique->shader->getBasicConfiguration().m_name == name)
         {
             return;
         }
         Engine::ShaderConfiguration config = Ra::Engine::ShaderConfigurationFactory::getConfiguration(name);
-        ro->getRenderTechnique()->changeShader(config);
+        ro->renderTechnique->changeShader(config);
     }
 
     void Gui::MainWindow::toggleVisisbleRO()
@@ -377,7 +376,5 @@ namespace Ra
     {
         m_itemModel->removeItem(ent) ;
     }
-
-
 
 } // namespace Ra
