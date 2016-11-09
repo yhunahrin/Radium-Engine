@@ -4,7 +4,7 @@
 #include <Core/Mesh/MeshPrimitives.hpp>
 #include <Core/Mesh/MeshUtils.hpp>
 
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/Renderer/Mesh/Mesh.hpp>
 #include <Engine/Renderer/RenderObject/RenderObject.hpp>
 #include <Engine/Renderer/RenderObject/RenderObjectTypes.hpp>

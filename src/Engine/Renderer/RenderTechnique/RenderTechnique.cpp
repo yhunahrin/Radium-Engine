@@ -1,6 +1,6 @@
 #include <Engine/Renderer/RenderTechnique/RenderTechnique.hpp>
 
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/Renderer/RenderTechnique/Material.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderProgram.hpp>
 

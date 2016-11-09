@@ -12,7 +12,7 @@
 #include <Core/Mesh/MeshPrimitives.hpp>
 
 #include <Engine/RadiumEngine.hpp>
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/Renderer/OpenGL/OpenGL.hpp>
 #include <Engine/Renderer/OpenGL/FBO.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderProgram.hpp>

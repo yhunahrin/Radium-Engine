@@ -20,7 +20,7 @@
 #include <Engine/Entity/Entity.hpp>
 #include <Engine/Component/Component.hpp>
 
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/Managers/EntityManager/EntityManager.hpp>
 #include <Engine/Managers/ComponentMessenger/ComponentMessenger.hpp>
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>

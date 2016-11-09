@@ -5,7 +5,7 @@
 #include <Core/Math/RayCast.hpp>
 #include <Core/Mesh/MeshPrimitives.hpp>
 
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 #include <Engine/RadiumEngine.hpp>
 #include <Engine/Renderer/Camera/Camera.hpp>

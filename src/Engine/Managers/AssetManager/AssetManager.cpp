@@ -1,4 +1,4 @@
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 
 #include <Core/Containers/MakeShared.hpp>
 

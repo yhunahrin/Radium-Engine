@@ -8,7 +8,7 @@
 
 #include <Engine/Component/Component.hpp>
 #include <Engine/Entity/Entity.hpp>
-#include <Engine/Managers/AssetManager.hpp>
+#include <Engine/Managers/AssetManager/AssetManager.hpp>
 #include <Engine/RadiumEngine.hpp>
 #include <Engine/Renderer/Mesh/Mesh.hpp>
 #include <Engine/Renderer/RenderObject/RenderObjectManager.hpp>
