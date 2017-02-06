@@ -7,6 +7,7 @@ cmake_policy(SET CMP0042 NEW)
 endif(APPLE)
 
 # CMake setups
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Build options options.
