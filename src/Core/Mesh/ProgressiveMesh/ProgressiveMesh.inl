@@ -184,10 +184,11 @@ namespace Ra
             m_primitives_v.clear();
             m_primitives_v.reserve(numVertices);
 
-            Primitive q;
+//#pragma omp parallel for
             for (uint v = 0; v < numVertices; ++v)
             {
-                q = computeVertexPrimitive(v);
+                Primitive q = computeVertexPrimitive(v);
+//#pragma omp critical
                 m_primitives_v.push_back(q);
             }
         }
@@ -316,17 +317,12 @@ namespace Ra
             const uint numTriangles = m_dcel->m_face.size();
             //pQueue.reserve(numTriangles*3 / 2);
 
-            // process through edges
-            double edgeError;
-            Vector3 p = Vector3::Zero();
-            int j;
-
-//#pragma omp parallel for private(j, edgeError, p)
+#pragma omp parallel for
             for (unsigned int i = 0; i < numTriangles; i++)
             {
                 const Face_ptr& f = m_dcel->m_face.at( i );
                 HalfEdge_ptr h = f->HE();
-                for (j = 0; j < 3; j++)
+                for (int j = 0; j < 3; j++)
                 {
                     const Vertex_ptr& vs = h->V();
                     const Vertex_ptr& vt = h->Next()->V();
@@ -339,10 +335,11 @@ namespace Ra
                     }
 
                     Primitive q;
-                    edgeError = computeEdgeError(h->idx, p, q);
+                    Vector3 p = Vector3::Zero();
+                    double edgeError = computeEdgeError(h->idx, p, q);
                     m_primitives_he[h->idx] = q;
 
-//#pragma omp critical
+#pragma omp critical
                     {
                         pQueue.insert(PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p));
                     }

@@ -399,7 +399,7 @@ namespace Ra
             CORE_ASSERT((sumWeights / normalizing_weight_factor) < 1.01 && (sumWeights / normalizing_weight_factor) > 0.99, "The sum of weights is not equal to 1");
 
             Primitive c;
-            c.setParameters(new_uc, new_ul, new_uq, new_p);
+            c.AlgebraicSphere::setParameters(new_uc, new_ul, new_uq, new_p);
             c.applyPrattNorm();
 
             CORE_ASSERT(!std::isnan(new_uc), "PRIMITIVE NAN : NOT OK");
@@ -451,7 +451,7 @@ namespace Ra
             Vector3 p = Vector3::Zero();
 
             Primitive q2;
-            q2.setParameters(uc, ul, uq, p);
+            q2.AlgebraicSphere::setParameters(uc, ul, uq, p);
             q2.applyPrattNorm();
 
             Vector3 segment = vt - vs;
@@ -476,7 +476,7 @@ namespace Ra
                 pResult = q.project(p2);
             }
 
-            return std::abs(q.potential(vs)) + std::abs(q2.potential(segment) * segment.norm());
+            return std::abs(q.potential(vs) + q2.potential(segment) * segment.norm());
         }
 
 
