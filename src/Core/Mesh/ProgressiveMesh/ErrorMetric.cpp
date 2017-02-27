@@ -97,7 +97,7 @@ namespace Ra
             return sum;
         }
 
-        void QuadricErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Dcel &dcel, Scalar weight, int ringSize)
+        void QuadricErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Scalar weight, int ringSize)
         {
             VFIterator vfIt = VFIterator(v);
             FaceList adjFaces = vfIt.list();
@@ -106,12 +106,12 @@ namespace Ra
             {
                 Face_ptr fi = adjFaces[i];
                 Primitive qi;
-                generateFacePrimitive(qi, fi, dcel, weight, ringSize);
+                generateFacePrimitive(qi, fi, weight, ringSize);
                 q += qi;
             }
         }
 
-        void QuadricErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f, Dcel &dcel, Scalar weight, int ringSize)
+        void QuadricErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f, Scalar weight, int ringSize)
         {
             Vertex_ptr v0 = f->HE()->V();
             Vertex_ptr v1 = f->HE()->Next()->V();
@@ -219,7 +219,7 @@ namespace Ra
             return error;
         }
 
-        void APSSErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f, Dcel &dcel)
+        void APSSErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f)
         {
             Vertex_ptr v0 = f->HE()->V();
             Vertex_ptr v1 = f->HE()->Next()->V();
@@ -442,45 +442,268 @@ namespace Ra
         }
         */
 
-        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combineWithTauEtaKappa(const Primitive& q1, const Primitive& q2, Scalar alpha)
         {
-            // compute error as integral
-            Scalar uc = 0.0;
-            Vector3 ul = Vector3(0.5 * q.m_ul.x() + q.m_uq * vs.x(), 0.5 * q.m_ul.y() + q.m_uq * vs.y(), 0.5 * q.m_ul.z() + q.m_uq * vs.z());
-            Scalar uq = q.m_uq / 3.0;
-            Vector3 p = Vector3::Zero();
+            // same base
+            Vector3 new_base = q1.basisCenter() + alpha * (q2.basisCenter() - q1.basisCenter());
+            Primitive q1_new_base = q1;
+            Primitive q2_new_base = q2;
+            q1_new_base.changeBasis(new_base);
+            q2_new_base.changeBasis(new_base);
 
-            Primitive q2;
-            q2.AlgebraicSphere::setParameters(uc, ul, uq, p);
-            q2.applyPrattNorm();
+            // combine tau eta kappa
+            Scalar new_tau      = q1_new_base.tau() + alpha * (q2_new_base.tau() - q1_new_base.tau());
+            Vector3 new_eta     = q1_new_base.eta() + alpha * (q2_new_base.eta() - q1_new_base.eta());
+            Scalar new_kappa    = q1_new_base.kappa() + alpha * (q2_new_base.kappa() - q1_new_base.kappa());
+            new_eta.normalize();
 
-            Vector3 segment = vt - vs;
+            // compute uc, ul, uq
+            Scalar new_uc       = new_tau;
+            Vector3 new_ul      = new_eta * (1.0 + 2.0 * new_tau * new_kappa);
+            Scalar new_uq       = new_kappa / 2.0;
+
+            Primitive res;
+            res.setParameters(new_uc, new_ul, new_uq, new_base);
+            res.applyPrattNorm();
+
+            if (std::isnan(res.m_uc))
+            {
+                LOG(logINFO) << "test combine tau/eta/kappa";
+            }
+
+        }
+
+
+        Scalar SimpleAPSSErrorMetric::computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q, std::ofstream& file)
+        {
+            Vector3 v1 = vs->P();
+            Vector3 v2 = vt->P();
+
+            Primitive q1_ = q1;
+
+            Scalar test = q1_.prattNorm2();
+            if (test < 0)
+                LOG(logINFO) << "pb q1";
+            q1_.applyPrattNorm();
+            Primitive q2_ = q2;
+            test = q2_.prattNorm2();
+            if (test < 0)
+                LOG(logINFO) << "pb q2";
+            q2_.applyPrattNorm();
+
+            // computing alpha
+            // sampling along the segments in 3D (TODO, sampling along uv)
+            Scalar dt = 0.01;
+            Scalar min_error = std::numeric_limits<double>::max();
+            Scalar min_alpha = 0.0;
+
+            std::vector<Scalar> errors;
+            errors.reserve(100);
+
+            if (q1.hasSameParameter(q2) && std::abs((q1.m_ul).dot((v2 - v1).normalized())) < 0.00001)
+            {
+                min_alpha = 0.5;
+                min_error = q1.potential(v1);
+            }
+            else
+            {
+                for (Scalar alpha = 0.0; alpha <= 1.0; alpha += dt) // on parcourt l'arête
+                {
+                    Vector3 valpha = v1 + alpha * (v2 - v1);
+                    Primitive salpha;
+                    salpha.combine(q1, q2, alpha, vs->P(), vt->P());
+
+                    // find adjacent vertices to vs and vt
+                    VVIterator vsvIt = VVIterator(vs);
+                    VertexList adjVerticesVs = vsvIt.list();
+                    VVIterator vtvIt = VVIterator(vt);
+                    VertexList adjVerticesVt = vtvIt.list();
+
+                    Scalar error = 0.0;
+                    valpha = salpha.project(valpha);
+                    Scalar sum_edge_norm = 0.0;
+                    for (unsigned int i = 0; i < adjVerticesVs.size(); i++)
+                    {
+                        if (adjVerticesVs[i]->idx == vt->idx) continue;
+                        sum_edge_norm += (adjVerticesVs[i]->P() - valpha).norm();
+                        Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
+                        //Scalar dist_seg_sphere = q1_.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
+                        //Scalar dist_seg_sphere = std::abs(q1_.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha));
+                        error += dist_seg_sphere;
+                    }
+                    for (unsigned int i = 0; i < adjVerticesVt.size(); i++)
+                    {
+                        if (adjVerticesVt[i]->idx == vs->idx) continue;
+                        sum_edge_norm += (adjVerticesVt[i]->P() - valpha).norm();
+                        Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
+                        //Scalar dist_seg_sphere = q2_.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
+                        //Scalar dist_seg_sphere = std::abs(q2_.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P()));
+                        error += dist_seg_sphere;
+                    }
+                    error /= sum_edge_norm;
+
+                    if (std::abs(error) < min_error)
+                    {
+                        min_error = std::abs(error);
+                        min_alpha = alpha;
+                    }
+                    //errors.push_back(std::abs(error));
+
+                }
+                /*
+                file << q1.m_uc << " " << q1.m_ul.transpose() << " " << q1.m_uq << " " << q1.basisCenter().transpose() << "\n";
+                file << q2.m_uc << " " << q2.m_ul.transpose() << " " << q2.m_uq << " " << q2.basisCenter().transpose() << "\n";
+                for (int i = 0; i < 100; i++)
+                {
+                    file << errors[i] << " ";
+                }
+                file << "\n";
+                */
+            }
+
+
+            q.combine(q1, q2, min_alpha, vs->P(), vt->P());
+            //q = combineWithTauEtaKappa(q1, q2, min_alpha);
+
+            pResult = v1 + min_alpha * (v2 - v1);
+            pResult = q.project(pResult);
+            //return q.potential(pResult);
+
+            return min_error;
+        }
+
+
+        /*
+        Scalar SimpleAPSSErrorMetric::computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q)
+        {
+            q.combine(q1, q2, 0.5);
+
+            Scalar error = q.distanceSegSphere(vs->P(), vt->P());
 
             // compute resulting vertex as usual
-            GrenaillePoint::VectorType p12 = (vs + vt) / 2.0;
-            GrenaillePoint::VectorType p1 = vs;
-            GrenaillePoint::VectorType p2 = vt;
+            GrenaillePoint::VectorType p14 = vs->P() + 0.25*(vt->P() - vs->P());
+            GrenaillePoint::VectorType p12 = vs->P() + 0.5*(vt->P() - vs->P());
+            GrenaillePoint::VectorType p34 = vs->P() + 0.75*(vt->P() - vs->P());
+            GrenaillePoint::VectorType p1 = vs->P();
+            GrenaillePoint::VectorType p2 = vt->P();
+
+            Scalar error14 = std::abs(q.potential(p14));
+            Scalar error34 = std::abs(q.potential(p34));
             Scalar error12 = std::abs(q.potential(p12));
             Scalar error1 = std::abs(q.potential(p1));
             Scalar error2 = std::abs(q.potential(p2));
-            if (error12 <= error1 && error12 <= error2)
+            if (error14 <= error34 && error14 <= error12 && error14 <= error1 && error14 <= error2)
+            {
+                pResult = q.project(p14);
+            }
+            else if (error34 <= error14 && error34 <= error12 && error34 <= error1 && error34 <= error2)
+            {
+                pResult = q.project(p34);
+            }
+            else if (error12 <= error14 && error12 <= error34 && error12 <= error1 && error12 <= error2)
             {
                 pResult = q.project(p12);
             }
-            else if (error1 < error2)
+            else if (error1 <= error14 && error1 <= error34 && error1 <= error12 && error1 <= error2)
             {
                 pResult = q.project(p1);
             }
-            else
+            else if (error2 <= error14 && error2 <= error34 && error2 <= error12 && error2 <= error1)
             {
                 pResult = q.project(p2);
             }
 
-            return std::abs(q.potential(vs) + q2.potential(segment) * segment.norm());
+            return error;
         }
+        */
 
+        /*
+        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        {
+            // Looking for alpha minimizing the error
 
-        void SimpleAPSSErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Dcel &dcel, Scalar weight, int ringSize)
+            // projection on a sphere
+            Vector3 proj = q.project(vs); // real value
+            Vector3 vs_local = vs - q.basisCenter();
+            Vector3 dir = (q.m_ul + 2.0 * q.m_uq * vs_local);
+            dir = dir / dir.norm();
+            Vector3 test3 = vs_local - dir * q.potential(vs) * std::min(1.0/dir.norm(), 1.0) + q.basisCenter();
+
+            // new spheres
+            Scalar uc2 = 0.0;
+            Vector3 ul2 = b * q.m_ul + 2.0 * b * q.m_uq * A;
+            Scalar uq2 = q.m_uq * b * b;
+            Vector3 p2 = Vector3::Zero();
+            Primitive q2;
+            q2.setParameters(uc2, ul2, uq2, p2);
+            q2.applyPrattNorm();
+
+            Vector3 ul3 = 0.5 * ul2;
+            Scalar uq3 = 0.5 * uq2;
+            Primitive q3;
+            q3.setParameters(uc2, ul3, uq3, p2);
+            q3.applyPrattNorm();
+
+            // the minimum is the solution of a equation of type 3*phi*alpha^2 + 2*alpha*beta + gamma
+            Vector3 seg = vt - vs;
+            Scalar mu = q.potential(A) + q2.potential(vs) + q3.potential(seg) + q.m_uq * b * b * vs.transpose() * seg;
+            Scalar gamma = 2.0 * q.potential(A) + 2.0 * q2.potential(vs);
+            Scalar alpha = -mu / gamma;
+
+            LOG(logINFO) << "alpha = " << alpha;
+
+            //
+            Scalar error = mu + alpha * gamma;
+            pResult = vs + alpha * seg;
+
+            return error;
+        }
+        */
+
+        /*
+        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        {
+            // Looking for alpha minimizing the error
+
+            // projection on a sphere
+            Vector3 proj = q.project(vs); // real value
+            Vector3 vs_local = vs - q.basisCenter();
+            Vector3 dir = (q.m_ul + 2.0 * q.m_uq * vs_local);
+            dir = dir / dir.norm();
+            Vector3 test3 = vs_local - dir * q.potential(vs) * std::min(1.0/dir.norm(), 1.0) + q.basisCenter();
+
+            // new spheres
+            Scalar uc2 = 0.0;
+            Vector3 ul2 = b * q.m_ul + 2.0 * b * q.m_uq * A;
+            Scalar uq2 = q.m_uq * b * b;
+            Vector3 p2 = Vector3::Zero();
+            Primitive q2;
+            q2.setParameters(uc2, ul2, uq2, p2);
+            q2.applyPrattNorm();
+
+            Vector3 ul3 = 0.5 * ul2;
+            Scalar uq3 = 0.5 * uq2;
+            Primitive q3;
+            q3.setParameters(uc2, ul3, uq3, p2);
+            q3.applyPrattNorm();
+
+            // the minimum is the solution of a equation of type 3*phi*alpha^2 + 2*alpha*beta + gamma
+            Vector3 seg = vt - vs;
+            Scalar mu = q.potential(A) + q2.potential(vs) + q3.potential(seg) + q.m_uq * b * b * vs.transpose() * seg;
+            Scalar gamma = 2.0 * q.potential(A) + 2.0 * q2.potential(vs);
+            Scalar alpha = -mu / gamma;
+
+            LOG(logINFO) << "alpha = " << alpha;
+
+            //
+            Scalar error = mu + alpha * gamma;
+            pResult = vs + alpha * seg;
+
+            return error;
+        }
+        */
+
+        void SimpleAPSSErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Scalar weight, int ringSize)
         {
             Vector3 p = v->P();
             GrenaillePoint::VectorType pg = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
@@ -550,7 +773,7 @@ namespace Ra
             }
         }
 
-        void SimpleAPSSErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f, Dcel &dcel, Scalar weight, int ringSize)
+        void SimpleAPSSErrorMetric::generateFacePrimitive(Primitive &q, Face_ptr f, Scalar weight, int ringSize)
         {
             Vertex_ptr v0 = f->HE()->V();
             Vertex_ptr v1 = f->HE()->Next()->V();
@@ -586,7 +809,7 @@ namespace Ra
                 }
 
                 fit.finalize();
-                fit.applyPrattNorm();
+                //fit.applyPrattNorm();
                 new_pg = fit.project(pg);
                 error = (new_pg-pg).norm();
                 pg = new_pg;

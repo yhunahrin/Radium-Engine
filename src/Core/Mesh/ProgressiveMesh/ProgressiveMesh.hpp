@@ -27,7 +27,7 @@ namespace Ra
     namespace Core
     {
 
-//      template<class ErrorMetric = QuadricErrorMetric>
+      //template<class ErrorMetric = QuadricErrorMetric>
         template<class ErrorMetric = SimpleAPSSErrorMetric>
         class ProgressiveMeshBase
         {
@@ -49,7 +49,7 @@ namespace Ra
             virtual ErrorMetric getEM() = 0;
         };
 
-//      template<class ErrorMetric = QuadricErrorMetric>
+      //template<class ErrorMetric = QuadricErrorMetric>
         template<class ErrorMetric = SimpleAPSSErrorMetric>
         class ProgressiveMesh : public ProgressiveMeshBase<ErrorMetric>
         {
@@ -66,6 +66,9 @@ namespace Ra
             /// We construct a priority queue with an error for each edge
             PriorityQueue constructPriorityQueue();
 
+            ///
+            void projectOnAlgebraicSphereSurface();
+
             /// Construction of the coarser mesh
             std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) override;
 
@@ -81,7 +84,7 @@ namespace Ra
             Primitive computeEdgePrimitive(Index edgeIndex);
 
             /// Compute the error on an edge
-            Scalar computeEdgeError(Index edgeIndex, Vector3&p_result, Primitive &q);
+            Scalar computeEdgeError(Index edgeIndex, Vector3&p_result, Primitive &q, std::ofstream &file);
 
             /// Scale the mesh to enter in a 1x1x1 box
             void scaleMesh();
@@ -111,7 +114,7 @@ namespace Ra
             /// Updates
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he);
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he, Vector3 v0, Vector3 v1, Index v0Ind, Index v1Ind, std::ofstream &file);
-            void updatePriorityQueue(PriorityQueue &pQueue, Index vsId, Index vtId);
+            void updatePriorityQueue(PriorityQueue &pQueue, Index vsId, Index vtId, std::ofstream &file);
 
 
         private:

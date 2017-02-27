@@ -28,8 +28,8 @@ namespace Ra
 
             Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
 
-            void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Dcel &dcel, Scalar weight, int ringSize);
-            void generateFacePrimitive      (Primitive &q, Face_ptr f, Dcel &dcel, Scalar weight, int ringSize);
+            void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);
+            void generateFacePrimitive      (Primitive &q, Face_ptr f, Scalar weight, int ringSize);
         };
 
         //---------------------------------------------------
@@ -104,7 +104,7 @@ namespace Ra
             Scalar computeError(const Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
             Scalar computeGeometricError(const Primitive& q, const Primitive::Vector& p);
 
-            void generateFacePrimitive(Primitive &q, Face_ptr f, Dcel &dcel);
+            void generateFacePrimitive(Primitive &q, Face_ptr f);
 
         };
 
@@ -123,13 +123,15 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
+            Scalar computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q, std::ofstream& file);
             Scalar computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 
+            Primitive combineWithTauEtaKappa(const Primitive& q1, const Primitive& q2, Scalar alpha);
             Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
 
-            void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Dcel &dcel, Scalar weight, int ringSize);
-            void generateFacePrimitive      (Primitive &q, Face_ptr f, Dcel &dcel, Scalar weight, int ringSize);
+            void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);
+            void generateFacePrimitive      (Primitive &q, Face_ptr f, Scalar weight, int ringSize);
         };
 
     }
