@@ -127,7 +127,6 @@ namespace Ra
             Scalar computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 
-            Primitive combineWithTauEtaKappa(const Primitive& q1, const Primitive& q2, Scalar alpha);
             Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
 
             void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);

@@ -109,12 +109,15 @@ namespace Ra
             Primitive combine(const std::vector<Primitive>& primitives, const std::vector<Scalar>& weightsWedgeAngles);
 
             /// Check if an edge collapse is doable
-            bool isEcolPossible(Index halfEdgeIndex, Vector3 pResult);
+            bool isEcolPossible(Index halfEdgeIndex, Vector3 pResult, ProgressiveMeshData::TConfiguration &tConf);
+
+            /// Check if an edge has a T intersection
+            bool hasTConfiguration(Index halfEdgeIndex, ProgressiveMeshData::TConfiguration &tConf, bool &isCompleConfiguration);
 
             /// Updates
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he);
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he, Vector3 v0, Vector3 v1, Index v0Ind, Index v1Ind, std::ofstream &file);
-            void updatePriorityQueue(PriorityQueue &pQueue, Index vsId, Index vtId, std::ofstream &file);
+            void updatePriorityQueue(PriorityQueue &pQueue, Index vsId, Index vtId, ProgressiveMeshData &data, std::ofstream &file);
 
 
         private:

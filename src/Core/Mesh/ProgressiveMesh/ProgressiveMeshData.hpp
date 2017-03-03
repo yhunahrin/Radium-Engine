@@ -23,6 +23,8 @@ namespace Ra
         {
         public:
 
+            //----------------------------------------------
+
             struct DataPerEdgeColor
             {
                 Vector3 v0;
@@ -38,6 +40,58 @@ namespace Ra
                     error = data.error;
                 }
             };
+
+            //----------------------------------------------
+            // For the T configuration case
+            /*
+                        Vl                      Vs — — — — — — — Vt
+                       /|\                       \   \       /    /
+                      / | \                       \   \  Fr /    /
+                     /he|  \                       \ F2\   / F1 /
+                    /   VT  \                       \   \ /    /
+                   / F1/ \F2 \                       \   VT   /
+                  /   /   \   \                       \  |   /
+                 /   /  Fl \   \                       \ |he/
+                /   /       \   \                       \| /
+               Vs — — — — — — — Vt                       Vr
+
+               We have to delete the 3 faces
+            */
+
+            struct TConfiguration
+            {
+                Index v_tconfig_id;
+                Vector3 v_tconfig_pos;
+                Index f1_tconfig_id, f2_tconfig_id;
+                Index he_tconfig;
+
+
+                TConfiguration() : v_tconfig_id(-1), f1_tconfig_id(-1), f2_tconfig_id(-1), he_tconfig(-1)
+                {
+                    v_tconfig_pos = Vector3::Zero();
+                }
+
+                TConfiguration(Index v, Vector3 vp, Index f1, Index f2, Index he) : v_tconfig_id(v), v_tconfig_pos(vp), f1_tconfig_id(f1), f2_tconfig_id(f2), he_tconfig(he) {}
+
+                bool hasTConfig() { return (getVTConfigId() != -1 ? true : false); }
+
+                void setF1TConfigId(Index &f1) { f1_tconfig_id = f1; }
+                Index getF1TConfigId() { return f1_tconfig_id; }
+
+                void setF2TConfigId(Index &f2) { f2_tconfig_id = f2; }
+                Index getF2TConfigId() { return f2_tconfig_id; }
+
+                void setHeTConfig(Index &heid) { he_tconfig = heid; }
+                Index getHeTConfigId() { return he_tconfig; }
+
+                void setVTConfigId(Index &v) { v_tconfig_id = v; }
+                Index getVTConfigId() { return v_tconfig_id; }
+
+                void setVTConfigPos(Vector3& v) { v_tconfig_pos = v; }
+                Vector3 getVTConfigPos() { return v_tconfig_pos; }
+            };
+
+            //----------------------------------------------
 
             ProgressiveMeshData();
 
@@ -90,8 +144,15 @@ namespace Ra
             inline Vector3 getVadl();
             inline void setVadl(Vector3& v);
 
+
+            inline void setTConfig(TConfiguration& t);
+            inline TConfiguration getTConfig();
+            inline void resetTConfig();
+
+
             //----------------------------------------------
 
+            /*
             inline Scalar getError();
             inline void setError(Scalar& s);
             inline Vector3 getPResult();
@@ -118,6 +179,7 @@ namespace Ra
             inline void setGradientQ2(const Vector3& v);
             inline std::vector<DataPerEdgeColor> getErrorPerEdge();
             inline void setErrorPerEdge(const std::vector<DataPerEdgeColor> &v);
+            */
 
             //----------------------------------------------
 
@@ -134,12 +196,23 @@ namespace Ra
             Index m_fl_id, m_fr_id;
             Index m_vs_id, m_vt_id, m_vl_id, m_vr_id;
 
+            // only for T configurations
+            /*
+            Index m_f1_tconfig_id, m_f2_tconfig_id;
+            Index m_v_tconfig_id;
+            Vector3 m_v_tconfig_pos;
+            */
+
             // gives the attribute of the new vertex
             short int m_ii; // prediction of p position
+
+            // for t configuration
+            TConfiguration m_t_conf;
 
             ///////////////////////////////////
             /// only for debug interactions ///
             ///////////////////////////////////
+            /*
             Scalar m_error;
             Vector3 m_p_result;
             Vector3 m_q1_center;
@@ -153,6 +226,7 @@ namespace Ra
             Vector3 m_q1_grad;
             Vector3 m_q2_grad;
             std::vector<DataPerEdgeColor> m_error_per_edge;
+            */
 
         };
     } // namespace Core

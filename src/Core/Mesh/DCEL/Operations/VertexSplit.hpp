@@ -11,19 +11,19 @@
 
 
 namespace Ra {
-namespace Core {
-namespace DcelOperations {
+    namespace Core {
+        namespace DcelOperations {
 
-    //void vertexFaceAdjacency(Dcel& dcel, Index vertexIndex, std::vector<Index>& adjOut);
-    void createVt(Dcel& dcel, ProgressiveMeshData pmdata);
-    void findFlclwNeig(Dcel& dcel, ProgressiveMeshData pmdata,
-                       Index &flclwId, Index &flclwOpId, Index &frcrwId, Index &frcrwOpId,
-                       FaceList adjOut);
+            //void vertexFaceAdjacency(Dcel& dcel, Index vertexIndex, std::vector<Index>& adjOut);
+            void createVt(Dcel& dcel, ProgressiveMeshData pmdata);
+            void findFlclwNeig(Dcel& dcel, ProgressiveMeshData pmdata,
+                               Index &flclwId, Index &flclwOpId, Index &frcrwId, Index &frcrwOpId,
+                               FaceList adjOut);
 
 
-    RA_CORE_API void vertexSplit(Dcel& dcel, ProgressiveMeshData pmdata);
-}
-}
+            RA_CORE_API void vertexSplit(Dcel& dcel, ProgressiveMeshData pmdata);
+        }
+    }
 }
 
 #endif // EDGECOLLAPSE_H

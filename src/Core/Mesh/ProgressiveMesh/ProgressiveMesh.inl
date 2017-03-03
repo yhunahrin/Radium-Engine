@@ -292,23 +292,18 @@ namespace Ra
         Scalar ProgressiveMesh<ErrorMetric>::computeEdgeError(Index halfEdgeIndex, Vector3 &pResult, Primitive &q, std::ofstream& file)
         {
             /*
-            int v0Idx = m_dcel->m_halfedge[halfEdgeIndex]->V()->idx;
-            int v1Idx = m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx;
             //q = computeEdgePrimitive(halfEdgeIndex);
             //Scalar error = m_em.computeError(q, vs, vt, pResult);
             Scalar error = m_em.computeError(m_primitives_v[v0Idx], m_primitives_v[v1Idx], m_dcel->m_vertex[v0Idx], m_dcel->m_vertex[v1Idx], pResult, q);
             */
 
-            ///////////////////////////////////////////////////////////////////////////////
             int v0Idx = m_dcel->m_halfedge[halfEdgeIndex]->V()->idx;
             int v1Idx = m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx;
             Primitive p0 = m_primitives_v[v0Idx];
             Primitive p1 = m_primitives_v[v1Idx];
             Scalar error = m_em.computeError(p0, p1, m_dcel->m_vertex[v0Idx], m_dcel->m_vertex[v1Idx], pResult, q, file);
-            //q = computeEdgePrimitive(halfEdgeIndex); //%
-            //Scalar error = m_em.computeError(q, m_dcel->m_vertex[v0Idx]->P(), m_dcel->m_vertex[v1Idx]->P(), pResult); //%
-            ///////////////////////////////////////////////////////////////////////////////
 
+            //error += errorOnTConfiguration(halfEdgeIndex);
 
             return error;
         }
@@ -395,11 +390,18 @@ namespace Ra
         }
 
         template <class ErrorMetric>
-        void ProgressiveMesh<ErrorMetric>::updatePriorityQueue(PriorityQueue &pQueue, Index vsIndex, Index vtIndex, std::ofstream &file)
+        void ProgressiveMesh<ErrorMetric>::updatePriorityQueue(PriorityQueue &pQueue, Index vsIndex, Index vtIndex, ProgressiveMeshData &data, std::ofstream &file)
         {
             // we delete of the priority queue all the edge containing vs_id or vt_id
             pQueue.removeEdges(vsIndex);
             pQueue.removeEdges(vtIndex);
+
+            /*
+            if (data.getTConfig().hasTConfig())
+            {
+                pQueue.removeEdges(data.getTConfig().getVTConfigId());
+            }
+            */
 
             double edgeError;
             Vector3 p = Vector3::Zero();
@@ -411,6 +413,10 @@ namespace Ra
             for (uint i = 0; i < adjHE.size(); i++)
             {
                 HalfEdge_ptr he = adjHE[i];
+                if (he->V()->idx == he->Next()->V()->idx)
+                {
+                    LOG(logINFO) << "arete = point";
+                }
 
                 Primitive q;
                 edgeError = computeEdgeError(he->idx, p, q, file);
@@ -425,12 +431,114 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, Vector3 pResult)
+        bool ProgressiveMesh<ErrorMetric>::hasTConfiguration(Index halfEdgeIndex, ProgressiveMeshData::TConfiguration& tConf, bool &isComplexConfiguration)
         {
             HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
 
             // Look at configuration T inside a triangle
-            bool hasTIntersection = false;
+            bool isTConfiguration = false;
+            isComplexConfiguration = false;
+            VVIterator v1vIt = VVIterator(he->V());
+            VVIterator v2vIt = VVIterator(he->Next()->V());
+            VertexList adjVerticesV1 = v1vIt.list();
+            VertexList adjVerticesV2 = v2vIt.list();
+
+            uint countIntersection = 0;
+            std::vector<Index> commonVerts;
+            for (uint i = 0; i < adjVerticesV1.size(); i++)
+            {
+                for (uint j = 0; j < adjVerticesV2.size(); j++)
+                {
+                    if (adjVerticesV1[i]->idx == adjVerticesV2[j]->idx)
+                    {
+                        commonVerts.push_back(adjVerticesV1[i]->idx);
+                        countIntersection++;
+                    }
+                }
+            }           
+            if (countIntersection == 3)
+            {
+                // finding the T Configuration
+                for (unsigned int i = 0; i < commonVerts.size(); i++)
+                {
+                    if (he->Next()->Twin()->Prev()->Twin()->V()->idx == commonVerts[i]) // the T config is in Fl
+                    {
+                        // Verification
+                        Vertex_ptr v0 = he->V();
+                        Vertex_ptr v1 = he->Next()->V();
+                        Vertex_ptr v2 = he->Next()->Twin()->Prev()->V();
+                        Vertex_ptr v2bis = he->Prev()->Twin()->Prev()->V();
+                        if (v2->idx == v2bis->idx)
+                        {
+                            Index vertexTId = he->Next()->Twin()->Prev()->Twin()->V()->idx;
+                            Vector3 barCoord = Geometry::barycentricCoordinate(m_dcel->m_vertex[vertexTId]->P(), v0->P(), v1->P(), v2->P());
+                            if (barCoord[0] > 0 && barCoord[0] < 1 &&
+                                barCoord[1] > 0 && barCoord[1] < 1 &&
+                                barCoord[2] > 0 && barCoord[2] < 1)
+                            {
+                                LOG(logINFO) << "NB COMMON VERTS = " << countIntersection << " IS T CONF on " << vertexTId;
+                                isTConfiguration = true;
+                                tConf.setVTConfigId(vertexTId);
+                                tConf.setVTConfigPos(m_dcel->m_vertex[vertexTId]->P());
+                                tConf.setHeTConfig(he->Next()->Twin()->Prev()->Twin()->idx);
+                                tConf.setF1TConfigId(he->Next()->Twin()->Prev()->Twin()->F()->idx);
+                                tConf.setF2TConfigId(he->Next()->Twin()->Prev()->F()->idx);
+                                break;
+                            }
+                        }
+                    }
+                    else if (he->Twin()->Next()->Twin()->Prev()->Twin()->V()->idx == commonVerts[i]) // the T config is in Fr
+                    {
+                        // Verification
+                        Vertex_ptr v0 = he->Twin()->V();
+                        Vertex_ptr v1 = he->Twin()->Next()->V();
+                        Vertex_ptr v2 = he->Twin()->Next()->Twin()->Prev()->V();
+                        Vertex_ptr v2bis = he->Twin()->Prev()->Twin()->Prev()->V();
+                        if (v2->idx == v2bis->idx)
+                        {
+                            Index vertexTId = he->Twin()->Next()->Twin()->Prev()->Twin()->V()->idx;
+                            Vector3 barCoord = Geometry::barycentricCoordinate(m_dcel->m_vertex[vertexTId]->P(), v0->P(), v1->P(), v2->P());
+                            if (barCoord[0] > 0 && barCoord[0] < 1 &&
+                                barCoord[1] > 0 && barCoord[1] < 1 &&
+                                barCoord[2] > 0 && barCoord[2] < 1)
+                            {
+                                LOG(logINFO) << "NB COMMON VERTS = " << countIntersection << " IS T CONF on " << vertexTId;
+                                isTConfiguration = true;
+                                tConf.setVTConfigId(vertexTId);
+                                tConf.setVTConfigPos(m_dcel->m_vertex[vertexTId]->P());
+                                tConf.setHeTConfig(he->Twin()->Next()->Twin()->Prev()->Twin()->idx);
+                                tConf.setF1TConfigId(he->Twin()->Next()->Twin()->Prev()->Twin()->F()->idx);
+                                tConf.setF2TConfigId(he->Twin()->Next()->Twin()->Prev()->F()->idx);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!isTConfiguration)
+                {
+                    isComplexConfiguration = true;
+                }
+            }
+            else if (countIntersection > 3)
+            {
+                isComplexConfiguration = true;
+            }
+            return isTConfiguration;
+        }
+
+        template <class ErrorMetric>
+        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, Vector3 pResult, ProgressiveMeshData::TConfiguration& tConf)
+        {
+            HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
+
+            bool isComplexConfiguration;
+            hasTConfiguration(halfEdgeIndex, tConf, isComplexConfiguration);
+            if (isComplexConfiguration)
+                return false;
+
+            /*
+            // Look at configuration T inside a triangle
+            bool hasIntersection = false;
             VVIterator v1vIt = VVIterator(he->V());
             VVIterator v2vIt = VVIterator(he->Next()->V());
             VertexList adjVerticesV1 = v1vIt.list();
@@ -447,13 +555,13 @@ namespace Ra
             }
             if (countIntersection > 2)
             {
-                //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
-                hasTIntersection = true;
+                LOG(logINFO) << countIntersection << " intersections so the edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
+                hasIntersection = true;
                 return false;
             }
+            */
 
             // Look if normals of faces change after collapse
-
             bool isFlipped = false;
             EFIterator eIt = EFIterator(he);
             FaceList adjFaces = eIt.list();
@@ -514,10 +622,9 @@ namespace Ra
                 }
             }
 
-            return ((!hasTIntersection) && (!isFlipped));
-
-
-            //return !hasTIntersection;
+            return ((!isComplexConfiguration) && (!isFlipped));
+            //return (!isFlipped);
+            //return ((!isFlipped) && (!hasIntersection));
         }
 
         //--------------------------------------------------
@@ -556,8 +663,11 @@ namespace Ra
                 HalfEdge_ptr he = m_dcel->m_halfedge[d.m_edge_id];
 
                 // TODO !
-                if (!isEcolPossible(he->idx, d.m_p_result))
+                ProgressiveMeshData::TConfiguration tConf;
+                if (!isEcolPossible(he->idx, d.m_p_result, tConf))
                     continue;
+                data.setTConfig(tConf);
+
 
                 if (he->Twin() == nullptr)
                 {
@@ -571,20 +681,17 @@ namespace Ra
                 m_nb_vertices -= 1;
 
 //#ifdef CORE_DEBUG
+                /*
                 data.setError(d.m_err);
                 data.setPResult(d.m_p_result);
-
-                /*
                 data.setQCenter(m_primitives_he[he->idx].center());
                 data.setQRadius(m_primitives_he[he->idx].radius());
                 data.setQ1Center(m_primitives_v[d.m_vs_id].center());
                 data.setQ1Radius(m_primitives_v[d.m_vs_id].radius());
                 data.setQ2Center(m_primitives_v[d.m_vt_id].center());
                 data.setQ2Radius(m_primitives_v[d.m_vt_id].radius());
-                */
                 data.setVs((m_dcel->m_vertex[d.m_vs_id])->P());
                 data.setVt((m_dcel->m_vertex[d.m_vt_id])->P());
-                /*
                 data.setGradientQ1(m_primitives_v[d.m_vs_id].primitiveGradient(data.getVs()));
                 data.setGradientQ2(m_primitives_v[d.m_vt_id].primitiveGradient(data.getVt()));
                 */
@@ -595,16 +702,13 @@ namespace Ra
                 */
 //#endif
 
-                //
                 Vector3 v0 = m_dcel->m_vertex[d.m_vs_id]->P();
                 Vector3 v1 = m_dcel->m_vertex[d.m_vt_id]->P();
-                //
 
                 DcelOperations::edgeCollapse(*m_dcel, d.m_edge_id, d.m_p_result, true, data);
 
-                //updateVerticesPrimitives(d.m_vs_id, he);
                 updateVerticesPrimitives(d.m_vs_id, he, v0, v1, d.m_vs_id, d.m_vt_id, file);
-                updatePriorityQueue(pQueue, d.m_vs_id, d.m_vt_id, file2);
+                updatePriorityQueue(pQueue, d.m_vs_id, d.m_vt_id, data, file2);
 
                 pmdata.push_back(data);
 

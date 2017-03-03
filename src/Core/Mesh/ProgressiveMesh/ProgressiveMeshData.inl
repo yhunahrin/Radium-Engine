@@ -125,6 +125,24 @@ inline void ProgressiveMeshData::setVadl(Vector3 &v)
 
 //-----------------------------------------------
 
+inline void ProgressiveMeshData::setTConfig(TConfiguration& t)
+{
+    m_t_conf = t;
+}
+
+inline ProgressiveMeshData::TConfiguration ProgressiveMeshData::getTConfig()
+{
+    return m_t_conf;
+}
+
+inline void ProgressiveMeshData::resetTConfig()
+{
+    m_t_conf = ProgressiveMeshData::TConfiguration();
+}
+
+//-----------------------------------------------
+
+/*
 inline Scalar ProgressiveMeshData::getError()
 {
     return m_error;
@@ -254,7 +272,7 @@ inline void ProgressiveMeshData::setErrorPerEdge(const std::vector<ProgressiveMe
 {
     m_error_per_edge = v;
 }
-
+*/
 
 } // namespace Core
 } // namespace Ra

@@ -442,38 +442,6 @@ namespace Ra
         }
         */
 
-        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combineWithTauEtaKappa(const Primitive& q1, const Primitive& q2, Scalar alpha)
-        {
-            // same base
-            Vector3 new_base = q1.basisCenter() + alpha * (q2.basisCenter() - q1.basisCenter());
-            Primitive q1_new_base = q1;
-            Primitive q2_new_base = q2;
-            q1_new_base.changeBasis(new_base);
-            q2_new_base.changeBasis(new_base);
-
-            // combine tau eta kappa
-            Scalar new_tau      = q1_new_base.tau() + alpha * (q2_new_base.tau() - q1_new_base.tau());
-            Vector3 new_eta     = q1_new_base.eta() + alpha * (q2_new_base.eta() - q1_new_base.eta());
-            Scalar new_kappa    = q1_new_base.kappa() + alpha * (q2_new_base.kappa() - q1_new_base.kappa());
-            new_eta.normalize();
-
-            // compute uc, ul, uq
-            Scalar new_uc       = new_tau;
-            Vector3 new_ul      = new_eta * (1.0 + 2.0 * new_tau * new_kappa);
-            Scalar new_uq       = new_kappa / 2.0;
-
-            Primitive res;
-            res.setParameters(new_uc, new_ul, new_uq, new_base);
-            res.applyPrattNorm();
-
-            if (std::isnan(res.m_uc))
-            {
-                LOG(logINFO) << "test combine tau/eta/kappa";
-            }
-
-        }
-
-
         Scalar SimpleAPSSErrorMetric::computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q, std::ofstream& file)
         {
             Vector3 v1 = vs->P();
