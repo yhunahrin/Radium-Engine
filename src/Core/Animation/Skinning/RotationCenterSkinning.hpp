@@ -10,7 +10,7 @@
 #include <Core/Mesh/MeshUtils.hpp>
 #include <Core/Mesh/Wrapper/Convert.hpp>
 #include <Core/Mesh/DCEL/Dcel.hpp>
-#include <Core/Mesh/DCEL/Operations/EdgeSplit.hpp>
+#include <Core/Mesh/DCEL/Operations/EdgeOperation.hpp>
 #include <Core/Mesh/DCEL/FullEdge.hpp>
 
 #include <Core/Animation/Handle/HandleWeight.hpp>
