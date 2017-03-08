@@ -10,8 +10,8 @@
 #include <Core/Mesh/DCEL/HalfEdge.hpp>
 #include <Core/Mesh/DCEL/FullEdge.hpp>
 //#include <Core/Mesh/DCEL/Dcel.hpp>
-#include <Core/Mesh/DCEL/Operations/EdgeCollapse.hpp>
-#include <Core/Mesh/DCEL/Operations/VertexSplit.hpp>
+#include <Core/Mesh/DCEL/Operations/EdgeOperation.hpp>
+#include <Core/Mesh/DCEL/Operations/VertexOperation.hpp>
 #include <Core/Geometry/Triangle/TriangleOperation.hpp>
 
 #include <Core/Mesh/DCEL/Iterator/Vertex/VVIterator.hpp>
@@ -88,23 +88,6 @@ namespace Ra
         }
 
         template <class ErrorMetric>
-        void ProgressiveMesh<ErrorMetric>::scaleMesh()
-        {
-            Scalar min_x, max_x, min_y, max_y, min_z, max_z;
-            computeBoundingBoxSize(min_x, max_x, min_y, max_y, min_z, max_z);
-            Scalar maxX = std::max(std::abs(max_x), std::abs(min_x));
-            Scalar maxY = std::max(std::abs(max_y), std::abs(min_y));
-            Scalar maxZ = std::max(std::abs(max_z), std::abs(min_z));
-            // TODO parallelization
-            for (unsigned int i = 0; i < m_dcel->m_vertex.size(); i++)
-            {
-                m_dcel->m_vertex[i]->P().x() = m_dcel->m_vertex[i]->P().x() / maxX;
-                m_dcel->m_vertex[i]->P().y() = m_dcel->m_vertex[i]->P().y() / maxY;
-                m_dcel->m_vertex[i]->P().z() = m_dcel->m_vertex[i]->P().z() / maxZ;
-            }
-        }
-
-        template <class ErrorMetric>
         void ProgressiveMesh<ErrorMetric>::computeMeanEdgeLength()
         {
             Scalar mean_edge_length = 0.0;
@@ -169,7 +152,8 @@ namespace Ra
         typename ErrorMetric::Primitive ProgressiveMesh<ErrorMetric>::computeVertexPrimitive(Index vertexIndex)
         {
             Primitive q;
-            m_em.generateVertexPrimitive(q, m_dcel->m_vertex[vertexIndex], m_scale, m_ring_size);
+            //m_em.generateVertexPrimitive(q, m_dcel->m_vertex[vertexIndex], m_scale, m_ring_size);
+            m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[vertexIndex], m_ring_size);
             return q;
         }
 
@@ -187,6 +171,7 @@ namespace Ra
 //#pragma omp parallel for
             for (uint v = 0; v < numVertices; ++v)
             {
+                LOG(logINFO) << v << "primitive";
                 Primitive q = computeVertexPrimitive(v);
 //#pragma omp critical
                 m_primitives_v.push_back(q);
@@ -205,68 +190,14 @@ namespace Ra
                 for (uint t = 0; t < adjVertices.size(); ++t)
                 {
                     Primitive q;
-                    m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
+                    //m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
+                    m_em.generateRIMLSVertexPrimitive(q, adjVertices[t], m_ring_size);
                     m_primitives_v[adjVertices[t]->idx] = q;
                 }
             }
             else if (m_primitive_update == 1) // no update
             {
                 m_primitives_v[vsIndex] = m_primitives_he[he->idx];
-            }
-        }
-
-        template <class ErrorMetric>
-        void ProgressiveMesh<ErrorMetric>::updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he, Vector3 v0, Vector3 v1, Index v0Ind, Index v1Ind, std::ofstream &file)
-        {
-            // We go all over the faces which contain vsIndex
-            VVIterator vvIt = VVIterator(m_dcel->m_vertex[vsIndex]);
-            VertexList adjVertices = vvIt.list();
-
-            if (m_primitive_update == 0) // re-calcul
-            {
-                for (uint t = 0; t < adjVertices.size(); ++t)
-                {
-                    Primitive q;
-                    m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
-                    m_primitives_v[adjVertices[t]->idx] = q;
-                }
-            }
-            else if (m_primitive_update == 1) // no update
-            {
-                /*
-                Scalar vsv0 = (m_dcel->m_vertex[vsIndex]->P() - v0).norm();
-                Scalar vsv1 = (m_dcel->m_vertex[vsIndex]->P() - v1).norm();
-                Scalar vsv01 = (m_dcel->m_vertex[vsIndex]->P() - ((v0 + v1)/2.0)).norm();
-                if (vsv0 < vsv1 && vsv0 < vsv01)
-                {
-                    m_primitives_v[vsIndex] = m_primitives_v[v0Ind];
-                    file << "0\n";
-                }
-                else if (vsv1 < vsv0 && vsv1 < vsv01)
-                {
-                    m_primitives_v[vsIndex] = m_primitives_v[v1Ind];
-                    file << "1\n";
-                }
-                else
-                */
-                {
-
-                    /*
-                    Primitive testq;
-                    m_em.generateVertexPrimitive(testq, m_dcel->m_vertex[vsIndex], m_scale, m_ring_size);
-                    Scalar uctestq = testq.m_uc;
-                    Vector3 ultestq = testq.m_ul;
-                    Scalar uqtestq = testq.m_uq;
-                    */
-
-                    Primitive testq2 = m_primitives_he[he->idx];
-                    //Scalar uctestq2 = testq2.m_uc;
-                    //Vector3 ultestq2 = testq2.m_ul;
-                    //Scalar uqtestq2 = testq2.m_uq;
-
-                    m_primitives_v[vsIndex] = m_primitives_he[he->idx];
-                    file << "0.5\n";
-                }
             }
         }
 
@@ -286,31 +217,6 @@ namespace Ra
             weights.push_back(0.5);
             weights.push_back(0.5);
             return combine(primitives, weights);
-        }
-
-        template <class ErrorMetric>
-        Scalar ProgressiveMesh<ErrorMetric>::computeEdgeError(Index halfEdgeIndex, Vector3 &pResult, Primitive &q, std::ofstream& file)
-        {
-            /*
-            int v0Idx = m_dcel->m_halfedge[halfEdgeIndex]->V()->idx;
-            int v1Idx = m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx;
-            //q = computeEdgePrimitive(halfEdgeIndex);
-            //Scalar error = m_em.computeError(q, vs, vt, pResult);
-            Scalar error = m_em.computeError(m_primitives_v[v0Idx], m_primitives_v[v1Idx], m_dcel->m_vertex[v0Idx], m_dcel->m_vertex[v1Idx], pResult, q);
-            */
-
-            ///////////////////////////////////////////////////////////////////////////////
-            int v0Idx = m_dcel->m_halfedge[halfEdgeIndex]->V()->idx;
-            int v1Idx = m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx;
-            Primitive p0 = m_primitives_v[v0Idx];
-            Primitive p1 = m_primitives_v[v1Idx];
-            Scalar error = m_em.computeError(p0, p1, m_dcel->m_vertex[v0Idx], m_dcel->m_vertex[v1Idx], pResult, q, file);
-            //q = computeEdgePrimitive(halfEdgeIndex); //%
-            //Scalar error = m_em.computeError(q, m_dcel->m_vertex[v0Idx]->P(), m_dcel->m_vertex[v1Idx]->P(), pResult); //%
-            ///////////////////////////////////////////////////////////////////////////////
-
-
-            return error;
         }
 
         //-----------------------------------------------------
@@ -368,7 +274,7 @@ namespace Ra
 
                     Primitive q;
                     Vector3 p = Vector3::Zero();
-                    double edgeError = computeEdgeError(h->idx, p, q, file);
+                    double edgeError = m_em.computeError(h, m_primitives_v[h->V()->idx], m_primitives_v[h->Next()->V()->idx], p, q, file);
                     m_primitives_he[h->idx] = q;
 
 //#pragma omp critical
@@ -412,8 +318,11 @@ namespace Ra
             {
                 HalfEdge_ptr he = adjHE[i];
 
+                // TODO
+                // flip edge if needed
+
                 Primitive q;
-                edgeError = computeEdgeError(he->idx, p, q, file);
+                edgeError = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q, file);
                 m_primitives_he[he->idx] = q;
 
                 vIndex = he->Next()->V()->idx;
@@ -452,8 +361,8 @@ namespace Ra
                 return false;
             }
 
-            // Look if normals of faces change after collapse
 
+            // Look if normals of faces change after collapse
             bool isFlipped = false;
             EFIterator eIt = EFIterator(he);
             FaceList adjFaces = eIt.list();
@@ -504,7 +413,7 @@ namespace Ra
                     fp_n.normalize();
                     Vector3 f_n = Geometry::triangleNormal(v->P(), v1->P(), v2->P());
                     Scalar fpnDotFn = fp_n.dot(f_n);
-                    if (fpnDotFn < -0.5)
+                    if (fpnDotFn < 0.0) //-0.5
                     {
                         isFlipped = true;
                         //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : Flipped face";
@@ -514,10 +423,91 @@ namespace Ra
                 }
             }
 
+            /*
+            bool consitent = true;
+            if (!isEcolConsistent(halfEdgeIndex, pResult))
+                return false;
+            */
+
+            //return ((!hasTIntersection) && (!isFlipped) && (consitent));
             return ((!hasTIntersection) && (!isFlipped));
-
-
             //return !hasTIntersection;
+        }
+
+        //Quadric-Based Polygonal Surface Simplification, PhD thesis by Michael Garland (1999), p.56-57 : Consistency Checks
+        template <class ErrorMetric>
+        bool ProgressiveMesh<ErrorMetric>::isEcolConsistent(Index halfEdgeIndex, Vector3 pResult)
+        {
+            HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
+            Face_ptr f1 = he->F();
+            Face_ptr f2 = he->Twin()->F();
+            Vertex_ptr v1 = he->V();
+            Vertex_ptr v2 = he->Next()->V();
+
+            VFIterator v1fIt = VFIterator(v1);
+            VFIterator v2fIt = VFIterator(v2);
+            FaceList adjFacesV1 = v1fIt.list();
+            FaceList adjFacesV2 = v2fIt.list();
+
+            bool consistent = true;
+
+            for (uint i = 0; i < adjFacesV1.size() && consistent; i++)
+            {
+                Face_ptr f = adjFacesV1[i];
+                if ((f != f1) && (f != f2))
+                {
+                    HalfEdge_ptr h = f->HE();
+                    Vertex_ptr v = he->V();
+                    while (v != v1)
+                    {
+                        h = h->Next();
+                        v = h->V();
+                    }
+                    h = h->Next();
+                    Vertex_ptr vs = h->V();
+                    Vertex_ptr vt = h->Next()->V();
+
+                    Vector3 vsvt = vs->P() - vt->P();
+                    Vector3 nf = Geometry::triangleNormal(v1->P(), vs->P(), vt->P());
+                    Vector3 n = vsvt.cross(nf);
+
+                    consistent = ((n.dot(v1->P()) >= 0) == (n.dot(pResult) >= 0));
+                    if (! consistent)
+                    {
+                        LOG(logINFO) << "Edge " << v1->idx << " " << v2->idx << " is not collapsable due to inconsistency";
+                    }
+                }
+            }
+
+            for (uint i = 0; i < adjFacesV2.size() && consistent; i++)
+            {
+                Face_ptr f = adjFacesV2[i];
+                if ((f != f1) && (f != f2))
+                {
+                    HalfEdge_ptr h = f->HE();
+                    Vertex_ptr v = he->V();
+                    while (v != v2)
+                    {
+                        h = h->Next();
+                        v = h->V();
+                    }
+                    h = h->Next();
+                    Vertex_ptr vs = h->V();
+                    Vertex_ptr vt = h->Next()->V();
+
+                    Vector3 vsvt = vs->P() - vt->P();
+                    Vector3 nf = Geometry::triangleNormal(v2->P(), vs->P(), vt->P());
+                    Vector3 n = vsvt.cross(nf);
+
+                    consistent = ((n.dot(v2->P()) >= 0) == (n.dot(pResult) >= 0));
+                    if (! consistent)
+                    {
+                        LOG(logINFO) << "Edge " << v1->idx << " " << v2->idx << " is not collapsable due to inconsistency";
+                    }
+                }
+            }
+
+            return consistent;
         }
 
         //--------------------------------------------------
@@ -602,8 +592,8 @@ namespace Ra
 
                 DcelOperations::edgeCollapse(*m_dcel, d.m_edge_id, d.m_p_result, true, data);
 
-                //updateVerticesPrimitives(d.m_vs_id, he);
-                updateVerticesPrimitives(d.m_vs_id, he, v0, v1, d.m_vs_id, d.m_vt_id, file);
+                updateVerticesPrimitives(d.m_vs_id, he);
+                //updateVerticesPrimitives(d.m_vs_id, he, v0, v1, d.m_vs_id, d.m_vt_id, file);
                 updatePriorityQueue(pQueue, d.m_vs_id, d.m_vt_id, file2);
 
                 pmdata.push_back(data);

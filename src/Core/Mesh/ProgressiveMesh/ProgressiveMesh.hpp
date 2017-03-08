@@ -83,12 +83,6 @@ namespace Ra
             /// Compute an edge quadric
             Primitive computeEdgePrimitive(Index edgeIndex);
 
-            /// Compute the error on an edge
-            Scalar computeEdgeError(Index edgeIndex, Vector3&p_result, Primitive &q, std::ofstream &file);
-
-            /// Scale the mesh to enter in a 1x1x1 box
-            void scaleMesh();
-
             /// Compute the size of the bounding box of a mesh
             void computeBoundingBoxSize(Scalar &min_x, Scalar &max_x, Scalar &min_y, Scalar &max_y, Scalar &min_z, Scalar &max_z);
 
@@ -109,11 +103,11 @@ namespace Ra
             Primitive combine(const std::vector<Primitive>& primitives, const std::vector<Scalar>& weightsWedgeAngles);
 
             /// Check if an edge collapse is doable
+            bool isEcolConsistent(Index halfEdgeIndex, Vector3 pResult);
             bool isEcolPossible(Index halfEdgeIndex, Vector3 pResult);
 
             /// Updates
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he);
-            void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he, Vector3 v0, Vector3 v1, Index v0Ind, Index v1Ind, std::ofstream &file);
             void updatePriorityQueue(PriorityQueue &pQueue, Index vsId, Index vtId, std::ofstream &file);
 
 

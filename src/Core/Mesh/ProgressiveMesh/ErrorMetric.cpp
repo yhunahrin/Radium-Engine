@@ -6,6 +6,7 @@
 #include <Core/Mesh/DCEL/Iterator/Face/FFIterator.hpp>
 #include <Core/Mesh/DCEL/Iterator/Vertex/VVIterator.hpp>
 #include <Core/Mesh/DCEL/Iterator/Vertex/VFIterator.hpp>
+#include <Core/Mesh/DCEL/Operations/VertexOperation.hpp>
 
 #include <Core/Log/Log.hpp>
 
@@ -268,68 +269,6 @@ namespace Ra
         {
         }
 
-        /*
-        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combine(const Primitive& a, const Primitive& b)
-        {
-            Primitive c = a;
-            c.changeBasis(b.basisCenter());
-            c.applyPrattNorm();
-
-            //c.setParameters((c.tau() + b.tau())/Scalar(2), (c.eta() + b.eta()), (c.kappa() + b.kappa())/Scalar(2));
-            c.setParameters((c.tau() + b.tau()), (c.eta() + b.eta()), (c.kappa() + b.kappa()));
-
-            c.changeBasis(a.basisCenter());
-            c.applyPrattNorm();
-            return c;
-        }
-        */
-
-        /*
-        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combine(const Primitive& a, const Scalar& a_weight, const Primitive& b, const Scalar& b_weight)
-        {
-            Primitive c;
-            Scalar new_uc, new_uq;
-            Vector3 new_ul, new_p;
-            if (a.isPlane() && b.isPlane())
-            {
-                // PLAN
-                new_ul  = a_weight * a.m_ul + b_weight * b.m_ul;
-                new_uq  = 0.0;
-                new_p   = a_weight * a.m_p + b_weight * b.m_p;
-                new_uc  = a_weight * a.potential(new_p) + b_weight * b.potential(new_p);
-            }
-            else
-            {
-                // SPHERE
-                new_uc  =   0.5*a_weight*b_weight*(a.m_ul.dot(b.m_ul)) +
-                                    a_weight*a_weight*a.m_uc*b.m_uq +
-                                    b_weight*b_weight*b.m_uc*a.m_uq -
-                                    0.5*a_weight*b_weight*a.prattNorm()*b.prattNorm();
-                new_ul  = a_weight*a.m_ul*b.m_uq + b_weight*b.m_ul*a.m_uq;
-                new_uq  = a.m_uq*b.m_uq;
-                new_p   = a_weight*a.m_p + b_weight*b.m_p;
-            }
-
-#ifdef CORE_DEBUG
-            Scalar test = new_ul.squaredNorm() - Scalar(4.) * new_uc * new_uq;
-            if (test > -0.00000000001 && test < 0.00000000001)
-            {
-                LOG(logINFO) << "ca merde ici : norm 0 \n";
-            }
-            if (std::abs(test) > 10000000000000)
-            {
-                LOG(logINFO) << "ca merde ici : norm inf \n";
-            }
-            if (test < 0)
-            {
-                LOG(logINFO) << "ca merde ici : norm negative \n";
-            }
-#endif
-            c.setParameters(new_uc, new_ul, new_uq, new_p);
-            return c;
-        }
-        */
-
         SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor)
         {
             Scalar new_uc = 0.0;
@@ -410,86 +349,12 @@ namespace Ra
             return c;
         }
 
-        /*
-        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        Scalar SimpleAPSSErrorMetric::computeEdgeMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q)
         {
-            GrenaillePoint::VectorType p12 = (vs + vt) / 2.0;
-            GrenaillePoint::VectorType p1 = vs;
-            GrenaillePoint::VectorType p2 = vt;
-            Scalar error;
-            Scalar error12 = std::abs(q.potential(p12));
-            Scalar error1 = std::abs(q.potential(p1));
-            Scalar error2 = std::abs(q.potential(p2));
-            if (error12 <= error1 && error12 <= error2)
-            {
-                pResult = q.project(p12);
-                error = error12;
-            }
-            else if (error1 < error2)
-            {
-                pResult = q.project(p1);
-                error = error1;
-            }
-            else
-            {
-                pResult = q.project(p2);
-                error = error2;
-            }
-
-            error = std::max(std::max(error12, error1), error2);
-            CORE_ASSERT(!std::isnan(std::abs(error)), "ERROR TOO HIGH");
-            return error;
-        }
-        */
-
-        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combineWithTauEtaKappa(const Primitive& q1, const Primitive& q2, Scalar alpha)
-        {
-            // same base
-            Vector3 new_base = q1.basisCenter() + alpha * (q2.basisCenter() - q1.basisCenter());
-            Primitive q1_new_base = q1;
-            Primitive q2_new_base = q2;
-            q1_new_base.changeBasis(new_base);
-            q2_new_base.changeBasis(new_base);
-
-            // combine tau eta kappa
-            Scalar new_tau      = q1_new_base.tau() + alpha * (q2_new_base.tau() - q1_new_base.tau());
-            Vector3 new_eta     = q1_new_base.eta() + alpha * (q2_new_base.eta() - q1_new_base.eta());
-            Scalar new_kappa    = q1_new_base.kappa() + alpha * (q2_new_base.kappa() - q1_new_base.kappa());
-            new_eta.normalize();
-
-            // compute uc, ul, uq
-            Scalar new_uc       = new_tau;
-            Vector3 new_ul      = new_eta * (1.0 + 2.0 * new_tau * new_kappa);
-            Scalar new_uq       = new_kappa / 2.0;
-
-            Primitive res;
-            res.setParameters(new_uc, new_ul, new_uq, new_base);
-            res.applyPrattNorm();
-
-            if (std::isnan(res.m_uc))
-            {
-                LOG(logINFO) << "test combine tau/eta/kappa";
-            }
-
-        }
-
-
-        Scalar SimpleAPSSErrorMetric::computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q, std::ofstream& file)
-        {
-            Vector3 v1 = vs->P();
-            Vector3 v2 = vt->P();
-
-            Primitive q1_ = q1;
-
-            Scalar test = q1_.prattNorm2();
-            if (test < 0)
-                LOG(logINFO) << "pb q1";
-            q1_.applyPrattNorm();
-            Primitive q2_ = q2;
-            test = q2_.prattNorm2();
-            if (test < 0)
-                LOG(logINFO) << "pb q2";
-            q2_.applyPrattNorm();
+            Vertex_ptr vs = he->V();
+            Vertex_ptr vt = he->Next()->V();
+            Vector3 vsPOs = vs->P();
+            Vector3 vtPOs = vt->P();
 
             // computing alpha
             // sampling along the segments in 3D (TODO, sampling along uv)
@@ -500,18 +365,20 @@ namespace Ra
             std::vector<Scalar> errors;
             errors.reserve(100);
 
-            if (q1.hasSameParameter(q2) && std::abs((q1.m_ul).dot((v2 - v1).normalized())) < 0.00001)
+            if (q1.hasSameParameter(q2) && std::abs((q1.m_ul).dot((vtPOs - vsPOs).normalized())) < 0.00001)
             {
+                // both spheres are planes
                 min_alpha = 0.5;
-                min_error = q1.potential(v1);
+                min_error = q1.potential(vsPOs);
             }
             else
             {
-                for (Scalar alpha = 0.0; alpha <= 1.0; alpha += dt) // on parcourt l'arête
+
+                for (Scalar alpha = 0.0; alpha <= 1.0; alpha += dt) // we go through the edge
                 {
-                    Vector3 valpha = v1 + alpha * (v2 - v1);
+                    Vector3 valpha = vsPOs + alpha * (vtPOs - vsPOs);
                     Primitive salpha;
-                    salpha.combine(q1, q2, alpha, vs->P(), vt->P());
+                    salpha.combine(q1, q2, alpha, vsPOs, vtPOs);
 
                     // find adjacent vertices to vs and vt
                     VVIterator vsvIt = VVIterator(vs);
@@ -527,8 +394,8 @@ namespace Ra
                         if (adjVerticesVs[i]->idx == vt->idx) continue;
                         sum_edge_norm += (adjVerticesVs[i]->P() - valpha).norm();
                         Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
-                        //Scalar dist_seg_sphere = q1_.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
-                        //Scalar dist_seg_sphere = std::abs(q1_.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha));
+                        //Scalar dist_seg_sphere = q1.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
+                        //Scalar dist_seg_sphere = std::abs(q1.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha));
                         error += dist_seg_sphere;
                     }
                     for (unsigned int i = 0; i < adjVerticesVt.size(); i++)
@@ -536,8 +403,8 @@ namespace Ra
                         if (adjVerticesVt[i]->idx == vs->idx) continue;
                         sum_edge_norm += (adjVerticesVt[i]->P() - valpha).norm();
                         Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
-                        //Scalar dist_seg_sphere = q2_.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
-                        //Scalar dist_seg_sphere = std::abs(q2_.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P()));
+                        //Scalar dist_seg_sphere = q2.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
+                        //Scalar dist_seg_sphere = std::abs(q2.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P()));
                         error += dist_seg_sphere;
                     }
                     error /= sum_edge_norm;
@@ -548,7 +415,6 @@ namespace Ra
                         min_alpha = alpha;
                     }
                     //errors.push_back(std::abs(error));
-
                 }
                 /*
                 file << q1.m_uc << " " << q1.m_ul.transpose() << " " << q1.m_uq << " " << q1.basisCenter().transpose() << "\n";
@@ -560,154 +426,231 @@ namespace Ra
                 file << "\n";
                 */
             }
-
-
-            q.combine(q1, q2, min_alpha, vs->P(), vt->P());
-            //q = combineWithTauEtaKappa(q1, q2, min_alpha);
-
-            pResult = v1 + min_alpha * (v2 - v1);
+            q.combine(q1, q2, min_alpha, vsPOs, vtPOs);
+            pResult = vsPOs + min_alpha * (vtPOs - vsPOs);
             pResult = q.project(pResult);
-            //return q.potential(pResult);
-
             return min_error;
         }
 
-
-        /*
-        Scalar SimpleAPSSErrorMetric::computeError(const Primitive& q1, const Primitive& q2, Vertex_ptr vs, Vertex_ptr vt, Vector3& pResult, Primitive &q)
+        Scalar SimpleAPSSErrorMetric::computeFaceMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q)
         {
-            q.combine(q1, q2, 0.5);
+            Vertex_ptr vs = he->V();
+            Vertex_ptr vt = he->Next()->V();
+            Vector3 vsPOs = vs->P();
+            Vector3 vtPOs = vt->P();
 
-            Scalar error = q.distanceSegSphere(vs->P(), vt->P());
+            Scalar min_error = std::numeric_limits<double>::max();
+            Scalar min_gamma1 = 0.0;
+            Scalar min_gamma2 = 0.0;
 
-            // compute resulting vertex as usual
-            GrenaillePoint::VectorType p14 = vs->P() + 0.25*(vt->P() - vs->P());
-            GrenaillePoint::VectorType p12 = vs->P() + 0.5*(vt->P() - vs->P());
-            GrenaillePoint::VectorType p34 = vs->P() + 0.75*(vt->P() - vs->P());
-            GrenaillePoint::VectorType p1 = vs->P();
-            GrenaillePoint::VectorType p2 = vt->P();
+            Face_ptr faces[2];
+            faces[0] = he->F();
+            faces[1] = he->Twin()->F();
+            Scalar dt = 0.01;
+            for (uint i = 0; i < 2; ++i)
+            {
+                Face_ptr f = faces[i];
+                Vertex_ptr v0 = f->HE()->V();
+                Vertex_ptr v1 = f->HE()->Next()->V();
+                Vertex_ptr v2 = f->HE()->Next()->Next()->V();
+                for (Scalar gamma1 = 0.0; gamma1 <= 1.0; gamma1 += dt) // we go through the face
+                {
+                    for (Scalar gamma2 = 0.0; gamma2 <= 1.0; gamma2 += dt)
+                    {
+                        Vector3 vgamma = gamma1 * v0->P() + gamma2 * v1->P() + (1.0 - gamma1 - gamma2) * v2->P();
+                        Primitive salpha;
+                        //salpha.combine(q1, q2, alpha, vsPOs, vtPOs);
 
-            Scalar error14 = std::abs(q.potential(p14));
-            Scalar error34 = std::abs(q.potential(p34));
-            Scalar error12 = std::abs(q.potential(p12));
-            Scalar error1 = std::abs(q.potential(p1));
-            Scalar error2 = std::abs(q.potential(p2));
-            if (error14 <= error34 && error14 <= error12 && error14 <= error1 && error14 <= error2)
-            {
-                pResult = q.project(p14);
-            }
-            else if (error34 <= error14 && error34 <= error12 && error34 <= error1 && error34 <= error2)
-            {
-                pResult = q.project(p34);
-            }
-            else if (error12 <= error14 && error12 <= error34 && error12 <= error1 && error12 <= error2)
-            {
-                pResult = q.project(p12);
-            }
-            else if (error1 <= error14 && error1 <= error34 && error1 <= error12 && error1 <= error2)
-            {
-                pResult = q.project(p1);
-            }
-            else if (error2 <= error14 && error2 <= error34 && error2 <= error12 && error2 <= error1)
-            {
-                pResult = q.project(p2);
+                        // find adjacent vertices to vs and vt
+                        VVIterator vsvIt = VVIterator(vs);
+                        VertexList adjVerticesVs = vsvIt.list();
+                        VVIterator vtvIt = VVIterator(vt);
+                        VertexList adjVerticesVt = vtvIt.list();
+
+                        Scalar error = 0.0;
+                        vgamma = salpha.project(vgamma);
+                        Scalar sum_edge_norm = 0.0;
+                        for (unsigned int i = 0; i < adjVerticesVs.size(); i++)
+                        {
+                            if (adjVerticesVs[i]->idx == vt->idx) continue;
+                            sum_edge_norm += (adjVerticesVs[i]->P() - vgamma).norm();
+                            Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), vgamma);
+                            //Scalar dist_seg_sphere = q1.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha);
+                            //Scalar dist_seg_sphere = std::abs(q1.AlgebraicSphere::distanceSegSphere(adjVerticesVs[i]->P(), valpha));
+                            error += dist_seg_sphere;
+                        }
+                        for (unsigned int i = 0; i < adjVerticesVt.size(); i++)
+                        {
+                            if (adjVerticesVt[i]->idx == vs->idx) continue;
+                            sum_edge_norm += (adjVerticesVt[i]->P() - vgamma).norm();
+                            Scalar dist_seg_sphere = salpha.AlgebraicSphere::distanceSegSphere(vgamma, adjVerticesVt[i]->P());
+                            //Scalar dist_seg_sphere = q2.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P());
+                            //Scalar dist_seg_sphere = std::abs(q2.AlgebraicSphere::distanceSegSphere(valpha, adjVerticesVt[i]->P()));
+                            error += dist_seg_sphere;
+                        }
+                        error /= sum_edge_norm;
+
+                        if (std::abs(error) < min_error)
+                        {
+                            min_error = std::abs(error);
+                            min_gamma1 = gamma1;
+                            min_gamma2 = gamma2;
+                        }
+                    }
+                }
             }
 
-            return error;
+            pResult = q.project(pResult);
+            return min_error;
         }
-        */
 
-        /*
-        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        Scalar SimpleAPSSErrorMetric::computeError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q, std::ofstream& file)
         {
-            // Looking for alpha minimizing the error
-
-            // projection on a sphere
-            Vector3 proj = q.project(vs); // real value
-            Vector3 vs_local = vs - q.basisCenter();
-            Vector3 dir = (q.m_ul + 2.0 * q.m_uq * vs_local);
-            dir = dir / dir.norm();
-            Vector3 test3 = vs_local - dir * q.potential(vs) * std::min(1.0/dir.norm(), 1.0) + q.basisCenter();
-
-            // new spheres
-            Scalar uc2 = 0.0;
-            Vector3 ul2 = b * q.m_ul + 2.0 * b * q.m_uq * A;
-            Scalar uq2 = q.m_uq * b * b;
-            Vector3 p2 = Vector3::Zero();
-            Primitive q2;
-            q2.setParameters(uc2, ul2, uq2, p2);
-            q2.applyPrattNorm();
-
-            Vector3 ul3 = 0.5 * ul2;
-            Scalar uq3 = 0.5 * uq2;
-            Primitive q3;
-            q3.setParameters(uc2, ul3, uq3, p2);
-            q3.applyPrattNorm();
-
-            // the minimum is the solution of a equation of type 3*phi*alpha^2 + 2*alpha*beta + gamma
-            Vector3 seg = vt - vs;
-            Scalar mu = q.potential(A) + q2.potential(vs) + q3.potential(seg) + q.m_uq * b * b * vs.transpose() * seg;
-            Scalar gamma = 2.0 * q.potential(A) + 2.0 * q2.potential(vs);
-            Scalar alpha = -mu / gamma;
-
-            LOG(logINFO) << "alpha = " << alpha;
-
-            //
-            Scalar error = mu + alpha * gamma;
-            pResult = vs + alpha * seg;
-
-            return error;
+            Scalar min_error = computeEdgeMinError(he, q1, q2, pResult, q);
+            return min_error;
         }
-        */
 
-        /*
-        Scalar SimpleAPSSErrorMetric::computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult)
+        //------------------------------------------------------------------------------------------------
+        // RIMLS : Feature Preserving Point Set Surfaces based on Non-Linear Kernel Regression
+        //------------------------------------------------------------------------------------------------
+
+        Scalar phi(Scalar x, Scalar hi)
         {
-            // Looking for alpha minimizing the error
-
-            // projection on a sphere
-            Vector3 proj = q.project(vs); // real value
-            Vector3 vs_local = vs - q.basisCenter();
-            Vector3 dir = (q.m_ul + 2.0 * q.m_uq * vs_local);
-            dir = dir / dir.norm();
-            Vector3 test3 = vs_local - dir * q.potential(vs) * std::min(1.0/dir.norm(), 1.0) + q.basisCenter();
-
-            // new spheres
-            Scalar uc2 = 0.0;
-            Vector3 ul2 = b * q.m_ul + 2.0 * b * q.m_uq * A;
-            Scalar uq2 = q.m_uq * b * b;
-            Vector3 p2 = Vector3::Zero();
-            Primitive q2;
-            q2.setParameters(uc2, ul2, uq2, p2);
-            q2.applyPrattNorm();
-
-            Vector3 ul3 = 0.5 * ul2;
-            Scalar uq3 = 0.5 * uq2;
-            Primitive q3;
-            q3.setParameters(uc2, ul3, uq3, p2);
-            q3.applyPrattNorm();
-
-            // the minimum is the solution of a equation of type 3*phi*alpha^2 + 2*alpha*beta + gamma
-            Vector3 seg = vt - vs;
-            Scalar mu = q.potential(A) + q2.potential(vs) + q3.potential(seg) + q.m_uq * b * b * vs.transpose() * seg;
-            Scalar gamma = 2.0 * q.potential(A) + 2.0 * q2.potential(vs);
-            Scalar alpha = -mu / gamma;
-
-            LOG(logINFO) << "alpha = " << alpha;
-
-            //
-            Scalar error = mu + alpha * gamma;
-            pResult = vs + alpha * seg;
-
-            return error;
+            return std::pow(1.0 - (x / (hi * hi)), 4.0);
         }
-        */
+
+        Scalar dphi(Scalar x, Scalar hi)
+        {
+            return (-4.0 / (hi * hi)) * std::pow(1.0 - (x / (hi * hi)), 3.0);
+        }
+
+        bool convergence(Scalar alpha, Scalar sumA, Scalar alpha_b, Scalar sumA_b)
+        {
+            Scalar t = 0.0001;
+            return std::abs((alpha / sumA) - (alpha_b / sumA_b)) < t;
+        }
+
+        void SimpleAPSSErrorMetric::generateRIMLSVertexPrimitive(Primitive &q, Vertex_ptr v, int ringSize)
+        {
+            Vector3 x = v->P();
+
+            Fit1 fit;
+
+            VVIterator vvIt = VVIterator(v);
+            std::set<Vertex_ptr, VVIterator::compareVertexPtr> adjVerticesSet;
+            vvIt.nRing(ringSize, adjVerticesSet);
+            std::set<Vertex_ptr, VVIterator::compareVertexPtr>::iterator it;
+
+            Scalar f, fx, w;
+            Scalar alpha, alpha_b, sumA, sumA_b;
+            Vector3 grad_w, grad_f, p, px, n;
+            Scalar sigma_r, sigma_n;
+            Scalar sumW, sumF;
+            Vector3 sumGw, sumGf, sumN;
+            Scalar threshold, hi;
+
+            // Value choices
+            // TODO
+            sigma_r = 0.5;
+            sigma_n = 0.5; // typical choices range from 0.5 to 1.5
+            hi = 2.0 * (x - v->HE()->Twin()->V()->P()).norm();  // 1.4 to 4 times the local point spacing
+                                                                // TODO
+            threshold = 0.01; //verify
+            int max_iters = 20;
+
+
+            // projection of v onto the underlying RIMLS surface using
+            // a steepest gradient descent strategy
+            do
+            {
+                f = 0.0;
+                grad_f = Vector3::Zero();
+                int i = 0;
+                bool converge = false;
+
+                do
+                {
+                    fit.init(x);
+                    uint nb_neighbors = 0;
+
+                    sumA = sumF = sumW = 0.0;
+                    sumGw = sumGf = sumN = Vector3::Zero();
+
+                    for (it = adjVerticesSet.begin(); it != adjVerticesSet.end(); ++it)
+                    {
+                        sumA_b = sumA;
+                        alpha_b = alpha;
+                        p = (*it)->P();
+                        n = DcelOperations::vertexNormal((*it));
+                        px = x - p;
+                        fx = px.dot(n);
+                        if (i > 0)
+                        {
+                            alpha = std::exp(-((fx - f)/sigma_r)*((fx - f)/sigma_r)) *
+                                    std::exp(-((n - grad_f).norm()/sigma_n)*((n - grad_f).norm()/sigma_n));
+                        }
+                        else
+                        {
+                            alpha = 1.0;
+                        }
+                        sumA += alpha;
+
+                        w = alpha * phi(px.norm() * px.norm(), hi);
+                        grad_w = alpha * 2.0 * px * dphi(px.norm() * px.norm(), hi);
+
+                        sumW    += w;
+                        sumGw   += grad_w;
+                        sumF    += w * fx;
+                        sumGf   += grad_w * fx;
+                        sumN    += w * n;
+
+                        GrenaillePoint gpi(p, n);
+                        if (fit.addNeighbor(gpi, w))
+                        {
+                            nb_neighbors++;
+                        }
+                    }
+                    f = sumF / sumW;
+                    grad_f = (sumGf - f * sumGw + sumN) / sumW;
+                    converge = convergence(alpha, sumA, alpha_b, sumA_b);
+//                    if (i >= max_iters - 1)
+//                    {
+//                        LOG(logINFO) << "MAX ITERS, conv = " << std::abs((alpha / sumA) - (alpha_b / sumA_b));
+//                    }
+//                    else if (converge)
+//                    {
+//                        LOG(logINFO) << "CONV, max_iters = " << i;
+//                    }
+                } while ((++i < max_iters) && !converge);
+                // TODO verify convergence see paper
+                x = x - f * grad_f;
+                if ((f * grad_f).norm() > threshold)
+                {
+                    LOG(logINFO) << "reloop " << (f * grad_f).norm();
+                }
+            } while ((f * grad_f).norm() > threshold);
+
+            fit.finalize();
+            fit.applyPrattNorm();
+
+            if (fit.getCurrentState() != UNDEFINED)
+            {
+                q = fit;
+                CORE_ASSERT(!std::isnan(q.m_uc), "PRIMITIVE NAN, NOT OK");
+            }
+            else
+            {
+                CORE_ASSERT(true, "PRIMITIVE NOT OK : APSS FIT IS NOT STABLE");
+            }
+        }
+
+        //-----------------------------------------------------------------------------------------
 
         void SimpleAPSSErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Scalar weight, int ringSize)
         {
             Vector3 p = v->P();
-            GrenaillePoint::VectorType pg = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
-            GrenaillePoint::VectorType new_pg = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
+            Vector3 new_p = p;
+            Vector3 np = DcelOperations::vertexNormal(v);
 
             Fit1 fit;
             fit.setWeightFunc(WeightFunc(weight)); // TODO weight func
@@ -718,34 +661,32 @@ namespace Ra
             vvIt.nRing(ringSize, adjVerticesSet);
             unsigned int nb_of_loop = 0;
             do {
-                fit.init(new_pg);
-                GrenaillePoint::VectorType pgi;
+                if (v->idx == 34)
+                {
+                    LOG(logINFO) << "-------------------------------";
+                    LOG(logINFO) << "sqrt(2)/2 = " << std::sqrt(2.0)/2.0;
+                }
+                fit.init(new_p);
                 std::set<Vertex_ptr, VVIterator::compareVertexPtr>::iterator it;
                 unsigned int nb_neighbors = 0;
                 for (it = adjVerticesSet.begin(); it != adjVerticesSet.end(); ++it)
                 {
                     Vertex_ptr vi = *it;
                     p = vi->P();
-                    pgi = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
+                    Vector3 n = DcelOperations::vertexNormal(vi);
+                    GrenaillePoint gpi(p, n);
 
-                    // Compute vertex normal
-                    VFIterator vfIt = VFIterator(vi);
-                    FaceList adjFaces = vfIt.list();
-                    Vector3 n = Vector3(0.0, 0.0, 0.0);
-                    for (unsigned int i = 0; i < adjFaces.size(); i++)
+                    Scalar sharp = std::abs(np.dot(n));
+                    if (v->idx == 34)
                     {
-                        Vertex_ptr v0 = adjFaces[i]->HE()->V();
-                        Vertex_ptr v1 = adjFaces[i]->HE()->Next()->V();
-                        Vertex_ptr v2 = adjFaces[i]->HE()->Prev()->V();
-                        n += Geometry::triangleNormal(v0->P(), v1->P(), v2->P());
+                        LOG(logINFO) << sharp;
                     }
-                    n.normalize();
-                    GrenaillePoint::VectorType ng = GrenaillePoint::VectorType(n.x(), n.y(), n.z());
-
-                    GrenaillePoint gpi(pgi, ng);
-                    if (fit.addNeighbor(gpi))
+                    if (sharp >= std::sqrt(2.0)/2.0) // TODO : threshold à revoir
                     {
-                        nb_neighbors++;
+                        if (fit.addNeighbor(gpi))
+                        {
+                            nb_neighbors++;
+                        }
                     }
                 }
 
@@ -753,9 +694,9 @@ namespace Ra
 
                 fit.finalize();
                 fit.applyPrattNorm();
-                new_pg = fit.project(pg);
-                error = (new_pg-pg).norm();
-                pg = new_pg;
+                new_p = fit.project(p);
+                error = (new_p-p).norm();
+                p = new_p;
                 nb_of_loop++;
                 if (nb_of_loop > 16)
                     break;
@@ -765,7 +706,6 @@ namespace Ra
             {
                 q = fit;
                 CORE_ASSERT(!std::isnan(q.m_uc), "PRIMITIVE NAN, NOT OK");
-                //CORE_ASSERT(std::abs(q.m_uc) > 0.00000001 || std::abs(q.m_uq) > 0.00000001, "PRIMITIVE 0, NOT OK");
             }
             else
             {
@@ -779,8 +719,7 @@ namespace Ra
             Vertex_ptr v1 = f->HE()->Next()->V();
             Vertex_ptr v2 = f->HE()->Next()->Next()->V();
             Vector3 p = (v0->P() + v1->P() + v2->P()) / 3.0;
-            GrenaillePoint::VectorType pg = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
-            GrenaillePoint::VectorType new_pg = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
+            Vector3 new_p = p;
 
             Fit1 fit;
             fit.setWeightFunc(WeightFunc(weight)); // TODO weight func
@@ -791,8 +730,7 @@ namespace Ra
             ffIt.nRing(ringSize, adjFacesSet); // TODO N-ring
             //ffIt.nRing(1, adjFacesSet); // TODO N-ring
             do {
-                fit.init(new_pg);
-                GrenaillePoint::VectorType pgi;
+                fit.init(new_p);
                 std::set<Face_ptr, FFIterator::compareFacePtr>::iterator it;
                 for (it = adjFacesSet.begin(); it != adjFacesSet.end(); ++it)
                 {
@@ -801,25 +739,22 @@ namespace Ra
                     v1 = fi->HE()->Next()->V();
                     v2 = fi->HE()->Next()->Next()->V();
                     p = (v0->P() + v1->P() + v2->P()) / 3.0;
-                    pgi = GrenaillePoint::VectorType(p.x(), p.y(), p.z());
                     Vector3 n = Geometry::triangleNormal(v0->P(), v1->P(), v2->P());
-                    GrenaillePoint::VectorType ng = GrenaillePoint::VectorType(n.x(), n.y(), n.z());
-                    GrenaillePoint gpi(pgi, ng);
+                    GrenaillePoint gpi(p, n);
                     fit.addNeighbor(gpi);
                 }
 
                 fit.finalize();
-                //fit.applyPrattNorm();
-                new_pg = fit.project(pg);
-                error = (new_pg-pg).norm();
-                pg = new_pg;
+                fit.applyPrattNorm();
+                new_p = fit.project(p);
+                error = (new_p-p).norm();
+                p = new_p;
             } while (error > 0.01); // TODO threshold
 
             if (fit.getCurrentState() != UNDEFINED)
             {
                 q = fit;
                 CORE_ASSERT(!std::isnan(q.m_uc), "PRIMITIVE NAN, NOT OK");
-                //CORE_ASSERT(std::abs(q.m_uc) > 0.00000001 || std::abs(q.m_uq) > 0.00000001, "PRIMITIVE 0, NOT OK");
             }
             else
             {
