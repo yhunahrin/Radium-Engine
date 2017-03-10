@@ -1,6 +1,8 @@
 git submodule radium in my own project
 
-for instance Radium in ./myproject/external/Radium-Engine
+For instance Radium in ./myproject/external/Radium-Engine
+
+create 
 
 .gitmodules
 [submodule "Radium-Engine"]
