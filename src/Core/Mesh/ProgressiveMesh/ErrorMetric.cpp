@@ -269,87 +269,7 @@ namespace Ra
         {
         }
 
-        SimpleAPSSErrorMetric::Primitive SimpleAPSSErrorMetric::combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor)
-        {
-            Scalar new_uc = 0.0;
-            Scalar new_uq = 0.0;
-            Vector3 new_ul = Vector3(0.0, 0.0, 0.0);
-            Vector3 new_p = Vector3(0.0, 0.0, 0.0);
-
-            // Determine if all primitives are planes
-            bool arePlanes = true;
-            for (unsigned int i = 0; i < p.size(); i++)
-            {
-                if (!p[i].isPlane())
-                {
-                    arePlanes = false;
-                    break;
-                }
-            }
-
-            Scalar sumWeights = 0.0;
-            if (arePlanes) // PLANE
-            {
-                for (unsigned int i = 0; i < p.size(); i++)
-                {
-                    new_ul  += weights[i] * p[i].m_ul;
-                    new_uq  = 0.0;
-                    new_p   += weights[i] * p[i].basisCenter();
-                    sumWeights += weights[i];
-                }
-                //
-                new_ul /= normalizing_weight_factor;
-                new_uq /= normalizing_weight_factor;
-                new_p /= normalizing_weight_factor;
-                //
-                new_ul.normalize();
-                for (unsigned int i = 0; i < p.size(); i++)
-                {
-                    new_uc  += weights[i] * p[i].potential(new_p);
-                }
-                new_uc /= normalizing_weight_factor;
-            }
-            else // SPHERE
-            {
-                // linear interpolation of parameters
-                for (unsigned int i = 0; i < p.size(); i++)
-                {
-                    new_ul  += weights[i] * p[i].m_ul;
-                    new_uq  += weights[i] * p[i].m_uq;
-                    //new_uq  *= p[i].m_uq;
-                    new_p   += weights[i] * p[i].basisCenter();
-                    sumWeights += weights[i];
-                }
-                //
-                new_ul /= normalizing_weight_factor;
-                new_uq /= normalizing_weight_factor;
-                new_p /= normalizing_weight_factor;
-                //
-                new_ul.normalize();
-                for (unsigned int i = 0; i < p.size(); i++)
-                {
-                    new_uc  += weights[i] * p[i].potential(new_p);
-                }
-                new_uc /= normalizing_weight_factor;
-                // TODO sometimes sqrt(-x)
-                //new_ul *= sqrt(1.0 + 4.0 * new_uc * new_uq);
-                new_ul *= sqrt(std::abs(1.0 + 4.0 * new_uc * new_uq));
-            }
-            CORE_ASSERT((sumWeights / normalizing_weight_factor) < 1.01 && (sumWeights / normalizing_weight_factor) > 0.99, "The sum of weights is not equal to 1");
-
-            Primitive c;
-            c.AlgebraicSphere::setParameters(new_uc, new_ul, new_uq, new_p);
-            c.applyPrattNorm();
-
-            CORE_ASSERT(!std::isnan(new_uc), "PRIMITIVE NAN : NOT OK");
-            CORE_ASSERT(std::abs(new_ul.squaredNorm() - Scalar(4.) * new_uc * new_uq) > 0.00000000001, "PRIMITIVE 0 : NOT OK");
-            CORE_ASSERT(!std::isnan(std::abs(new_ul.squaredNorm() - Scalar(4.) * new_uc * new_uq)), "PRIMITIVE WITH NORM ZERO : NOT OK");
-            CORE_ASSERT(new_ul.squaredNorm() - Scalar(4.) * new_uc * new_uq > 0.0, "PRIMITIVE WITH NEGATIVE NORM : NOT OK");
-
-            return c;
-        }
-
-        Scalar SimpleAPSSErrorMetric::computeEdgeMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q)
+        Scalar SimpleAPSSErrorMetric::computeEdgeMinError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q)
         {
             Vertex_ptr vs = he->V();
             Vertex_ptr vt = he->Next()->V();
@@ -378,7 +298,7 @@ namespace Ra
                 {
                     Vector3 valpha = vsPOs + alpha * (vtPOs - vsPOs);
                     Primitive salpha;
-                    salpha.combine(q1, q2, alpha, vsPOs, vtPOs);
+                    salpha.combine(q1, q2, alpha);
 
                     // find adjacent vertices to vs and vt
                     VVIterator vsvIt = VVIterator(vs);
@@ -387,7 +307,7 @@ namespace Ra
                     VertexList adjVerticesVt = vtvIt.list();
 
                     Scalar error = 0.0;
-                    valpha = salpha.project(valpha);
+                    valpha = salpha.project(valpha); // ATTENTION !!!
                     Scalar sum_edge_norm = 0.0;
                     for (unsigned int i = 0; i < adjVerticesVs.size(); i++)
                     {
@@ -426,13 +346,13 @@ namespace Ra
                 file << "\n";
                 */
             }
-            q.combine(q1, q2, min_alpha, vsPOs, vtPOs);
+            q.combine(q1, q2, min_alpha);
             pResult = vsPOs + min_alpha * (vtPOs - vsPOs);
             pResult = q.project(pResult);
             return min_error;
         }
 
-        Scalar SimpleAPSSErrorMetric::computeFaceMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q)
+        Scalar SimpleAPSSErrorMetric::computeFaceMinError(HalfEdge_ptr he, const Primitive& q0, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q)
         {
             Vertex_ptr vs = he->V();
             Vertex_ptr vt = he->Next()->V();
@@ -459,7 +379,7 @@ namespace Ra
                     {
                         Vector3 vgamma = gamma1 * v0->P() + gamma2 * v1->P() + (1.0 - gamma1 - gamma2) * v2->P();
                         Primitive salpha;
-                        //salpha.combine(q1, q2, alpha, vsPOs, vtPOs);
+                        salpha.combine(q0, q1, q2, gamma1, gamma2);
 
                         // find adjacent vertices to vs and vt
                         VVIterator vsvIt = VVIterator(vs);
@@ -504,7 +424,7 @@ namespace Ra
             return min_error;
         }
 
-        Scalar SimpleAPSSErrorMetric::computeError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q, std::ofstream& file)
+        Scalar SimpleAPSSErrorMetric::computeError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q)
         {
             Scalar min_error = computeEdgeMinError(he, q1, q2, pResult, q);
             return min_error;
@@ -555,7 +475,7 @@ namespace Ra
             sigma_n = 0.5; // typical choices range from 0.5 to 1.5
             hi = 2.0 * (x - v->HE()->Twin()->V()->P()).norm();  // 1.4 to 4 times the local point spacing
                                                                 // TODO
-            threshold = 0.01; //verify
+            threshold = 0.001; //verify
             int max_iters = 20;
 
 
@@ -605,10 +525,12 @@ namespace Ra
                         sumN    += w * n;
 
                         GrenaillePoint gpi(p, n);
+                        /*
                         if (fit.addNeighbor(gpi, w))
                         {
                             nb_neighbors++;
                         }
+                        */
                     }
                     f = sumF / sumW;
                     grad_f = (sumGf - f * sumGw + sumN) / sumW;
@@ -624,10 +546,6 @@ namespace Ra
                 } while ((++i < max_iters) && !converge);
                 // TODO verify convergence see paper
                 x = x - f * grad_f;
-                if ((f * grad_f).norm() > threshold)
-                {
-                    LOG(logINFO) << "reloop " << (f * grad_f).norm();
-                }
             } while ((f * grad_f).norm() > threshold);
 
             fit.finalize();
@@ -645,12 +563,11 @@ namespace Ra
         }
 
         //-----------------------------------------------------------------------------------------
-
         void SimpleAPSSErrorMetric::generateVertexPrimitive(Primitive &q, Vertex_ptr v, Scalar weight, int ringSize)
         {
             Vector3 p = v->P();
             Vector3 new_p = p;
-            Vector3 np = DcelOperations::vertexNormal(v);
+            Vector3 nei = Vector3::Zero();
 
             Fit1 fit;
             fit.setWeightFunc(WeightFunc(weight)); // TODO weight func
@@ -661,32 +578,18 @@ namespace Ra
             vvIt.nRing(ringSize, adjVerticesSet);
             unsigned int nb_of_loop = 0;
             do {
-                if (v->idx == 34)
-                {
-                    LOG(logINFO) << "-------------------------------";
-                    LOG(logINFO) << "sqrt(2)/2 = " << std::sqrt(2.0)/2.0;
-                }
                 fit.init(new_p);
                 std::set<Vertex_ptr, VVIterator::compareVertexPtr>::iterator it;
                 unsigned int nb_neighbors = 0;
                 for (it = adjVerticesSet.begin(); it != adjVerticesSet.end(); ++it)
                 {
                     Vertex_ptr vi = *it;
-                    p = vi->P();
+                    nei = vi->P();
                     Vector3 n = DcelOperations::vertexNormal(vi);
-                    GrenaillePoint gpi(p, n);
-
-                    Scalar sharp = std::abs(np.dot(n));
-                    if (v->idx == 34)
+                    GrenaillePoint gpi(nei, n);
+                    if (fit.addNeighbor(gpi))
                     {
-                        LOG(logINFO) << sharp;
-                    }
-                    if (sharp >= std::sqrt(2.0)/2.0) // TODO : threshold à revoir
-                    {
-                        if (fit.addNeighbor(gpi))
-                        {
-                            nb_neighbors++;
-                        }
+                        nb_neighbors++;
                     }
                 }
 
@@ -698,9 +601,9 @@ namespace Ra
                 error = (new_p-p).norm();
                 p = new_p;
                 nb_of_loop++;
-                if (nb_of_loop > 16)
+                if (nb_of_loop > 100)
                     break;
-            } while (error > 0.01); // TODO threshold
+            } while (error > 0.0001); // TODO threshold
 
             if (fit.getCurrentState() != UNDEFINED)
             {
