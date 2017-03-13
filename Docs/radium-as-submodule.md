@@ -1,3 +1,14 @@
+# How to use Radium-Engine as an external dynamic lib for your project
+
+## Fork pre made AppExample
+
+You can also fork https://github.com/AGGA-IRIT/Radium-AppExample 
+It already contains Radium as submodule and a build-radium.sh script
+in the external directory.
+
+## git submodule, or just clone
+
+You can clone Radium, or add it as a submodule of your git project
 git submodule radium in my own project
 For instance Radium in ./myproject/external/Radium-Engine
 
@@ -18,6 +29,7 @@ This corresponds to
 ```
 
 
+## Add Radium to the lib of your project
 Add a line to include the Radium-Engine cmake module in your main
 CMakeLists.txt
 ```
@@ -65,8 +77,9 @@ target_link_libraries( ${EXEC_FILE} # target
 ```
 
 Then build radium (as debug and release)
-cd external
+For linux something like
 ```
+cd external
 mkdir build-radium-debug
 cd build-radium-debug
 cmake ../Radium-Engine -DCMAKE_BUILD_TYPE=Debug
@@ -76,5 +89,3 @@ mkdir build-radium-release
 cmake ../Radium-Engine -DCMAKE_BUILD_TYPE=Release
 make -j8
 ```
-
-
