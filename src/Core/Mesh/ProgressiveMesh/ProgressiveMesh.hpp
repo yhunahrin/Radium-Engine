@@ -35,11 +35,11 @@ namespace Ra
 
             using Primitive = typename ErrorMetric::Primitive;
 
-            virtual std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) = 0;
+            virtual PriorityQueue constructPriorityQueue() = 0;
 
             virtual void computeVerticesPrimitives() = 0;
-            virtual Primitive computeEdgePrimitive(Index edgeIndex) = 0;
-            virtual Primitive computeVertexPrimitive(Index vertexIndex) = 0;
+
+            virtual std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) = 0;
 
             virtual void vsplit(ProgressiveMeshData pmData) = 0;
             virtual void ecol(ProgressiveMeshData pmData) = 0;
@@ -69,6 +69,9 @@ namespace Ra
             ///
             void projectOnAlgebraicSphereSurface();
 
+            ///
+            void cleaning(HalfEdge_ptr he);
+
             /// Construction of the coarser mesh
             std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) override;
 
@@ -77,11 +80,7 @@ namespace Ra
             void ecol(ProgressiveMeshData pmData) override;
 
             /// ComputeVertexQuadric
-            Primitive computeVertexPrimitive(Index vertexIndex);
             inline void computeVerticesPrimitives();
-
-            /// Compute an edge quadric
-            Primitive computeEdgePrimitive(Index edgeIndex);
 
             /// Compute the size of the bounding box of a mesh
             void computeBoundingBoxSize(Scalar &min_x, Scalar &max_x, Scalar &min_y, Scalar &max_y, Scalar &min_z, Scalar &max_z);

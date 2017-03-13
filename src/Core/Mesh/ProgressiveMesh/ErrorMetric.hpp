@@ -123,15 +123,12 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
-            Scalar computeError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q, std::ofstream& file);
-            Scalar computeError(Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
+            Scalar computeError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q);
 
-            Scalar computeEdgeMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q);
-            Scalar computeFaceMinError(HalfEdge_ptr he, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q);
+            Scalar computeEdgeMinError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q);
+            Scalar computeFaceMinError(HalfEdge_ptr he, const Primitive& q0, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q);
 
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
-
-            Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
 
             void generateRIMLSVertexPrimitive(Primitive &q, Vertex_ptr v, int ringSize);
             void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);

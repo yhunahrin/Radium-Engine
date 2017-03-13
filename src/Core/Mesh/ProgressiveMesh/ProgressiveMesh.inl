@@ -9,11 +9,8 @@
 #include <Core/Mesh/DCEL/Vertex.hpp>
 #include <Core/Mesh/DCEL/HalfEdge.hpp>
 #include <Core/Mesh/DCEL/FullEdge.hpp>
-//#include <Core/Mesh/DCEL/Dcel.hpp>
 #include <Core/Mesh/DCEL/Operations/EdgeOperation.hpp>
 #include <Core/Mesh/DCEL/Operations/VertexOperation.hpp>
-#include <Core/Geometry/Triangle/TriangleOperation.hpp>
-
 #include <Core/Mesh/DCEL/Iterator/Vertex/VVIterator.hpp>
 #include <Core/Mesh/DCEL/Iterator/Vertex/VFIterator.hpp>
 #include <Core/Mesh/DCEL/Iterator/Vertex/VHEIterator.hpp>
@@ -124,7 +121,6 @@ namespace Ra
             {
                 for (unsigned int i = 0; i < primitives.size(); i++)
                 {
-                    //weights.push_back(1.0/primitives.size());
                     weights.push_back(1.0);
                 }
                 normalizing_weight_factor = primitives.size();
@@ -139,7 +135,6 @@ namespace Ra
                 normalizing_weight_factor = sumWedgeAngles;
                 for (unsigned int i = 0; i < primitives.size(); i++)
                 {
-                    //weights.push_back(weightsWedgeAngles[i] / Scalar(sumWedgeAngles));
                     weights.push_back(weightsWedgeAngles[i]);
                 }
             }
@@ -147,15 +142,6 @@ namespace Ra
         }
 
         //-----------------------------------------------------
-
-        template<class ErrorMetric>
-        typename ErrorMetric::Primitive ProgressiveMesh<ErrorMetric>::computeVertexPrimitive(Index vertexIndex)
-        {
-            Primitive q;
-            //m_em.generateVertexPrimitive(q, m_dcel->m_vertex[vertexIndex], m_scale, m_ring_size);
-            m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[vertexIndex], m_ring_size);
-            return q;
-        }
 
         template<class ErrorMetric>
         void ProgressiveMesh<ErrorMetric>::computeVerticesPrimitives()
@@ -168,11 +154,19 @@ namespace Ra
             m_primitives_v.clear();
             m_primitives_v.reserve(numVertices);
 
+            Scalar progression = 0.0;
 //#pragma omp parallel for
             for (uint v = 0; v < numVertices; ++v)
             {
-                LOG(logINFO) << v << "primitive";
-                Primitive q = computeVertexPrimitive(v);
+                if (std::abs(Scalar(Scalar(v) / Scalar(numVertices)) - progression * 0.10) < (1.0/numVertices))
+                {
+                    LOG(logINFO) << progression * 10 << "% done";
+                    progression += 1.0;
+                }
+
+                Primitive q;
+                //m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
+                m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
 //#pragma omp critical
                 m_primitives_v.push_back(q);
             }
@@ -199,24 +193,6 @@ namespace Ra
             {
                 m_primitives_v[vsIndex] = m_primitives_he[he->idx];
             }
-        }
-
-        //-----------------------------------------------------
-
-        template <class ErrorMetric>
-        typename ErrorMetric::Primitive ProgressiveMesh<ErrorMetric>::computeEdgePrimitive(Index halfEdgeIndex)
-        {
-            std::vector<Primitive> primitives;
-            primitives.reserve(2);
-            std::vector<Scalar> weights;
-            weights.reserve(2);
-            int v0Idx = m_dcel->m_halfedge[halfEdgeIndex]->V()->idx;
-            int v1Idx = m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx;
-            primitives.push_back(m_primitives_v[v0Idx]);
-            primitives.push_back(m_primitives_v[v1Idx]);
-            weights.push_back(0.5);
-            weights.push_back(0.5);
-            return combine(primitives, weights);
         }
 
         //-----------------------------------------------------
@@ -255,9 +231,16 @@ namespace Ra
             //pQueue.reserve(numTriangles*3 / 2);
             std::ofstream file ("error_pqueue.dat", std::ofstream::out);
 
+            Scalar progression = 0.0;
 //#pragma omp parallel for
             for (unsigned int i = 0; i < numTriangles; i++)
             {
+                if (std::abs(Scalar(Scalar(i) / Scalar(numTriangles)) - progression * 0.10) < (1.0/numTriangles))
+                {
+                    LOG(logINFO) << progression * 10 << "% done";
+                    progression += 1;
+                }
+
                 const Face_ptr& f = m_dcel->m_face.at( i );
                 HalfEdge_ptr h = f->HE();
                 for (int j = 0; j < 3; j++)
@@ -274,7 +257,7 @@ namespace Ra
 
                     Primitive q;
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v[h->V()->idx], m_primitives_v[h->Next()->V()->idx], p, q, file);
+                    double edgeError = m_em.computeError(h, m_primitives_v[h->V()->idx], m_primitives_v[h->Next()->V()->idx], p, q);
                     m_primitives_he[h->idx] = q;
 
 //#pragma omp critical
@@ -301,15 +284,101 @@ namespace Ra
         }
 
         template <class ErrorMetric>
+        void ProgressiveMesh<ErrorMetric>::cleaning(HalfEdge_ptr he)
+        {
+            // let vs, vt, vl, vr be the vertices of the two triangles adjacent to he
+            Vertex_ptr v[4];
+            v[0] = he->V();                 //vs
+            v[1] = he->Twin()->V();         //vt
+            v[2] = he->Prev()->V();         //vl
+            v[3] = he->Twin()->Prev()->V(); //vr
+
+            // test if an edge vl-vr already exists
+            // if so we have a "Y" configuration and we do not do the flip
+            VHEIterator vlIt = VHEIterator(v[2]);
+            HalfEdgeList adjHeVl = vlIt.list();
+            for (uint i = 0; i < adjHeVl.size(); i++)
+            {
+                HalfEdge_ptr heVl = adjHeVl[i];
+                if (heVl->Next()->V()->idx == v[3]->idx)
+                {
+                    return;
+                }
+            }
+
+            // compute valence before flip
+            FaceList vAdjFaces;
+            Scalar deviation_pre = 0.0;
+            VFIterator vFIt = VFIterator(v[0]);
+            vAdjFaces = vFIt.list();
+            deviation_pre += std::abs(Scalar(vAdjFaces.size()) - 6.0);
+            if (vAdjFaces.size() < 3)
+                return;
+            for (uint i = 1; i < 4; i++)
+            {
+                vFIt = VFIterator(v[i]);
+                vAdjFaces = vFIt.list();
+                deviation_pre += std::abs(Scalar(vAdjFaces.size()) - 6.0);
+                vAdjFaces.clear();
+            }
+            // compute normal before flip
+            Vector3 n1_pre = Geometry::triangleNormal(he->V()->P(), he->Next()->V()->P(), he->Prev()->V()->P());
+            Vector3 n2_pre = Geometry::triangleNormal(he->Twin()->V()->P(), he->Twin()->Next()->V()->P(), he->Twin()->Prev()->V()->P());
+            // compute error before flip
+            Primitive q;
+            Vector3 p = Vector3::Zero();
+            Scalar error_pre = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
+
+            // flip edge
+            DcelOperations::flipEdge(*m_dcel, he->idx);
+
+            // compute valence after flip
+            Scalar deviation_post = 0.0;
+            for (uint i = 0; i < 4; i++)
+            {
+                VFIterator vFIt = VFIterator(v[i]);
+                vAdjFaces = vFIt.list();
+                deviation_post += std::abs(Scalar(vAdjFaces.size()) - 6.0);
+                vAdjFaces.clear();
+            }
+            // compute normal after flip
+            Vector3 n1_post = Geometry::triangleNormal(he->V()->P(), he->Next()->V()->P(), he->Prev()->V()->P());
+            Vector3 n2_post = Geometry::triangleNormal(he->Twin()->V()->P(), he->Twin()->Next()->V()->P(), he->Twin()->Prev()->V()->P());
+            // compute error after flip
+            p = Vector3::Zero();
+            Scalar error_post = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
+
+
+            if ((deviation_pre <= deviation_post) ||
+                    (n1_pre.dot(n1_post) < 0.0) ||
+                    (n2_pre.dot(n2_post) < 0.0) ||
+                    (error_pre <= error_post))
+            {
+                DcelOperations::flipEdge(*m_dcel, he->idx);
+            }
+            else
+            {
+                LOG(logINFO) << "flip edge " << he->V()->idx << " " << he->Next()->V()->idx;
+            }
+        }
+
+        template <class ErrorMetric>
         void ProgressiveMesh<ErrorMetric>::updatePriorityQueue(PriorityQueue &pQueue, Index vsIndex, Index vtIndex, std::ofstream &file)
         {
+            if (vsIndex == 79 && vtIndex == 132)
+            {
+                LOG(logINFO) << "Here";
+                VHEIterator vsTestIt = VHEIterator(m_dcel->m_vertex[130]);
+                HalfEdgeList adjHE1 = vsTestIt.list();
+                VHEIterator vsTestIt2 = VHEIterator(m_dcel->m_vertex[131]);
+                HalfEdgeList adjHE2 = vsTestIt2.list();
+            }
             // we delete of the priority queue all the edge containing vs_id or vt_id
             pQueue.removeEdges(vsIndex);
             pQueue.removeEdges(vtIndex);
 
             double edgeError;
             Vector3 p = Vector3::Zero();
-            Index vIndex;
 
             VHEIterator vsHEIt = VHEIterator(m_dcel->m_vertex[vsIndex]);
             HalfEdgeList adjHE = vsHEIt.list();
@@ -318,15 +387,18 @@ namespace Ra
             {
                 HalfEdge_ptr he = adjHE[i];
 
-                // TODO
-                // flip edge if needed
+                //  TODO : Interface ?
 
+                cleaning(he);
+                if (he->V()->idx > he->Next()->V()->idx)
+                {
+                    he = he->Twin();
+                }
                 Primitive q;
-                edgeError = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q, file);
+                edgeError = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
                 m_primitives_he[he->idx] = q;
 
-                vIndex = he->Next()->V()->idx;
-                pQueue.insert(PriorityQueue::PriorityQueueData(vsIndex, vIndex, he->idx, he->F()->idx, edgeError, p));
+                pQueue.insert(PriorityQueue::PriorityQueueData(he->V()->idx, he->Next()->V()->idx, he->idx, he->F()->idx, edgeError, p));
             }
             //pQueue.display();
         }
@@ -537,9 +609,17 @@ namespace Ra
             ProgressiveMeshData data;
 
             std::ofstream file2 ("error_pqueue_update.dat", std::ofstream::out);
+            uint nb_faces_start = m_nb_faces;
+            uint progression = 0;
 
             while (m_nb_faces > targetNbFaces)
             {
+                if (std::abs(Scalar(Scalar((nb_faces_start - m_nb_faces)) / Scalar(nb_faces_start - targetNbFaces)) - progression * 0.10) < (1.0 / Scalar(nb_faces_start - targetNbFaces)))
+                {
+                    LOG(logINFO) << progression * 10 << "% done";
+                    progression += 1;
+                }
+
                 if (pQueue.empty()) break;
                 d = pQueue.top();
 
@@ -564,20 +644,16 @@ namespace Ra
                 data.setError(d.m_err);
                 data.setPResult(d.m_p_result);
 
-                /*
                 data.setQCenter(m_primitives_he[he->idx].center());
                 data.setQRadius(m_primitives_he[he->idx].radius());
                 data.setQ1Center(m_primitives_v[d.m_vs_id].center());
                 data.setQ1Radius(m_primitives_v[d.m_vs_id].radius());
                 data.setQ2Center(m_primitives_v[d.m_vt_id].center());
                 data.setQ2Radius(m_primitives_v[d.m_vt_id].radius());
-                */
                 data.setVs((m_dcel->m_vertex[d.m_vs_id])->P());
                 data.setVt((m_dcel->m_vertex[d.m_vt_id])->P());
-                /*
                 data.setGradientQ1(m_primitives_v[d.m_vs_id].primitiveGradient(data.getVs()));
                 data.setGradientQ2(m_primitives_v[d.m_vt_id].primitiveGradient(data.getVt()));
-                */
 
                 /*
                 std::vector<ProgressiveMeshData::DataPerEdgeColor> err_per_edge = pQueue.copyToVector(m_dcel->m_halfedge.size(), *m_dcel);
