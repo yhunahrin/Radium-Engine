@@ -120,7 +120,7 @@ namespace Ra
         {
             QModelIndex entryIndex = findEntryIndex(ent);
             CORE_ASSERT(ent.isValid(), "Removing invalid entry");
-            CORE_ASSERT(entryIndex.isValid(), "Entry not in model");
+//            CORE_ASSERT(entryIndex.isValid(), "Entry not in model"); // FIXME: cf issue #153 (may have been fixed by @louen)
             if (entryIndex.isValid())
             {
                 EngineTreeItem* toRemove = static_cast<EngineTreeItem*>(getItem(entryIndex));
