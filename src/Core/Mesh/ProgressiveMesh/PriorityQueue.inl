@@ -10,14 +10,49 @@ namespace Ra
 
         inline void PriorityQueue::insert(PriorityQueueData item)
         {
-            std::pair<PriorityQueueContainer::iterator,bool> pair = m_priority_queue.insert(item);
-            if(!(bool)pair.second)
+            PriorityQueueContainer::iterator it;
+            for ( it = m_priority_queue.begin();
+                  it != m_priority_queue.end();
+                  it++)
             {
-                LOG(logINFO) << "pb bad insert in priority queue : " << item.m_vs_id << ", " << item.m_vt_id;
-                return; // temporary fix
+                PriorityQueue::PriorityQueueData data = *it;
+                if (data.m_vs_id == item.m_vs_id && data.m_vt_id == item.m_vt_id)
+                {
+                    LOG(logINFO) << "PB here";
+                    display();
+                }
             }
-            m_vertex_hash.insert(item);
-            m_vertex_hash.insert(item.getSwapped());
+
+            if (item.m_vs_id > item.m_vt_id)
+            {
+                LOG(logINFO) << "PB Insert in priority queue swapped";
+                display();
+            }
+            CORE_ASSERT(item.m_vs_id < item.m_vt_id, "Insert in priority queue swapped");
+
+            std::pair<PriorityQueueContainer::iterator,bool> pair = m_priority_queue.insert(item);
+            if (!(bool)pair.second)
+            {
+                LOG(logINFO) << "PB Bad insert in priority queue";
+                display();
+            }
+            CORE_ASSERT((bool)pair.second, "Bad insert in priority queue");
+
+            std::pair<VertexHashContainer::iterator,bool> pair_vh = m_vertex_hash.insert(item);
+            if (!(bool)pair_vh.second)
+            {
+                LOG(logINFO) << "PB Bad insert in vertex hash";
+                display();
+            }
+            CORE_ASSERT((bool)pair_vh.second, "Bad insert in vertex hash");
+
+            pair_vh = m_vertex_hash.insert(item.getSwapped());
+            if (!(bool)pair_vh.second)
+            {
+                LOG(logINFO) << "PB Bad insert in vertex hash";
+                display();
+            }
+            CORE_ASSERT((bool)pair_vh.second, "Bad insert in vertex hash");
         }
 
         //------------------------------
@@ -36,6 +71,8 @@ namespace Ra
             m_priority_queue.erase(it_priority_queue);
             m_vertex_hash.erase(m_vertex_hash.find(data));
             m_vertex_hash.erase(m_vertex_hash.find(data.getSwapped()));
+
+            CORE_ASSERT(data.m_vs_id < data.m_vt_id, "Index has to be in order");
             return data;
         }
 

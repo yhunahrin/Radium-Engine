@@ -184,6 +184,26 @@ namespace DcelOperations {
 
     void flipEdge( Dcel& dcel, Index edgeIndex)
     {
+        // Global schema of operation
+        /*
+
+         before
+
+             vl
+            /   \
+           /  F1 \
+          /       \
+         / --he--> \
+        vs--edge --vt       vs
+         \         /
+          \       /
+           \  F2 /
+            \   /
+              vr
+
+
+        */
+
         HalfEdge_ptr he_vsvt = dcel.m_halfedge[edgeIndex];
         HalfEdge_ptr he_vtvs = he_vsvt->Twin();
 
@@ -207,13 +227,34 @@ namespace DcelOperations {
         he_vrvl->setV(vr);
 
         he_vlvr->setNext(he_vrvt);
-        he_vrvl->setNext(he_vlvs);
-
         he_vlvr->setPrev(he_vtvl);
+        he_vlvr->setF(f1);
+        he_vrvl->setNext(he_vlvs);
         he_vrvl->setPrev(he_vsvr);
+        he_vrvl->setF(f2);
 
-        he_vlvr->setTwin(he_vrvl);
-        he_vrvl->setTwin(he_vlvr);
+        he_vtvl->setNext(he_vlvr);
+        he_vtvl->setPrev(he_vrvt);
+        he_vtvl->setF(f1);
+        he_vrvt->setPrev(he_vlvr);
+        he_vrvt->setNext(he_vtvl);
+        he_vrvt->setF(f1);
+
+        he_vsvr->setNext(he_vrvl);
+        he_vsvr->setPrev(he_vlvs);
+        he_vsvr->setF(f2);
+        he_vlvs->setPrev(he_vrvl);
+        he_vlvs->setNext(he_vsvr);
+        he_vlvs->setF(f2);
+
+        vs->setHE(he_vsvr);
+        vt->setHE(he_vtvl);
+
+        f1->setHE(he_vrvt);
+        f2->setHE(he_vlvs);
+
+        //he_vlvr->setTwin(he_vrvl);
+        //he_vrvl->setTwin(he_vlvr);
 
     }
 
