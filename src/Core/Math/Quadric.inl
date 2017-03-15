@@ -93,5 +93,12 @@ namespace Ra
             return *this;
         }
 
+        template<int DIM>
+        inline Vector3 Quadric<DIM>::project(const Vector3& p) const
+        {
+            Vector3 q = p;
+            return q;
+        }
+
     }
 }

@@ -73,6 +73,8 @@ namespace Ra
             inline Quadric& operator+=(const Quadric& q);
             inline Quadric& operator*=(const Scalar scal);
 
+            inline Vector3 project(const Vector3& p) const;
+
         private:
 
             Matrix m_a;
