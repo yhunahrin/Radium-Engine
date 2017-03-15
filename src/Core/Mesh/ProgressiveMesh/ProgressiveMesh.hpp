@@ -35,7 +35,7 @@ namespace Ra
 
             using Primitive = typename ErrorMetric::Primitive;
 
-            virtual PriorityQueue constructPriorityQueue() = 0;
+            virtual void constructPriorityQueue(PriorityQueue& queue) = 0;
 
             virtual void computeVerticesPrimitives() = 0;
 
@@ -64,7 +64,7 @@ namespace Ra
             ~ProgressiveMesh() {}
 
             /// We construct a priority queue with an error for each edge
-            PriorityQueue constructPriorityQueue();
+            void constructPriorityQueue(PriorityQueue& queue);
 
             ///
             void projectOnAlgebraicSphereSurface();

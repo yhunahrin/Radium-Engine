@@ -15,6 +15,8 @@
  * "http://hhoppe.com/efficientpm.pdf"
  */
 
+//#define ENABLE_DEBUG_CONTENT
+
 namespace Ra
 {
     namespace Core
@@ -92,6 +94,7 @@ namespace Ra
 
             //----------------------------------------------
 
+#ifdef ENABLE_DEBUG_CONTENT
             inline Scalar getError();
             inline void setError(Scalar& s);
             inline Vector3 getPResult();
@@ -118,7 +121,7 @@ namespace Ra
             inline void setGradientQ2(const Vector3& v);
             inline std::vector<DataPerEdgeColor> getErrorPerEdge();
             inline void setErrorPerEdge(const std::vector<DataPerEdgeColor> &v);
-
+#endif
             //----------------------------------------------
 
             Vector3 computePResult(const Vector3& vt, const Vector3& vs);
@@ -140,6 +143,7 @@ namespace Ra
             ///////////////////////////////////
             /// only for debug interactions ///
             ///////////////////////////////////
+#ifdef ENABLE_DEBUG_CONTENT
             Scalar m_error;
             Vector3 m_p_result;
             Vector3 m_q1_center;
@@ -153,6 +157,7 @@ namespace Ra
             Vector3 m_q1_grad;
             Vector3 m_q2_grad;
             std::vector<DataPerEdgeColor> m_error_per_edge;
+#endif
 
         };
     } // namespace Core

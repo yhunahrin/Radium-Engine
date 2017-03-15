@@ -156,6 +156,7 @@ namespace Ra
 
             Scalar progression = 0.0;
 //#pragma omp parallel for
+            Primitive q;
             for (uint v = 0; v < numVertices; ++v)
             {
                 if (std::abs(Scalar(Scalar(v) / Scalar(numVertices)) - progression * 0.10) < (1.0/numVertices))
@@ -164,7 +165,6 @@ namespace Ra
                     progression += 1.0;
                 }
 
-                Primitive q;
                 m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
                 //m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
 //#pragma omp critical
@@ -224,23 +224,22 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        PriorityQueue ProgressiveMesh<ErrorMetric>::constructPriorityQueue()
+        void ProgressiveMesh<ErrorMetric>::constructPriorityQueue(PriorityQueue &pQueue)
         {
-            PriorityQueue pQueue = PriorityQueue();
             const uint numTriangles = m_dcel->m_face.size();
-            //pQueue.reserve(numTriangles*3 / 2);
-            std::ofstream file ("error_pqueue.dat", std::ofstream::out);
+            pQueue.reserve(numTriangles*3 / 2);
+            //std::ofstream file ("error_pqueue.dat", std::ofstream::out);
 
+           // Scalar progression = 0.0;
+            //uint nb = 0;
+            Primitive prims [3];
+            PriorityQueue::PriorityQueueData data[3];
+            Index ids[3];
             Scalar progression = 0.0;
-//#pragma omp parallel for
+            uint i_multi_thread = 0;
+#pragma omp parallel for private(prims, data, ids)
             for (unsigned int i = 0; i < numTriangles; i++)
             {
-                if (std::abs(Scalar(Scalar(i) / Scalar(numTriangles)) - progression * 0.10) < (1.0/numTriangles))
-                {
-                    LOG(logINFO) << progression * 10 << "% done";
-                    progression += 1;
-                }
-
                 const Face_ptr& f = m_dcel->m_face.at( i );
                 HalfEdge_ptr h = f->HE();
                 for (int j = 0; j < 3; j++)
@@ -252,25 +251,36 @@ namespace Ra
                     if (vs->idx > vt->idx)
                     {
                         h = h->Next();
+                        ids[j] = Index::INVALID_IDX();
                         continue;
                     }
 
-                    Primitive q;
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v, p, q);
-                    m_primitives_he[h->idx] = q;
+                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j]);
+                    data[j] = PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p);
+                    ids[j] = h->idx;
 
-//#pragma omp critical
-                    {
-                        pQueue.insert(PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p));
-                    }
                     h = h->Next();
+                }
+#pragma omp critical
+                {
+                    for (int j = 0; j < 3; j++){
+                        if (ids[j].isValid() ) {
+                            m_primitives_he[ids[j]] = prims[j];
+                            pQueue.insert(data[j]);
+                        }
+                    }
+
+                    if (std::abs(Scalar(Scalar(i_multi_thread++) / Scalar(numTriangles)) - progression * 0.10) < (1.0/numTriangles))
+                    {
+                        LOG(logINFO) << progression * 10 << "% done";
+                        progression += 1;
+                    }
                 }
             }
             projectOnAlgebraicSphereSurface();
-            file.close();
+            //file.close();
             //pQueue.display();
-            return pQueue;
         }
 
         template <class ErrorMetric>
@@ -571,7 +581,7 @@ namespace Ra
         template <class ErrorMetric>
         std::vector<ProgressiveMeshData> ProgressiveMesh<ErrorMetric>::constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, Scalar scale, int weightPerVertex, std::ofstream &file)
         {
-            uint nbPMData = 0;
+            //uint nbPMData = 0;
             m_scale = scale;
             m_weight_per_vertex = weightPerVertex;
             m_primitive_update = primitiveUpdate;
@@ -586,7 +596,8 @@ namespace Ra
             computeVerticesPrimitives();
 
             LOG(logINFO) << "Computing Priority Queue...";
-            PriorityQueue pQueue = constructPriorityQueue();
+            PriorityQueue pQueue;
+            constructPriorityQueue(pQueue);
             PriorityQueue::PriorityQueueData d;
 
             LOG(logINFO) << "Collapsing...";
@@ -625,6 +636,7 @@ namespace Ra
                 m_nb_vertices -= 1;
 
 //#ifdef CORE_DEBUG
+#ifdef ENABLE_DEBUG_CONTENT
                 data.setError(d.m_err);
                 data.setPResult(d.m_p_result);
 
@@ -644,11 +656,12 @@ namespace Ra
                 std::vector<ProgressiveMeshData::DataPerEdgeColor> err_per_edge = pQueue.copyToVector(m_dcel->m_halfedge.size(), *m_dcel);
                 data.setErrorPerEdge(err_per_edge);
                 */
+#endif
 //#endif
 
                 //
-                Vector3 v0 = m_dcel->m_vertex[d.m_vs_id]->P();
-                Vector3 v1 = m_dcel->m_vertex[d.m_vt_id]->P();
+                //Vector3 v0 = m_dcel->m_vertex[d.m_vs_id]->P();
+                //Vector3 v1 = m_dcel->m_vertex[d.m_vt_id]->P();
                 //
 
                 DcelOperations::edgeCollapse(*m_dcel, d.m_edge_id, d.m_p_result, true, data);
@@ -659,7 +672,7 @@ namespace Ra
 
                 pmdata.push_back(data);
 
-                nbPMData++;
+                //nbPMData++;
             }
             LOG(logINFO) << "Collapsing done";
             file2.close();

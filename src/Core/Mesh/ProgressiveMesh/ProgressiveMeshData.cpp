@@ -20,6 +20,7 @@ namespace Ra
             m_vr_id = -1;
             m_ii = 0;
 
+#ifdef ENABLE_DEBUG_CONTENT
             m_error = 0.0;
             m_q1_center = Vector3::Zero();
             m_q2_center = Vector3::Zero();
@@ -29,6 +30,7 @@ namespace Ra
             m_q_radius = 0.0;
             m_vs = Vector3::Zero();
             m_vt = Vector3::Zero();
+#endif
         }
 
         ProgressiveMeshData::ProgressiveMeshData(const Vector3& vad_l, const Vector3& vad_s,
@@ -74,6 +76,7 @@ namespace Ra
             m_vr_id = vr_id;
             m_ii = ii;
 
+#ifdef ENABLE_DEBUG_CONTENT
             m_error = error;
             m_p_result = p_result;
             m_q1_center = q1_center;
@@ -87,6 +90,7 @@ namespace Ra
             m_q1_grad = q1_grad;
             m_q2_grad = q2_grad;
             m_error_per_edge = error_per_edge;
+#endif
         }
 
         Vector3 ProgressiveMeshData::computePResult(const Vector3& vt, const Vector3& vs)
