@@ -165,8 +165,8 @@ namespace Ra
                 }
 
                 Primitive q;
-                //m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
-                m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
+                m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
+                //m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
 //#pragma omp critical
                 m_primitives_v.push_back(q);
             }
@@ -184,8 +184,8 @@ namespace Ra
                 for (uint t = 0; t < adjVertices.size(); ++t)
                 {
                     Primitive q;
-                    //m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
-                    m_em.generateRIMLSVertexPrimitive(q, adjVertices[t], m_ring_size);
+                    m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
+                    //m_em.generateRIMLSVertexPrimitive(q, adjVertices[t], m_ring_size);
                     m_primitives_v[adjVertices[t]->idx] = q;
                 }
             }
@@ -257,7 +257,7 @@ namespace Ra
 
                     Primitive q;
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v[h->V()->idx], m_primitives_v[h->Next()->V()->idx], p, q);
+                    double edgeError = m_em.computeError(h, m_primitives_v, p, q);
                     m_primitives_he[h->idx] = q;
 
 //#pragma omp critical
@@ -327,10 +327,17 @@ namespace Ra
             // compute error before flip
             Primitive q;
             Vector3 p = Vector3::Zero();
-            Scalar error_pre = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
+            Scalar error_pre = m_em.computeError(he, m_primitives_v, p, q);
 
             // flip edge
             DcelOperations::flipEdge(*m_dcel, he->idx);
+            // update primitive
+            for (uint i = 0; i < 4; i++)
+            {
+                Primitive q;
+                m_em.generateVertexPrimitive(q, v[i], m_scale, m_ring_size);
+                m_primitives_v[v[i]->idx] = q;
+            }
 
             // compute valence after flip
             Scalar deviation_post = 0.0;
@@ -346,7 +353,7 @@ namespace Ra
             Vector3 n2_post = Geometry::triangleNormal(he->Twin()->V()->P(), he->Twin()->Next()->V()->P(), he->Twin()->Prev()->V()->P());
             // compute error after flip
             p = Vector3::Zero();
-            Scalar error_post = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
+            Scalar error_post = m_em.computeError(he, m_primitives_v, p, q);
 
 
             if ((deviation_pre <= deviation_post) ||
@@ -355,6 +362,13 @@ namespace Ra
                     (error_pre <= error_post))
             {
                 DcelOperations::flipEdge(*m_dcel, he->idx);
+                // update primitive
+                for (uint i = 0; i < 4; i++)
+                {
+                    Primitive q;
+                    m_em.generateVertexPrimitive(q, v[i], m_scale, m_ring_size);
+                    m_primitives_v[v[i]->idx] = q;
+                }
             }
             else
             {
@@ -365,14 +379,6 @@ namespace Ra
         template <class ErrorMetric>
         void ProgressiveMesh<ErrorMetric>::updatePriorityQueue(PriorityQueue &pQueue, Index vsIndex, Index vtIndex, std::ofstream &file)
         {
-            if (vsIndex == 79 && vtIndex == 132)
-            {
-                LOG(logINFO) << "Here";
-                VHEIterator vsTestIt = VHEIterator(m_dcel->m_vertex[130]);
-                HalfEdgeList adjHE1 = vsTestIt.list();
-                VHEIterator vsTestIt2 = VHEIterator(m_dcel->m_vertex[131]);
-                HalfEdgeList adjHE2 = vsTestIt2.list();
-            }
             // we delete of the priority queue all the edge containing vs_id or vt_id
             pQueue.removeEdges(vsIndex);
             pQueue.removeEdges(vtIndex);
@@ -389,13 +395,13 @@ namespace Ra
 
                 //  TODO : Interface ?
 
-                cleaning(he);
+                //cleaning(he);
                 if (he->V()->idx > he->Next()->V()->idx)
                 {
                     he = he->Twin();
                 }
                 Primitive q;
-                edgeError = m_em.computeError(he, m_primitives_v[he->V()->idx], m_primitives_v[he->Next()->V()->idx], p, q);
+                edgeError = m_em.computeError(he, m_primitives_v, p, q);
                 m_primitives_he[he->idx] = q;
 
                 pQueue.insert(PriorityQueue::PriorityQueueData(he->V()->idx, he->Next()->V()->idx, he->idx, he->F()->idx, edgeError, p));
@@ -433,6 +439,10 @@ namespace Ra
                 return false;
             }
 
+            // Look if normals are consistents
+            bool consitent = true;
+            if (!isEcolConsistent(halfEdgeIndex, pResult))
+                return false;
 
             // Look if normals of faces change after collapse
             bool isFlipped = false;
@@ -495,15 +505,42 @@ namespace Ra
                 }
             }
 
-            /*
-            bool consitent = true;
-            if (!isEcolConsistent(halfEdgeIndex, pResult))
-                return false;
-            */
-
-            //return ((!hasTIntersection) && (!isFlipped) && (consitent));
-            return ((!hasTIntersection) && (!isFlipped));
+            //return ((!hasTIntersection) && (consitent));
+            return ((!hasTIntersection) && (!isFlipped) && (consitent));
+            //return ((!hasTIntersection) && (!isFlipped));
             //return !hasTIntersection;
+        }
+
+        template <class ErrorMetric>
+        bool ProgressiveMesh<ErrorMetric>::checkConsistency(FaceList adjFaces, Vertex_ptr v, Face_ptr f1, Face_ptr f2, Vector3 pResult, bool &consistent)
+        {
+            for (uint i = 0; i < adjFaces.size() && consistent; i++)
+            {
+                Face_ptr f = adjFaces[i];
+                if ((f != f1) && (f != f2))
+                {
+                    HalfEdge_ptr h = f->HE();
+                    Vertex_ptr vf = h->V(); //he->V()
+                    while (vf != v)
+                    {
+                        h = h->Next();
+                        vf = h->V();
+                    }
+                    h = h->Next();
+                    Vertex_ptr vs = h->V();
+                    Vertex_ptr vt = h->Next()->V();
+
+                    Vector3 vsvt = vs->P() - vt->P();
+                    Vector3 nf = Geometry::triangleNormal(v->P(), vs->P(), vt->P());
+                    Vector3 n = vsvt.cross(nf);
+
+                    consistent = ((n.dot(v->P()) >= 0.0) == (n.dot(pResult) >= 0.0));
+                    if (! consistent)
+                    {
+                        //LOG(logINFO) << "Edge is not collapsable due to inconsistency";
+                    }
+                }
+            }
         }
 
         //Quadric-Based Polygonal Surface Simplification, PhD thesis by Michael Garland (1999), p.56-57 : Consistency Checks
@@ -523,61 +560,8 @@ namespace Ra
 
             bool consistent = true;
 
-            for (uint i = 0; i < adjFacesV1.size() && consistent; i++)
-            {
-                Face_ptr f = adjFacesV1[i];
-                if ((f != f1) && (f != f2))
-                {
-                    HalfEdge_ptr h = f->HE();
-                    Vertex_ptr v = he->V();
-                    while (v != v1)
-                    {
-                        h = h->Next();
-                        v = h->V();
-                    }
-                    h = h->Next();
-                    Vertex_ptr vs = h->V();
-                    Vertex_ptr vt = h->Next()->V();
-
-                    Vector3 vsvt = vs->P() - vt->P();
-                    Vector3 nf = Geometry::triangleNormal(v1->P(), vs->P(), vt->P());
-                    Vector3 n = vsvt.cross(nf);
-
-                    consistent = ((n.dot(v1->P()) >= 0) == (n.dot(pResult) >= 0));
-                    if (! consistent)
-                    {
-                        LOG(logINFO) << "Edge " << v1->idx << " " << v2->idx << " is not collapsable due to inconsistency";
-                    }
-                }
-            }
-
-            for (uint i = 0; i < adjFacesV2.size() && consistent; i++)
-            {
-                Face_ptr f = adjFacesV2[i];
-                if ((f != f1) && (f != f2))
-                {
-                    HalfEdge_ptr h = f->HE();
-                    Vertex_ptr v = he->V();
-                    while (v != v2)
-                    {
-                        h = h->Next();
-                        v = h->V();
-                    }
-                    h = h->Next();
-                    Vertex_ptr vs = h->V();
-                    Vertex_ptr vt = h->Next()->V();
-
-                    Vector3 vsvt = vs->P() - vt->P();
-                    Vector3 nf = Geometry::triangleNormal(v2->P(), vs->P(), vt->P());
-                    Vector3 n = vsvt.cross(nf);
-
-                    consistent = ((n.dot(v2->P()) >= 0) == (n.dot(pResult) >= 0));
-                    if (! consistent)
-                    {
-                        LOG(logINFO) << "Edge " << v1->idx << " " << v2->idx << " is not collapsable due to inconsistency";
-                    }
-                }
-            }
+            checkConsistency(adjFacesV1, v1, f1, f2, pResult, consistent);
+            checkConsistency(adjFacesV2, v2, f1, f2, pResult, consistent);
 
             return consistent;
         }
@@ -644,6 +628,7 @@ namespace Ra
                 data.setError(d.m_err);
                 data.setPResult(d.m_p_result);
 
+                /*
                 data.setQCenter(m_primitives_he[he->idx].center());
                 data.setQRadius(m_primitives_he[he->idx].radius());
                 data.setQ1Center(m_primitives_v[d.m_vs_id].center());
@@ -654,7 +639,7 @@ namespace Ra
                 data.setVt((m_dcel->m_vertex[d.m_vt_id])->P());
                 data.setGradientQ1(m_primitives_v[d.m_vs_id].primitiveGradient(data.getVs()));
                 data.setGradientQ2(m_primitives_v[d.m_vt_id].primitiveGradient(data.getVt()));
-
+                    */
                 /*
                 std::vector<ProgressiveMeshData::DataPerEdgeColor> err_per_edge = pQueue.copyToVector(m_dcel->m_halfedge.size(), *m_dcel);
                 data.setErrorPerEdge(err_per_edge);
