@@ -23,10 +23,12 @@ namespace Ra
             QuadricErrorMetric();
             QuadricErrorMetric(Scalar scale);
 
-            Scalar computeError(const Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
+            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 
             Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
+
+            Scalar getWedgeAngle(Face_ptr face, Vertex_ptr v);
 
             void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);
             void generateFacePrimitive      (Primitive &q, Face_ptr f, Scalar weight, int ringSize);
@@ -88,25 +90,6 @@ namespace Ra
             VectorType m_pos, m_normal;
         };
 
-        class APSSErrorMetric
-        {
-            typedef DistWeightFunc<GrenaillePoint, ConstantWeightKernel<Scalar> > WeightFunc;
-            typedef Basket<GrenaillePoint, WeightFunc, OrientedSphereFit, GLSParam> Fit1;
-            typedef Basket<GrenaillePoint, WeightFunc, UnorientedSphereFit, GLSParam> Fit2;
-            typedef Basket<GrenaillePoint, WeightFunc, OrientedSphereFit, GLSParam, OrientedSphereSpaceDer, GLSDer, GLSCurvatureHelper> Fit3;
-
-        public:
-            using Primitive = Quadric<4>;
-
-            APSSErrorMetric();
-            APSSErrorMetric(Scalar scale);
-
-            Scalar computeError(const Primitive& q, const Vector3& vs, const Vector3& vt, Vector3& pResult);
-            Scalar computeGeometricError(const Primitive& q, const Primitive::Vector& p);
-
-            void generateFacePrimitive(Primitive &q, Face_ptr f);
-
-        };
 
         /// On tente de venir projeter les point résultant sur
         /// la sphère moyenne
@@ -123,10 +106,9 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
-            Scalar computeError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q);
-
-            Scalar computeEdgeMinError(HalfEdge_ptr he, Primitive& q1, Primitive& q2, Vector3& pResult, Primitive &q);
-            Scalar computeFaceMinError(HalfEdge_ptr he, const Primitive& q0, const Primitive& q1, const Primitive& q2, Vector3& pResult, Primitive &q);
+            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
 
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 

@@ -27,7 +27,7 @@ namespace Ra
     namespace Core
     {
 
-      //template<class ErrorMetric = QuadricErrorMetric>
+        //template<class ErrorMetric = QuadricErrorMetric>
         template<class ErrorMetric = SimpleAPSSErrorMetric>
         class ProgressiveMeshBase
         {
@@ -49,7 +49,7 @@ namespace Ra
             virtual ErrorMetric getEM() = 0;
         };
 
-      //template<class ErrorMetric = QuadricErrorMetric>
+        //template<class ErrorMetric = QuadricErrorMetric>
         template<class ErrorMetric = SimpleAPSSErrorMetric>
         class ProgressiveMesh : public ProgressiveMeshBase<ErrorMetric>
         {
@@ -102,6 +102,7 @@ namespace Ra
             Primitive combine(const std::vector<Primitive>& primitives, const std::vector<Scalar>& weightsWedgeAngles);
 
             /// Check if an edge collapse is doable
+            bool checkConsistency(FaceList adjFaces, Vertex_ptr v, Face_ptr f1, Face_ptr f2, Vector3 pResult, bool &consistent);
             bool isEcolConsistent(Index halfEdgeIndex, Vector3 pResult);
             bool isEcolPossible(Index halfEdgeIndex, Vector3 pResult);
 
