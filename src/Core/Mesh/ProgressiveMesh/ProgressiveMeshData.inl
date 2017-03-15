@@ -125,6 +125,7 @@ inline void ProgressiveMeshData::setVadl(Vector3 &v)
 
 //-----------------------------------------------
 
+#ifdef ENABLE_DEBUG_CONTENT
 inline Scalar ProgressiveMeshData::getError()
 {
     return m_error;
@@ -254,7 +255,7 @@ inline void ProgressiveMeshData::setErrorPerEdge(const std::vector<ProgressiveMe
 {
     m_error_per_edge = v;
 }
-
+#endif
 
 } // namespace Core
 } // namespace Ra
