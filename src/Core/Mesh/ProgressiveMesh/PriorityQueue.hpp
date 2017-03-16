@@ -121,7 +121,7 @@ namespace Ra
             PriorityQueueData top();
 
             /// Get the ith element
-            PriorityQueueData get(int i);
+            //const PriorityQueueData& get(int i);
 
             /// Delete edges having v_id as vertex
             void removeEdges(int v_id);
