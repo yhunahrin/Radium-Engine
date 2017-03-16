@@ -103,8 +103,8 @@ namespace Ra
 
             /// Check if an edge collapse is doable
             bool checkConsistency(FaceList adjFaces, Vertex_ptr v, Face_ptr f1, Face_ptr f2, Vector3 pResult, bool &consistent);
-            bool isEcolConsistent(Index halfEdgeIndex, Vector3 pResult);
-            bool isEcolPossible(Index halfEdgeIndex, Vector3 pResult);
+            bool isEcolConsistent(Index halfEdgeIndex, const Vector3 &pResult);
+            bool isEcolPossible(Index halfEdgeIndex, const Vector3& pResult);
 
             /// Updates
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he);
