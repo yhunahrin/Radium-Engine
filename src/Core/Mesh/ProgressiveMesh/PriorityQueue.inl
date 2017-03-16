@@ -3,6 +3,11 @@
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMeshData.hpp>
 #include <Core/Mesh/DCEL/Vertex.hpp>
 
+
+#ifdef NDEBUG
+#   define PRIORITYQUEUE_NO_SECURITY_CHECK
+#endif
+
 namespace Ra
 {
     namespace Core
@@ -10,6 +15,7 @@ namespace Ra
 
         inline void PriorityQueue::insert(PriorityQueueData item)
         {
+#ifndef PRIORITYQUEUE_NO_SECURITY_CHECK
             PriorityQueueContainer::iterator it;
             for ( it = m_priority_queue.begin();
                   it != m_priority_queue.end();
@@ -30,7 +36,11 @@ namespace Ra
             }
             CORE_ASSERT(item.m_vs_id < item.m_vt_id, "Insert in priority queue swapped");
 
-            std::pair<PriorityQueueContainer::iterator,bool> pair = m_priority_queue.insert(item);
+
+            std::pair<PriorityQueueContainer::iterator,bool> pair =
+#endif
+                    m_priority_queue.insert(item);
+#ifndef PRIORITYQUEUE_NO_SECURITY_CHECK
             if (!(bool)pair.second)
             {
                 LOG(logINFO) << "PB Bad insert in priority queue";
@@ -38,7 +48,10 @@ namespace Ra
             }
             CORE_ASSERT((bool)pair.second, "Bad insert in priority queue");
 
-            std::pair<VertexHashContainer::iterator,bool> pair_vh = m_vertex_hash.insert(item);
+            std::pair<VertexHashContainer::iterator,bool> pair_vh =
+#endif
+                    m_vertex_hash.insert(item);
+#ifndef PRIORITYQUEUE_NO_SECURITY_CHECK
             if (!(bool)pair_vh.second)
             {
                 LOG(logINFO) << "PB Bad insert in vertex hash";
@@ -46,13 +59,17 @@ namespace Ra
             }
             CORE_ASSERT((bool)pair_vh.second, "Bad insert in vertex hash");
 
-            pair_vh = m_vertex_hash.insert(item.getSwapped());
+            pair_vh =
+#endif
+                    m_vertex_hash.insert(item.getSwapped());
+#ifndef PRIORITYQUEUE_NO_SECURITY_CHECK
             if (!(bool)pair_vh.second)
             {
                 LOG(logINFO) << "PB Bad insert in vertex hash";
                 display();
             }
             CORE_ASSERT((bool)pair_vh.second, "Bad insert in vertex hash");
+#endif
         }
 
         //------------------------------

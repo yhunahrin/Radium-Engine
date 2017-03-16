@@ -547,10 +547,12 @@ namespace Ra
                     consistent = ((n.dot(v->P()) >= 0.0) == (n.dot(pResult) >= 0.0));
                     if (! consistent)
                     {
+                        return false;
                         //LOG(logINFO) << "Edge is not collapsable due to inconsistency";
                     }
                 }
             }
+            return consistent;
         }
 
         //Quadric-Based Polygonal Surface Simplification, PhD thesis by Michael Garland (1999), p.56-57 : Consistency Checks
