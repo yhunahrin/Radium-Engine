@@ -422,7 +422,7 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, Vector3 pResult)
+        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, const Vector3& pResult)
         {
             HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
 
@@ -438,15 +438,16 @@ namespace Ra
             {
                 for (uint j = 0; j < adjVerticesV2.size(); j++)
                 {
-                    if (adjVerticesV1[i]->idx == adjVerticesV2[j]->idx)
+                    if (adjVerticesV1[i]->idx == adjVerticesV2[j]->idx) {
                         countIntersection++;
+                        if (countIntersection > 2)
+                        {
+                            //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
+                            hasTIntersection = true;
+                            return false;
+                        }
+                    }
                 }
-            }
-            if (countIntersection > 2)
-            {
-                //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
-                hasTIntersection = true;
-                return false;
             }
 
             // Look if normals are consistents
@@ -557,23 +558,25 @@ namespace Ra
 
         //Quadric-Based Polygonal Surface Simplification, PhD thesis by Michael Garland (1999), p.56-57 : Consistency Checks
         template <class ErrorMetric>
-        bool ProgressiveMesh<ErrorMetric>::isEcolConsistent(Index halfEdgeIndex, Vector3 pResult)
+        bool ProgressiveMesh<ErrorMetric>::isEcolConsistent(Index halfEdgeIndex, const Vector3& pResult)
         {
             HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
             Face_ptr f1 = he->F();
             Face_ptr f2 = he->Twin()->F();
             Vertex_ptr v1 = he->V();
-            Vertex_ptr v2 = he->Next()->V();
 
             VFIterator v1fIt = VFIterator(v1);
-            VFIterator v2fIt = VFIterator(v2);
             FaceList adjFacesV1 = v1fIt.list();
-            FaceList adjFacesV2 = v2fIt.list();
 
             bool consistent = true;
 
             checkConsistency(adjFacesV1, v1, f1, f2, pResult, consistent);
-            checkConsistency(adjFacesV2, v2, f1, f2, pResult, consistent);
+            if (consistent){
+                Vertex_ptr v2 = he->Next()->V();
+                VFIterator v2fIt = VFIterator(v2);
+                FaceList adjFacesV2 = v2fIt.list();
+                checkConsistency(adjFacesV2, v2, f1, f2, pResult, consistent);
+            }
 
             return consistent;
         }
