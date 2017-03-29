@@ -312,6 +312,15 @@ namespace Ra
         m_taskQueue->waitForTasks();
         timerData.taskData = m_taskQueue->getTimerData();
         m_taskQueue->flushTaskQueue();
+#if 0
+        std::cout << "Tasks time:" << std::endl;
+        for (const auto& t : timerData.taskData)
+        {
+            std::cout << t.taskName << ": " << Ra::Core::Timer::getIntervalMicro(t.start, t.end) << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+#endif
 
         timerData.tasksEnd = Core::Timer::Clock::now();
 
