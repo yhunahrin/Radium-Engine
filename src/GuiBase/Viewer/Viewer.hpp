@@ -147,7 +147,7 @@ namespace Ra
             void onFrameSwapped();
             void onResized();
 
-        private:
+        protected:
 
             //
             // QOpenGlWidget primitives
