@@ -88,7 +88,7 @@ namespace Ra
             }
         }
 
-        void Entity::rayCastQuery(const Core::Ray& r) const
+        void Entity::rayCastQuery(const Core::Ray& r)
         {
             // put ray in local frame.
             Core::Ray transformedRay = Ra::Core::transformRay(r, m_transform.inverse());

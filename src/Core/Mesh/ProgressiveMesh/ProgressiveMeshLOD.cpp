@@ -22,9 +22,9 @@ namespace Ra
 
         //------------------------------
 
-        void ProgressiveMeshLOD::build(int target_nb_faces, int primitive_update, float scale, int weight_per_vertex, TriangleMesh &newMesh, std::ofstream &file)
+        void ProgressiveMeshLOD::build(int target_nb_faces, int primitive_update, Scalar scale, Scalar gradient_weight, int weight_per_vertex, TriangleMesh &newMesh)
         {
-            m_pmdata = m_pm->constructM0(target_nb_faces, m_nb_no_fr_vsplit, primitive_update, scale, weight_per_vertex, file);
+            m_pmdata = m_pm->constructM0(target_nb_faces, m_nb_no_fr_vsplit, primitive_update, scale, gradient_weight, weight_per_vertex);
             m_curr_vsplit = m_pmdata.size();
 
             convertPM(*(m_pm->getDcel()), newMesh);

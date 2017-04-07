@@ -183,7 +183,7 @@ namespace Ra
             GL_ASSERT( m_id = glCreateShader( type ) );
 
             std::string shader;
-            if (type == GL_VERTEX_SHADER || type == GL_GEOMETRY_SHADER)
+            if (type == GL_VERTEX_SHADER)
             {
                 shader = "\
                 out gl_PerVertex { \
@@ -191,6 +191,23 @@ namespace Ra
                   float gl_PointSize; \
                   float gl_ClipDistance[]; \
                 };";
+                shader += preprocessIncludes(load(), 0, m_lineerr);
+            }
+            else if (type == GL_GEOMETRY_SHADER)
+            {
+                shader = "\
+                out gl_PerVertex { \
+                  vec4 gl_Position; \
+                  float gl_PointSize; \
+                  float gl_ClipDistance[]; \
+                };";
+                shader += "\
+                        in gl_PerVertex\
+                        {\
+                          vec4 gl_Position;\
+                          float gl_PointSize;\
+                          float gl_ClipDistance[];\
+                        } gl_in[];";
                 shader += preprocessIncludes(load(), 0, m_lineerr);
             }
             else

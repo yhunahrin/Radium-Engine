@@ -219,7 +219,7 @@ namespace FancyMeshPlugin
         return &m_meshIndex;
     }
 
-    void FancyMeshComponent::rayCastQuery( const Ra::Core::Ray& r) const
+    void FancyMeshComponent::rayCastQuery( const Ra::Core::Ray& r)
     {
         auto result  = Ra::Core::MeshUtils::castRay( getMesh(), r );
         int tidx = result.m_hitTriangle;
