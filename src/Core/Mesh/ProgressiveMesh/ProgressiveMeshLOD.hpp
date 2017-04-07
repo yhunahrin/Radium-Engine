@@ -22,7 +22,7 @@ namespace Ra
             }
 
             /// This method will build the Progressive Mesh
-            void build(int target_nb_faces, int primitive_update, float scale, int weight_per_vertex, TriangleMesh &m, std::ofstream &file);
+            void build(int target_nb_faces, int primitive_update, Scalar scale, Scalar gradient_weight, int weight_per_vertex, TriangleMesh &m);
 
             /// Applies one vertex split :
             /// enables 1 vertex, and 2 faces

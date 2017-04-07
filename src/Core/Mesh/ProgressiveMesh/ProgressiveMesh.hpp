@@ -35,11 +35,11 @@ namespace Ra
 
             using Primitive = typename ErrorMetric::Primitive;
 
-            virtual void constructPriorityQueue(PriorityQueue& queue) = 0;
+            virtual void constructPriorityQueue(PriorityQueue& queue,  std::ofstream &file) = 0;
 
             virtual void computeVerticesPrimitives() = 0;
 
-            virtual std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) = 0;
+            virtual std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, Scalar scale, Scalar gradient_weight, int weight_per_vertex) = 0;
 
             virtual void vsplit(ProgressiveMeshData pmData) = 0;
             virtual void ecol(ProgressiveMeshData pmData) = 0;
@@ -47,6 +47,7 @@ namespace Ra
             virtual Dcel* getDcel() = 0;
             virtual int getNbFaces() = 0;
             virtual ErrorMetric getEM() = 0;
+            virtual Primitive getPrimitive(int i) = 0;
         };
 
         //template<class ErrorMetric = QuadricErrorMetric>
@@ -64,7 +65,7 @@ namespace Ra
             ~ProgressiveMesh() {}
 
             /// We construct a priority queue with an error for each edge
-            void constructPriorityQueue(PriorityQueue& queue);
+            void constructPriorityQueue(PriorityQueue& queue, std::ofstream &file);
 
             ///
             void projectOnAlgebraicSphereSurface();
@@ -73,7 +74,7 @@ namespace Ra
             void cleaning(HalfEdge_ptr he);
 
             /// Construction of the coarser mesh
-            std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, float scale, int weight_per_vertex, std::ofstream &file) override;
+            std::vector<ProgressiveMeshData> constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, Scalar scale, Scalar gradient_weight, int weight_per_vertex) override;
 
             /// Vertex Split and Edge Collapse
             void vsplit(ProgressiveMeshData pmData) override;
@@ -92,6 +93,7 @@ namespace Ra
             inline Dcel* getDcel();
             inline int getNbFaces();
             inline ErrorMetric getEM();
+            inline Primitive getPrimitive(int i);
 
         private:
 
@@ -120,6 +122,10 @@ namespace Ra
             Scalar m_bbox_size;
             Scalar m_mean_edge_length;
             Scalar m_scale;
+            Scalar m_gradient_weight;
+            Scalar m_min_radius;
+            Scalar m_max_radius;
+            Scalar m_mean_radius;
             unsigned int m_ring_size;
             int m_weight_per_vertex;
             int m_primitive_update;

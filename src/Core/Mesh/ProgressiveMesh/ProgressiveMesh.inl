@@ -36,6 +36,9 @@ namespace Ra
             convert(*mesh, *m_dcel);
 
             m_mean_edge_length = Ra::Core::MeshUtils::getMeanEdgeLength(*mesh);
+            m_min_radius = 0.0;
+            m_max_radius = 0.0;
+            m_mean_radius = 0.0;
             m_scale = 0.0;
             m_ring_size = 0;
             m_weight_per_vertex = 0;
@@ -60,6 +63,12 @@ namespace Ra
         inline ErrorMetric ProgressiveMesh<ErrorMetric>::getEM()
         {
             return m_em;
+        }
+
+        template <class ErrorMetric>
+        inline typename ErrorMetric::Primitive ProgressiveMesh<ErrorMetric>::getPrimitive(int i)
+        {
+            return m_primitives_v[i];
         }
 
         //------------------------------------------------
@@ -155,8 +164,10 @@ namespace Ra
             m_primitives_v.reserve(numVertices);
 
             Scalar progression = 0.0;
+            m_min_radius = std::numeric_limits<double>::max();
+            m_max_radius = std::numeric_limits<double>::min();
+            m_mean_radius = 0.0;
 //#pragma omp parallel for
-            Primitive q;
             for (uint v = 0; v < numVertices; ++v)
             {
                 if (std::abs(Scalar(Scalar(v) / Scalar(numVertices)) - progression * 0.10) < (1.0/numVertices))
@@ -164,12 +175,24 @@ namespace Ra
                     LOG(logINFO) << progression * 10 << "% done";
                     progression += 1.0;
                 }
-
+                Primitive q;
                 m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
                 //m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
 //#pragma omp critical
+                Scalar radius = q.radius();
+                m_mean_radius += radius;
+                LOG(logINFO) << radius;
+                if (radius < m_min_radius)
+                {
+                    m_min_radius = radius;
+                }
+                if (radius > m_max_radius)
+                {
+                    m_max_radius = radius;
+                }
                 m_primitives_v.push_back(q);
             }
+            m_mean_radius /= numVertices;
         }
 
         template <class ErrorMetric>
@@ -224,11 +247,10 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        void ProgressiveMesh<ErrorMetric>::constructPriorityQueue(PriorityQueue &pQueue)
+        void ProgressiveMesh<ErrorMetric>::constructPriorityQueue(PriorityQueue &pQueue, std::ofstream &file)
         {
             const uint numTriangles = m_dcel->m_face.size();
             pQueue.reserve(numTriangles*3 / 2);
-            //std::ofstream file ("error_pqueue.dat", std::ofstream::out);
 
            // Scalar progression = 0.0;
             //uint nb = 0;
@@ -256,7 +278,7 @@ namespace Ra
                     }
 
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j]);
+                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j], m_gradient_weight, m_min_radius, m_max_radius, file);
                     data[j] = PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p);
                     ids[j] = h->idx;
 
@@ -279,7 +301,6 @@ namespace Ra
                 }
             }
             projectOnAlgebraicSphereSurface();
-            //file.close();
             //pQueue.display();
         }
 
@@ -411,7 +432,7 @@ namespace Ra
                     he = he->Twin();
                 }
                 Primitive q;
-                edgeError = m_em.computeError(he, m_primitives_v, p, q);
+                edgeError = m_em.computeError(he, m_primitives_v, p, q, m_gradient_weight, m_min_radius, m_max_radius, file);
                 m_primitives_he[he->idx] = q;
 
                 pQueue.insert(PriorityQueue::PriorityQueueData(he->V()->idx, he->Next()->V()->idx, he->idx, he->F()->idx, edgeError, p));
@@ -451,9 +472,11 @@ namespace Ra
             }
 
             // Look if normals are consistents
+
             bool consitent = true;
             if (!isEcolConsistent(halfEdgeIndex, pResult))
                 return false;
+
 
             // Look if normals of faces change after collapse
             bool isFlipped = false;
@@ -584,31 +607,34 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        std::vector<ProgressiveMeshData> ProgressiveMesh<ErrorMetric>::constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, Scalar scale, int weightPerVertex, std::ofstream &file)
+        std::vector<ProgressiveMeshData> ProgressiveMesh<ErrorMetric>::constructM0(int targetNbFaces, int &nbNoFrVSplit, int primitiveUpdate, Scalar scale, Scalar gradient_weight, int weightPerVertex)
         {
-            //uint nbPMData = 0;
             m_scale = scale;
+            m_gradient_weight = gradient_weight;
             m_weight_per_vertex = weightPerVertex;
             m_primitive_update = primitiveUpdate;
             m_ring_size = std::floor((m_scale/m_mean_edge_length) + 1);
             LOG(logINFO) << "Ring Size = " << m_ring_size << "...";
             LOG(logINFO) << "Scale = " << m_scale << "...";
 
+            std::ofstream file;
+            file.open("q1q2.txt");
+
             std::vector<ProgressiveMeshData> pmdata;
             pmdata.reserve(targetNbFaces);
 
             LOG(logINFO) << "Computing Vertices Primitives...";
             computeVerticesPrimitives();
+            LOG(logINFO) << "min = " << m_min_radius << ", max = " << m_max_radius << ", mean = " << m_mean_radius;
 
             LOG(logINFO) << "Computing Priority Queue...";
             PriorityQueue pQueue;
-            constructPriorityQueue(pQueue);
+            constructPriorityQueue(pQueue, file);
             PriorityQueue::PriorityQueueData d;
 
             LOG(logINFO) << "Collapsing...";
             ProgressiveMeshData data;
 
-            std::ofstream file2 ("error_pqueue_update.dat", std::ofstream::out);
             uint nb_faces_start = m_nb_faces;
             uint progression = 0;
 
@@ -640,12 +666,10 @@ namespace Ra
                 }
                 m_nb_vertices -= 1;
 
-//#ifdef CORE_DEBUG
 #ifdef ENABLE_DEBUG_CONTENT
                 data.setError(d.m_err);
                 data.setPResult(d.m_p_result);
 
-                /*
                 data.setQCenter(m_primitives_he[he->idx].center());
                 data.setQRadius(m_primitives_he[he->idx].radius());
                 data.setQ1Center(m_primitives_v[d.m_vs_id].center());
@@ -656,31 +680,25 @@ namespace Ra
                 data.setVt((m_dcel->m_vertex[d.m_vt_id])->P());
                 data.setGradientQ1(m_primitives_v[d.m_vs_id].primitiveGradient(data.getVs()));
                 data.setGradientQ2(m_primitives_v[d.m_vt_id].primitiveGradient(data.getVt()));
-                    */
+
                 /*
                 std::vector<ProgressiveMeshData::DataPerEdgeColor> err_per_edge = pQueue.copyToVector(m_dcel->m_halfedge.size(), *m_dcel);
                 data.setErrorPerEdge(err_per_edge);
                 */
 #endif
-//#endif
 
-                //
-                //Vector3 v0 = m_dcel->m_vertex[d.m_vs_id]->P();
-                //Vector3 v1 = m_dcel->m_vertex[d.m_vt_id]->P();
-                //
 
                 DcelOperations::edgeCollapse(*m_dcel, d.m_edge_id, d.m_p_result, true, data);
 
                 updateVerticesPrimitives(d.m_vs_id, he);
-                //updateVerticesPrimitives(d.m_vs_id, he, v0, v1, d.m_vs_id, d.m_vt_id, file);
-                updatePriorityQueue(pQueue, d.m_vs_id, d.m_vt_id, file2);
+                updatePriorityQueue(pQueue, d.m_vs_id, d.m_vt_id, file);
 
                 pmdata.push_back(data);
 
                 //nbPMData++;
             }
             LOG(logINFO) << "Collapsing done";
-            file2.close();
+            file.close();
 
             return pmdata;
         }
