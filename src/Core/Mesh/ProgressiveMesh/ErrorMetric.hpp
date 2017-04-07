@@ -106,9 +106,12 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
-            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
-            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
-            Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
+            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
+            Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
+
+            Scalar computeAlpha(HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeUV(HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
 
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 

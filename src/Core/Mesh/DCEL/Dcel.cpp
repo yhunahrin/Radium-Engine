@@ -6,6 +6,7 @@
 #include <Core/Mesh/DCEL/HalfEdge.hpp>
 #include <Core/Mesh/DCEL/FullEdge.hpp>
 #include <Core/Mesh/DCEL/Face.hpp>
+#include <Core/Math/RayCast.hpp>
 #include <Core/Containers/MakeShared.hpp>
 
 namespace Ra {
@@ -84,6 +85,50 @@ Dcel::Dcel( const Dcel& dcel ) :
 /// DESTRUCTOR
 Dcel::~Dcel() { }
 
+/// RAY CAST
+Dcel::RayCastResult Dcel::castRay(const Ray &ray)
+{
+    RayCastResult result;
+    result.m_hitTriangle = -1;
+    Scalar minT = std::numeric_limits<Scalar>::max();
+
+    std::vector<Scalar> tValues;
+    std::array<Vector3,3> v;
+    for ( uint i = 0; i < m_face.size(); ++i)
+    {
+        if (m_face[i]->HE() == NULL) continue;
+        tValues.clear();
+        Vertex_ptr v0 = m_face[i]->HE()->V();
+        Vertex_ptr v1 = m_face[i]->HE()->Next()->V();
+        Vertex_ptr v2 = m_face[i]->HE()->Prev()->V();
+        if ( RayCast::vsTriangle(ray, v0->P(), v1->P(), v2->P(), tValues) && tValues[0] < minT )
+        {
+            minT = tValues[0];
+            result.m_hitTriangle = int(i);
+        }
+    }
+
+    if (result.m_hitTriangle >= 0)
+    {
+        Scalar minDist = std::numeric_limits<Scalar>::max();
+        Vertex_ptr v[3];
+        v[0] = m_face[result.m_hitTriangle]->HE()->V();
+        v[1] = m_face[result.m_hitTriangle]->HE()->Next()->V();
+        v[2] = m_face[result.m_hitTriangle]->HE()->Prev()->V();
+        for (uint i = 0; i < 3; ++i)
+        {
+            Scalar dSq = (v[i]->P() - ray.pointAt(minT)).squaredNorm();
+            if (dSq < minDist)
+            {
+                result.m_nearestVertex = v[i]->idx;
+            }
+        }
+        result.m_t = minT;
+
+    }
+
+    return result;
+}
 
 
 } // namespace Core
