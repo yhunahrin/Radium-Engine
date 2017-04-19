@@ -31,9 +31,10 @@ namespace Ra
             {
                 Core::TriangleMesh torus = Core::MeshUtils::makeParametricTorus<32>(torusOutRadius, torusAspectRatio*torusOutRadius);
                 // Transform the torus from z-axis to axis i.
-                if (i < 2)
+                for (auto& v: torus.m_vertices)
                 {
-                    for (auto& v: torus.m_vertices)
+                    v = 0.33f * v;
+                    if (i < 2)
                     {
                         std::swap( v[2], v[i]);
                     }
