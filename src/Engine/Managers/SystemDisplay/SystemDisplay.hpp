@@ -61,7 +61,7 @@ namespace Ra
             virtual ~SystemEntity() {};
 
             /// Ignore raycast queries
-            virtual void rayCastQuery(const Core::Ray& r) const override{}
+            virtual void rayCastQuery(const Core::Ray& r) override{}
 
 #ifndef RA_DISABLE_DEBUG_DISPLAY
             /// Access the debug component

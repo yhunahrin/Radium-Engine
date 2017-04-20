@@ -1,12 +1,12 @@
 #include <Core/Mesh/DCEL/Operations/VertexOperation.hpp>
-
 #include <Core/Mesh/DCEL/HalfEdge.hpp>
 #include <Core/Mesh/DCEL/Vertex.hpp>
 #include <Core/Mesh/DCEL/FullEdge.hpp>
-
 #include <Core/Mesh/DCEL/Iterator/Vertex/VFIterator.hpp>
-#include <Core/Geometry/Triangle/TriangleOperation.hpp>
+#include <Core/Mesh/DCEL/Iterator/Vertex/VVIterator.hpp>
 
+#include <Core/Geometry/Triangle/TriangleOperation.hpp>
+#include <Core/Geometry/Normal/Normal.hpp>
 
 namespace Ra {
 namespace Core {
@@ -14,17 +14,37 @@ namespace DcelOperations {
 
     Vector3 vertexNormal(Vertex_ptr vi)
     {
+
         VFIterator vfIt = VFIterator(vi);
         FaceList adjFaces = vfIt.list();
-        Vector3 n = Vector3(0.0, 0.0, 0.0);
+        Vector3 n_ok = Vector3(0.0, 0.0, 0.0);
         for (unsigned int i = 0; i < adjFaces.size(); i++)
         {
             Vertex_ptr v0 = adjFaces[i]->HE()->V();
             Vertex_ptr v1 = adjFaces[i]->HE()->Next()->V();
             Vertex_ptr v2 = adjFaces[i]->HE()->Prev()->V();
-            n += Geometry::triangleNormal(v0->P(), v1->P(), v2->P());
+            n_ok += Geometry::triangleNormal(v0->P(), v1->P(), v2->P());
         }
-        n.normalize();
+        n_ok.normalize();
+        //return n;
+
+        // angle weighted normal
+        Vector3 n = Vector3(0.0, 0.0, 0.0);
+        for (unsigned int i = 0; i < adjFaces.size(); i++)
+        {
+            Face_ptr fi = adjFaces[i];
+            HalfEdge_ptr hei = fi->HE();
+            while (hei->V()->idx != vi->idx)
+            {
+                hei = hei->Next();
+            }
+            Vector3 v0 = hei->Next()->V()->P() - vi->P();
+            Vector3 v1 = hei->Prev()->V()->P() - vi->P();
+            //Scalar wedgeAngle = std::acos(v0.dot(v1));
+            Scalar wedgeAngle = Vector::angle(v0, v1);
+            n += wedgeAngle * Geometry::triangleNormal(vi->P(), hei->Next()->V()->P(), hei->Prev()->V()->P());
+        }
+        n.normalized();
         return n;
     }
 

@@ -389,6 +389,7 @@ namespace DcelOperations {
             data.setVrId(vr->idx);
             data.setii(ii);
         }
+
     }
 
     void edgeCollapse( Dcel& dcel, ProgressiveMeshData pmData)

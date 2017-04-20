@@ -106,7 +106,7 @@ namespace Ra
             /// Check if an edge collapse is doable
             bool checkConsistency(FaceList adjFaces, Vertex_ptr v, Face_ptr f1, Face_ptr f2, Vector3 pResult, bool &consistent);
             bool isEcolConsistent(Index halfEdgeIndex, const Vector3 &pResult);
-            bool isEcolPossible(Index halfEdgeIndex, const Vector3& pResult);
+            bool isEcolPossible(Index halfEdgeIndex, const Vector3& pResult, Primitive& q);
 
             /// Updates
             void updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he);
@@ -123,9 +123,6 @@ namespace Ra
             Scalar m_mean_edge_length;
             Scalar m_scale;
             Scalar m_gradient_weight;
-            Scalar m_min_radius;
-            Scalar m_max_radius;
-            Scalar m_mean_radius;
             unsigned int m_ring_size;
             int m_weight_per_vertex;
             int m_primitive_update;

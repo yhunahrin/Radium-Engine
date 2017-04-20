@@ -115,7 +115,8 @@ namespace Ra
 
             virtual void closeEvent( QCloseEvent* event ) override;
 
-        private slots:
+        public:
+        //private slots:
             /// Slot for the "load file" menu.
             void loadFile();
 

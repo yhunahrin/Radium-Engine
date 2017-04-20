@@ -71,7 +71,7 @@ namespace Ra
             inline uint getNumComponents() const;
 
             // Queries
-            virtual void rayCastQuery(const Core::Ray& r) const;
+            virtual void rayCastQuery(const Core::Ray& r);
 
         private:
             Core::Transform m_transform;

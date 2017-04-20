@@ -443,11 +443,13 @@ namespace Ra
         std::string filename;
         Ra::Core::StringUtils::stringPrintf(filename, "radiummesh_%06u", mainApp->getFrameCount());
         ItemEntry e = m_selectionManager->currentItem();
+        LOG(logINFO) << "exportCurrentMesh";
 
         // For now we only export a mesh if the selected entry is a render object.
         // There could be a virtual method to get a mesh representation for any object.
         if (e.isRoNode())
         {
+            LOG(logINFO) << "e.isRoNode()";
             Ra::Core::OBJFileManager obj;
             auto ro = Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getRenderObject(e.m_roIndex);
             Ra::Core::TriangleMesh mesh = ro->getMesh()->getGeometry();

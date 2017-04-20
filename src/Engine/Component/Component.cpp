@@ -66,7 +66,7 @@ namespace Ra
             }
         }
 
-        void Component::rayCastQuery(const Core::Ray& ray) const
+        void Component::rayCastQuery(const Core::Ray& ray)
         {
             for (const auto& idx : m_renderObjects)
             {

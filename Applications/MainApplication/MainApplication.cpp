@@ -52,6 +52,7 @@ namespace Ra
         , m_realFrameRate( false )
         , m_recordFrames( false )
         , m_isAboutToQuit( false )
+        , m_export(false)
     {
         // Set application and organization names in order to ensure uniform
         // QSettings configurations.
@@ -73,8 +74,10 @@ namespace Ra
         QCommandLineOption pluginLoadOpt(QStringList{"l", "load", "loadPlugin"}, "Only load plugin with the given name (filename without the extension). If this option is not used, all plugins in the plugins folder will be loaded. ", "name");
         QCommandLineOption pluginIgnoreOpt(QStringList{"i", "ignore", "ignorePlugin"}, "Ignore plugins with the given name. If the name appears within both load and ignore options, it will be ignored.", "name");
         QCommandLineOption fileOpt(QStringList{"f", "file", "scene"}, "Open a scene file at startup.", "file name", "foo.bar");
+        QCommandLineOption progressiveMeshTargetNumFacesOpt(QStringList{"n", "targetnumfaces"}, "Set the target number of faces and the scale for the Progressive Mesh", "number", "0");
+        QCommandLineOption progressiveMeshScaleOpt(QStringList{"s", "scale"}, "Set the target number of faces and the scale for the Progressive Mesh", "number", "0");
 
-        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, numFramesOpt });
+        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, numFramesOpt, progressiveMeshTargetNumFacesOpt, progressiveMeshScaleOpt });
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
@@ -145,8 +148,12 @@ namespace Ra
         // initialized the OpenGL context..)
         processEvents();
 
+        // PM stuff
+        QStringList pmOptions(parser.values(progressiveMeshTargetNumFacesOpt));
+        pmOptions += parser.values(progressiveMeshScaleOpt);
+
         // Load plugins
-        if ( !loadPlugins( pluginsPath, parser.values(pluginLoadOpt), parser.values(pluginIgnoreOpt) ) )
+        if ( !loadPlugins( pluginsPath, parser.values(pluginLoadOpt), parser.values(pluginIgnoreOpt), pmOptions ))
         {
             LOG( logERROR ) << "An error occurred while trying to load plugins.";
         }
@@ -167,6 +174,14 @@ namespace Ra
         if (parser.isSet(fileOpt))
         {
             loadFile(parser.value(fileOpt));
+        }
+
+        // export mesh
+        if (pmOptions[0].toInt() != 0)
+        {
+            m_export = true;
+            QDir test(parser.value(fileOpt));
+            m_filename = test.dirName();
         }
 
         m_lastFrameStart = Core::Timer::Clock::now();
@@ -271,6 +286,16 @@ namespace Ra
         lConfig.addShader(ShaderType_VERTEX, "Shaders/GradientDisplay.vert.glsl");
         lConfig.addShader(ShaderType_FRAGMENT, "Shaders/GradientDisplay.frag.glsl");
         ShaderConfigurationFactory::addConfiguration(gdConfig);
+
+        /*
+        ShaderConfiguration isdConfig("InterpolatedSurfaceDisplay");
+        isdConfig.addShader(ShaderType_VERTEX, "Shaders/SphereInterpolation.vert.glsl");
+        isdConfig.addShader(ShaderType_TESS_CONTROL, "Shaders/SphereInterpolation.tcs.glsl");
+        isdConfig.addShader(ShaderType_TESS_EVALUATION, "Shaders/SphereInterpolation.tes.glsl");
+        isdConfig.addShader(ShaderType_GEOMETRY, "Shaders/SphereInterpolation.geom.glsl");
+        isdConfig.addShader(ShaderType_FRAGMENT, "Shaders/SphereInterpolation.frag.glsl");
+        ShaderConfigurationFactory::addConfiguration(isdConfig);
+        */
     }
 
     void BaseApplication::radiumFrame()
@@ -351,6 +376,17 @@ namespace Ra
             m_timerData.clear();
         }
 
+        // Progressive mesh export mesh
+        if (m_export)
+        {
+            m_filename.remove(m_filename.size() - 4, 4);
+            Engine::Entity* ent = m_engine->getEntityManager()->getEntity(m_filename.toStdString());
+            Engine::Component* comp = ((ent->getComponents()).begin())->get();
+            m_mainWindow->getSelectionManager()->setCurrentEntry(Engine::ItemEntry(ent, comp, 2), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+            m_mainWindow->exportCurrentMesh();
+            m_export = false;
+        }
+
         m_mainWindow->onFrameComplete();
     }
 
@@ -384,7 +420,7 @@ namespace Ra
         m_engine->cleanup();
     }
 
-    bool BaseApplication::loadPlugins( const std::string& pluginsPath, const QStringList& loadList, const QStringList& ignoreList )
+    bool BaseApplication::loadPlugins( const std::string& pluginsPath, const QStringList& loadList, const QStringList& ignoreList, QStringList& pmOptions )
     {
         QDir pluginsDir( qApp->applicationDirPath() );
         LOG( logINFO )<<" *** Loading Plugins ***";
@@ -403,6 +439,9 @@ namespace Ra
         PluginContext context;
         context.m_engine = m_engine.get();
         context.m_selectionManager = m_mainWindow->getSelectionManager();
+        context.m_options = pmOptions;
+
+        LOG(logINFO) << pmOptions[0].toInt() << " " << pmOptions[1].toDouble();
 
         for (const auto& filename : pluginsDir.entryList(QDir::Files))
         {

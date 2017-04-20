@@ -86,7 +86,7 @@ Dcel::Dcel( const Dcel& dcel ) :
 Dcel::~Dcel() { }
 
 /// RAY CAST
-Dcel::RayCastResult Dcel::castRay(const Ray &ray)
+Dcel::RayCastResult Dcel::castRay(const Ray &ray) const
 {
     RayCastResult result;
     result.m_hitTriangle = -1;
