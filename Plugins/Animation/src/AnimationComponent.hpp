@@ -68,9 +68,9 @@ namespace AnimationPlugin
 
         virtual void setTransform(Ra::Core::Index roIdx, const Ra::Core::Transform& transform) override;
 
-    private:
+    public:
         // debug function to display the hierarchy
-        void printSkeleton(const Ra::Core::Animation::Skeleton& skeleton);private:
+        void printSkeleton(const Ra::Core::Animation::Skeleton& skeleton);
 
         //
         // Loading data functions

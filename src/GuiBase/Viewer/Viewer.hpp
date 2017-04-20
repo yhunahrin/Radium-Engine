@@ -181,7 +181,7 @@ namespace Ra
         public:
             Scalar m_dt;
 
-        private:
+        protected:
             /// Owning pointer to the renderers.
             std::vector<std::unique_ptr<Engine::Renderer>> m_renderers;
             Engine::Renderer* m_currentRenderer;

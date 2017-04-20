@@ -64,6 +64,8 @@ namespace Ra
 
             const Engine::Camera* getCamera() const { return m_camera.get();}
 
+            Engine::Camera* getCamera()  { return m_camera.get();}
+
             void attachLight( const std::shared_ptr<Engine::Light>& light );
 
             virtual void update( Scalar dt ) {}
@@ -102,6 +104,7 @@ namespace Ra
             std::unique_ptr<Engine::Camera> m_camera;
             bool m_mapCameraBahaviourToAabb;
 
+        public:
             std::shared_ptr<Engine::Light> m_light;
             bool m_hasLightAttached;
         };

@@ -65,7 +65,7 @@ namespace Ra
     }
 
     void Gui::Viewer::initializeGL()
-    {        
+    {
         //glbinding::Binding::initialize(false);
         // no need to initalize glbinding. globjects (magically) do this internally.
         globjects::init(globjects::Shader::IncludeImplementation::Fallback);

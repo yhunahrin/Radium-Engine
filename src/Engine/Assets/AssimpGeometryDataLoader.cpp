@@ -7,6 +7,8 @@
 #include <Engine/Assets/GeometryData.hpp>
 #include <Engine/Assets/AssimpWrapper.hpp>
 
+#include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
+
 namespace Ra {
     namespace Asset {
 
