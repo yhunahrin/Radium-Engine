@@ -93,6 +93,8 @@ namespace Ra
             m_properties = properties;
             GL_ASSERT( m_id = glCreateShader( type ) );
 
+            LOG(logINFO) << "type = " << type;
+
             std::string shader;
             if (type == GL_VERTEX_SHADER)
             {
@@ -104,7 +106,7 @@ namespace Ra
                 };";
                 shader += preprocessIncludes(load(), 0, m_lineerr);
             }
-            else if (type == GL_GEOMETRY_SHADER)
+            else if (type == GL_GEOMETRY_SHADER /*|| type == GL_TESS_EVALUATION_SHADER*/)
             {
                 shader = "\
                 out gl_PerVertex { \
@@ -121,6 +123,25 @@ namespace Ra
                         } gl_in[];";
                 shader += preprocessIncludes(load(), 0, m_lineerr);
             }
+            /*
+            else if (type == GL_TESS_CONTROL_SHADER)
+            {
+                shader = "\
+                out gl_PerVertex { \
+                  vec4 gl_Position; \
+                  float gl_PointSize; \
+                  float gl_ClipDistance[]; \
+                } gl_out[];";
+                shader += "\
+                        in gl_PerVertex\
+                        {\
+                          vec4 gl_Position;\
+                          float gl_PointSize;\
+                          float gl_ClipDistance[];\
+                        } gl_in[];";
+                shader += preprocessIncludes(load(), 0, m_lineerr);
+            }
+            */
             else
             {
                 shader = preprocessIncludes(load(), 0, m_lineerr);

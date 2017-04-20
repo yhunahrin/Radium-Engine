@@ -4,6 +4,7 @@
 class QWidget;
 class QMenu;
 class QAction;
+class QString;
 
 namespace Ra
 {
@@ -21,6 +22,7 @@ namespace Ra
     {
         Engine::RadiumEngine* m_engine;
         GuiBase::SelectionManager* m_selectionManager;
+        QStringList m_options;
     };
 
     namespace Plugins

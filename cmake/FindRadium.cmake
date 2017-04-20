@@ -70,7 +70,7 @@ IF ( RADIUM_ROOT_DIR )
 
     # TODO (Mathias) : verify if cmake recommand this (append the include dir of module dependencis in the include dir of the module header)
     SET( RADIUM_INCLUDE_DIR)
-    LIST(APPEND RADIUM_INCLUDE_DIR "${RADIUM_INCLUDES}" "${EIGEN3_INCLUDE_DIR}" "${ASSIMP_INCLUDE_DIR}" "${GLBINDING_INCLUDE_DIR}")
+    LIST(APPEND RADIUM_INCLUDE_DIR "${RADIUM_INCLUDES}" "${EIGEN3_INCLUDE_DIR}" "${PATATE_INCLUDE_DIR}" "${ASSIMP_INCLUDE_DIR}" "${GLBINDING_INCLUDE_DIR}")
 
     # TODO (Mathias) Like above : is it recommended to add all dependencies here ?
     SET( RADIUM_LIBRARIES )
@@ -84,6 +84,7 @@ IF ( Radium_FOUND )
     IF(NOT Radium_FIND_QUIETLY)
       MESSAGE ( STATUS "Found Radium Engine: ${RADIUM_ROOT_DIR}")
       MESSAGE ( STATUS "      Eigen3 includes: ${EIGEN3_INCLUDE_DIR}")
+      MESSAGE ( STATUS "      Patate includes: ${PATATE_INCLUDE_DIR}")
       MESSAGE ( STATUS "      Radium libs: ${RADIUM_LIBRARIES}")
       MESSAGE ( STATUS "      Assimp libs: ${ASSIMP_LIBRARIES}")
       MESSAGE ( STATUS "      GlBinding libs: ${GLBINDING_LIBRARIES}")

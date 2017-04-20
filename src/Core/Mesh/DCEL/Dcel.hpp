@@ -38,7 +38,7 @@ public:
 
     /// Return the index of the triangle hit by the ray or -1 if there's no hit.
     struct RayCastResult { int m_hitTriangle; int m_nearestVertex; Scalar m_t; };
-    RA_CORE_API RayCastResult castRay(const Ray& ray);
+    RA_CORE_API RayCastResult castRay(const Ray& ray) const;
 
     /// VARIABLE
     IndexMap< Vertex_ptr >   m_vertex;   // Vertices  Data

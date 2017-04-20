@@ -8,6 +8,8 @@
 #include <GuiBase/TimerData/FrameTimerData.hpp>
 #include <GuiBase/Viewer/Viewer.hpp>
 
+#include <PluginBase/RadiumPluginInterface.hpp>
+
 class QTimer;
 namespace Ra
 {
@@ -94,7 +96,7 @@ namespace Ra
         /// Load plugins from the specified folder.
         /// If loadList is empty, attempts to load all DLLs in the folder (except those on the ignore list)
         /// If loadList contains names it will only look for DLLs in that folder with the given name.
-        bool loadPlugins( const std::string& pluginsPath, const QStringList& loadList, const QStringList& ignoreList );
+        bool loadPlugins(const std::string& pluginsPath, const QStringList& loadList, const QStringList& ignoreList, QStringList &pmOptions );
 
         void setupScene();
         void addBasicShaders();
@@ -128,6 +130,10 @@ namespace Ra
         uint m_frameCountBeforeUpdate;
         uint m_numFrames;
         std::vector<FrameTimerData> m_timerData;
+
+        /// Only for progressive mesh
+        bool m_export;
+        QString m_filename;
 
         /// If true, use the wall clock to advance the engine. If false, use a fixed time step.
         bool m_realFrameRate;

@@ -5,8 +5,10 @@
 #include <Core/Math/LinearAlgebra.hpp>
 #include <Core/Mesh/DCEL/Dcel.hpp>
 #include <Core/Mesh/ProgressiveMesh/AlgebraicSphere.hpp>
+#include <Core/Mesh/DCEL/Iterator/Vertex/VVIterator.hpp>
 #include <Patate/grenaille.h>
 
+#include <set>
 #include <iostream>
 #include <fstream>
 
@@ -29,6 +31,9 @@ namespace Ra
             Primitive combine(const std::vector<Primitive>& p, const std::vector<Scalar>& weights, Scalar normalizing_weight_factor);
 
             Scalar getWedgeAngle(Face_ptr face, Vertex_ptr v);
+
+            void projectOnPrimitive (Vertex_ptr v, const Primitive& q);
+            void setNormal(Vertex_ptr v, const Primitive& q);
 
             void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);
             void generateFacePrimitive      (Primitive &q, Face_ptr f, Scalar weight, int ringSize);
@@ -106,15 +111,18 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
-            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
-            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
-            Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, Scalar gradient_weight, Scalar min_radius, Scalar max_radius, std::ofstream &file);
+            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
 
-            Scalar computeAlpha(HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
-            Scalar computeUV(HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            void projectOnPrimitive (Vertex_ptr v, const Primitive& q);
+            void setNormal(Vertex_ptr v, const Primitive& q);
 
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 
+            Scalar computeFaceGradDotN(Primitive& q, const Vector3& v0, const Vector3& v1, const Vector3& v2, const Vector3& n0, const Vector3& n1, const Vector3& n2);
+
+            void addNRingNeighbor(Fit1& fit, Vertex_ptr v, unsigned int &nb_neighbors, std::set<Vertex_ptr, VVIterator::compareVertexPtr>& adjVerticesSet);
             void generateRIMLSVertexPrimitive(Primitive &q, Vertex_ptr v, int ringSize);
             void generateVertexPrimitive    (Primitive &q, Vertex_ptr v, Scalar weight, int ringSize);
 

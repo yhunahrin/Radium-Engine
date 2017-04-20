@@ -36,9 +36,6 @@ namespace Ra
             convert(*mesh, *m_dcel);
 
             m_mean_edge_length = Ra::Core::MeshUtils::getMeanEdgeLength(*mesh);
-            m_min_radius = 0.0;
-            m_max_radius = 0.0;
-            m_mean_radius = 0.0;
             m_scale = 0.0;
             m_ring_size = 0;
             m_weight_per_vertex = 0;
@@ -164,9 +161,6 @@ namespace Ra
             m_primitives_v.reserve(numVertices);
 
             Scalar progression = 0.0;
-            m_min_radius = std::numeric_limits<double>::max();
-            m_max_radius = std::numeric_limits<double>::min();
-            m_mean_radius = 0.0;
 //#pragma omp parallel for
             for (uint v = 0; v < numVertices; ++v)
             {
@@ -179,42 +173,32 @@ namespace Ra
                 m_em.generateVertexPrimitive(q, m_dcel->m_vertex[v], m_scale, m_ring_size);
                 //m_em.generateRIMLSVertexPrimitive(q, m_dcel->m_vertex[v], m_ring_size);
 //#pragma omp critical
-                Scalar radius = q.radius();
-                m_mean_radius += radius;
-                LOG(logINFO) << radius;
-                if (radius < m_min_radius)
-                {
-                    m_min_radius = radius;
-                }
-                if (radius > m_max_radius)
-                {
-                    m_max_radius = radius;
-                }
                 m_primitives_v.push_back(q);
             }
-            m_mean_radius /= numVertices;
+            projectOnAlgebraicSphereSurface();
         }
 
         template <class ErrorMetric>
         void ProgressiveMesh<ErrorMetric>::updateVerticesPrimitives(Index vsIndex, HalfEdge_ptr he)
         {
-            // We go all over the faces which contain vsIndex
-            VVIterator vvIt = VVIterator(m_dcel->m_vertex[vsIndex]);
-            VertexList adjVertices = vvIt.list();
-
             if (m_primitive_update == 0) // re-calcul
             {
+                // We go all over the faces which contain vsIndex
+                VVIterator vvIt = VVIterator(m_dcel->m_vertex[vsIndex]);
+                VertexList adjVertices = vvIt.list();
                 for (uint t = 0; t < adjVertices.size(); ++t)
                 {
                     Primitive q;
                     m_em.generateVertexPrimitive(q, adjVertices[t], m_scale, m_ring_size);
                     //m_em.generateRIMLSVertexPrimitive(q, adjVertices[t], m_ring_size);
                     m_primitives_v[adjVertices[t]->idx] = q;
+                    m_em.setNormal(m_dcel->m_vertex[vsIndex], m_primitives_v[vsIndex]);
                 }
             }
             else if (m_primitive_update == 1) // no update
             {
                 m_primitives_v[vsIndex] = m_primitives_he[he->idx];
+                m_em.setNormal(m_dcel->m_vertex[vsIndex], m_primitives_v[vsIndex]);
             }
         }
 
@@ -259,7 +243,7 @@ namespace Ra
             Index ids[3];
             Scalar progression = 0.0;
             uint i_multi_thread = 0;
-#pragma omp parallel for private(prims, data, ids)
+//#pragma omp parallel for private(prims, data, ids)
             for (unsigned int i = 0; i < numTriangles; i++)
             {
                 const Face_ptr& f = m_dcel->m_face.at( i );
@@ -278,13 +262,13 @@ namespace Ra
                     }
 
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j], m_gradient_weight, m_min_radius, m_max_radius, file);
+                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j]);
                     data[j] = PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p);
                     ids[j] = h->idx;
 
                     h = h->Next();
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                     for (int j = 0; j < 3; j++){
                         if (ids[j].isValid() ) {
@@ -300,7 +284,6 @@ namespace Ra
                     }
                 }
             }
-            projectOnAlgebraicSphereSurface();
             //pQueue.display();
         }
 
@@ -310,7 +293,7 @@ namespace Ra
             for (unsigned int i = 0; i < m_dcel->m_vertex.size(); i++)
             {
                 Vertex_ptr vi = m_dcel->m_vertex[i];
-                vi->setP(m_primitives_v[vi->idx].project(vi->P()));
+                m_em.projectOnPrimitive(vi, m_primitives_v[vi->idx]);
             }
         }
 
@@ -352,6 +335,8 @@ namespace Ra
                 deviation_pre += std::abs(Scalar(vAdjFaces.size()) - 6.0);
                 vAdjFaces.clear();
             }
+
+            /*
             // compute normal before flip
             Vector3 n1_pre = Geometry::triangleNormal(he->V()->P(), he->Next()->V()->P(), he->Prev()->V()->P());
             Vector3 n2_pre = Geometry::triangleNormal(he->Twin()->V()->P(), he->Twin()->Next()->V()->P(), he->Twin()->Prev()->V()->P());
@@ -359,9 +344,12 @@ namespace Ra
             Primitive q;
             Vector3 p = Vector3::Zero();
             Scalar error_pre = m_em.computeError(he, m_primitives_v, p, q);
+            */
 
             // flip edge
             DcelOperations::flipEdge(*m_dcel, he->idx);
+
+            /*
             // update primitive
             for (uint i = 0; i < 4; i++)
             {
@@ -369,6 +357,7 @@ namespace Ra
                 m_em.generateVertexPrimitive(q, v[i], m_scale, m_ring_size);
                 m_primitives_v[v[i]->idx] = q;
             }
+            */
 
             // compute valence after flip
             Scalar deviation_post = 0.0;
@@ -379,18 +368,23 @@ namespace Ra
                 deviation_post += std::abs(Scalar(vAdjFaces.size()) - 6.0);
                 vAdjFaces.clear();
             }
+
+            /*
             // compute normal after flip
             Vector3 n1_post = Geometry::triangleNormal(he->V()->P(), he->Next()->V()->P(), he->Prev()->V()->P());
             Vector3 n2_post = Geometry::triangleNormal(he->Twin()->V()->P(), he->Twin()->Next()->V()->P(), he->Twin()->Prev()->V()->P());
             // compute error after flip
             p = Vector3::Zero();
             Scalar error_post = m_em.computeError(he, m_primitives_v, p, q);
+            */
 
-
+            /*
             if ((deviation_pre <= deviation_post) ||
                     (n1_pre.dot(n1_post) < 0.0) ||
                     (n2_pre.dot(n2_post) < 0.0) ||
                     (error_pre <= error_post))
+            */
+            if (deviation_pre <= deviation_post)
             {
                 DcelOperations::flipEdge(*m_dcel, he->idx);
                 // update primitive
@@ -432,7 +426,7 @@ namespace Ra
                     he = he->Twin();
                 }
                 Primitive q;
-                edgeError = m_em.computeError(he, m_primitives_v, p, q, m_gradient_weight, m_min_radius, m_max_radius, file);
+                edgeError = m_em.computeError(he, m_primitives_v, p, q);
                 m_primitives_he[he->idx] = q;
 
                 pQueue.insert(PriorityQueue::PriorityQueueData(he->V()->idx, he->Next()->V()->idx, he->idx, he->F()->idx, edgeError, p));
@@ -443,7 +437,7 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, const Vector3& pResult)
+        bool ProgressiveMesh<ErrorMetric>::isEcolPossible(Index halfEdgeIndex, const Vector3& pResult, Primitive& q_after)
         {
             HalfEdge_ptr he = m_dcel->m_halfedge[halfEdgeIndex];
 
@@ -472,19 +466,71 @@ namespace Ra
             }
 
             // Look if normals are consistents
-
             bool consitent = true;
             if (!isEcolConsistent(halfEdgeIndex, pResult))
                 return false;
 
+            // Look if grad.dot(normals) of faces increase after collapse
+            bool isGradDotNBetter = true;
+            EFIterator eIt = EFIterator(he);
+            FaceList adjFaces = eIt.list();
+            Index vsId = he->V()->idx;
+            Index vtId = he->Next()->V()->idx;
+
+            /*
+            Scalar sum_cos_after = 0.0;
+            Scalar sum_cos_before = 0.0;
+            Scalar sum_area_before = 0.0;
+            Scalar sum_area_after = 0.0;
+
+            for (uint i = 0; i < adjFaces.size(); i++)
+            {
+                HalfEdge_ptr heCurr = adjFaces[i]->HE();
+                Vertex_ptr v1 = nullptr;
+                Vertex_ptr v2 = nullptr;
+                Vertex_ptr v = nullptr;
+                for (uint j = 0; j < 3; j++)
+                {
+                    if (heCurr->V()->idx != vsId && heCurr->V()->idx != vtId)
+                    {
+                        if (v1 == nullptr)
+                            v1 = heCurr->V();
+                        else if (v2 == nullptr)
+                            v2 = heCurr->V();
+                    }
+                    else
+                    {
+                        v = heCurr->V();
+                    }
+                    heCurr = heCurr->Next();
+                }
+                if (v1 != nullptr && v2 != nullptr)
+                {
+                    Vector3 f_n_after = Geometry::triangleNormal(pResult, v1->P(), v2->P());
+                    Vector3 f_n_before = Geometry::triangleNormal(v->P(), v1->P(), v2->P());
+                    Primitive q_before = m_primitives_v[v->idx];
+                    Scalar grad_dot_n_before = m_em.computeFaceGradDotN(q_before, v->P(), v1->P(), v2->P(), f_n_before, 0.0, 0.0, 0.0);
+                    grad_dot_n_before *= grad_dot_n_before;
+                    Scalar grad_dot_n_after = m_em.computeFaceGradDotN(q_after, pResult, v1->P(), v2->P(), f_n_after, 0.0, 0.0, 0.0);
+                    grad_dot_n_after *= grad_dot_n_after;
+                    sum_area_before += Geometry::triangleArea(v->P(), v1->P(), v2->P());
+                    sum_area_after += Geometry::triangleArea(pResult, v1->P(), v2->P());
+                    sum_cos_after += grad_dot_n_after;
+                    sum_cos_before += grad_dot_n_before;
+                }
+            }
+            sum_cos_after /= sum_area_after;
+            sum_cos_before /= sum_area_before;
+            if (sum_cos_after > sum_cos_before)
+            {
+                LOG(logINFO) << "ecol not possible : gradient important " << sum_cos_after << " instead of " << sum_cos_before;
+                isGradDotNBetter = false;
+                return false;
+            }
+            */
 
             // Look if normals of faces change after collapse
             bool isFlipped = false;
-            EFIterator eIt = EFIterator(he);
-            FaceList adjFaces = eIt.list();
-
-            Index vsId = he->V()->idx;
-            Index vtId = he->Next()->V()->idx;
             for (uint i = 0; i < adjFaces.size(); i++)
             {
                 HalfEdge_ptr heCurr = adjFaces[i]->HE();
@@ -540,7 +586,7 @@ namespace Ra
             }
 
             //return ((!hasTIntersection) && (consitent));
-            return ((!hasTIntersection) && (!isFlipped) && (consitent));
+            return ((!hasTIntersection) && (!isFlipped) && (consitent) && (isGradDotNBetter));
             //return ((!hasTIntersection) && (!isFlipped));
             //return !hasTIntersection;
         }
@@ -625,11 +671,10 @@ namespace Ra
 
             LOG(logINFO) << "Computing Vertices Primitives...";
             computeVerticesPrimitives();
-            LOG(logINFO) << "min = " << m_min_radius << ", max = " << m_max_radius << ", mean = " << m_mean_radius;
 
             LOG(logINFO) << "Computing Priority Queue...";
             PriorityQueue pQueue;
-            constructPriorityQueue(pQueue, file);
+            //constructPriorityQueue(pQueue, file);
             PriorityQueue::PriorityQueueData d;
 
             LOG(logINFO) << "Collapsing...";
@@ -638,11 +683,18 @@ namespace Ra
             uint nb_faces_start = m_nb_faces;
             uint progression = 0;
 
+            Scalar error_max = std::numeric_limits<double>::min();
+            Scalar error_mean = 0.0;
+            int nb_collapse = 0;
+            std::vector<Scalar> errors;
+
             while (m_nb_faces > targetNbFaces)
+            //while (error_max < 0.00018698)
             {
                 if (std::abs(Scalar(Scalar((nb_faces_start - m_nb_faces)) / Scalar(nb_faces_start - targetNbFaces)) - progression * 0.10) < (1.0 / Scalar(nb_faces_start - targetNbFaces)))
                 {
                     LOG(logINFO) << progression * 10 << "% done";
+                    LOG(logINFO) << "Error max = " << error_max;
                     progression += 1;
                 }
 
@@ -652,7 +704,7 @@ namespace Ra
                 HalfEdge_ptr he = m_dcel->m_halfedge[d.m_edge_id];
 
                 // TODO !
-                if (!isEcolPossible(he->idx, d.m_p_result))
+                if (!isEcolPossible(he->idx, d.m_p_result, m_primitives_he[he->idx]))
                     continue;
 
                 if (he->Twin() == nullptr)
@@ -686,8 +738,6 @@ namespace Ra
                 data.setErrorPerEdge(err_per_edge);
                 */
 #endif
-
-
                 DcelOperations::edgeCollapse(*m_dcel, d.m_edge_id, d.m_p_result, true, data);
 
                 updateVerticesPrimitives(d.m_vs_id, he);
@@ -695,9 +745,33 @@ namespace Ra
 
                 pmdata.push_back(data);
 
-                //nbPMData++;
+                // errors
+                if (d.m_err > error_max)
+                {
+                    error_max = d.m_err;
+                }
+                error_mean += d.m_err;
+                nb_collapse++;
+                errors.push_back(d.m_err);
             }
             LOG(logINFO) << "Collapsing done";
+
+            // errors
+            LOG(logINFO) << "-----------------------------";
+            LOG(logINFO) << "Error max = " << error_max;
+            LOG(logINFO) << "Error mean = " << error_mean/nb_collapse;
+            int size_errors = errors.size();
+            sort(errors.begin(), errors.end());
+            if (size_errors != 0 && size_errors % 2 == 0)
+            {
+                LOG(logINFO) << "Error mediane = " << (errors[size_errors / 2 - 1] + errors[size_errors / 2]) / 2;
+            }
+            else if (size_errors != 0)
+            {
+                LOG(logINFO) << "Error mediane = " << errors[size_errors / 2];
+            }
+            LOG(logINFO) << "-----------------------------";
+
             file.close();
 
             return pmdata;

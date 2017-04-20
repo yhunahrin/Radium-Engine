@@ -15,7 +15,7 @@ if (APPLE)
 
     if (NOT ${RADIUM_WITH_OMP})
         set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
+        #add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
     else()
         set(RADIUM_WITH_OMP ON)
     endif()
@@ -38,7 +38,7 @@ elseif (UNIX OR MINGW)
 
     if (NOT ${RADIUM_WITH_OMP})
         set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
+#        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
     endif()
 
     if( MINGW )
