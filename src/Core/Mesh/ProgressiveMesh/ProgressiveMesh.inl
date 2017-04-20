@@ -674,7 +674,7 @@ namespace Ra
 
             LOG(logINFO) << "Computing Priority Queue...";
             PriorityQueue pQueue;
-            //constructPriorityQueue(pQueue, file);
+            constructPriorityQueue(pQueue, file);
             PriorityQueue::PriorityQueueData d;
 
             LOG(logINFO) << "Collapsing...";
