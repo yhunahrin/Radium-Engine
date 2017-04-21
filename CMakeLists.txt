@@ -148,6 +148,6 @@ endif(DOXYGEN_FOUND)
 set(SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Shaders")
 
 add_custom_target( radium_assets
-    #COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADER_DIR} "${EXECUTABLE_OUTPUT_PATH}/Shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADER_DIR} "${EXECUTABLE_OUTPUT_PATH}/Shaders"
     COMMENT "Copying shaders and other ressources" VERBATIM
 )
