@@ -6,10 +6,13 @@ layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
 layout (location = 0) in vec3 in_position[];
+layout (location = 1) in vec3 in_normal[];
 layout (location = 6) in vec4 in_uc_ul[];
 layout (location = 5) in vec4 in_uq_p[];
 
 layout (location = 0) out vec3 out_position;
+layout (location = 1) out vec3 out_normal;
+layout (location = 6) out vec4 out_uc_ul;
 
 
 float prattNorm(float uc, vec3 ul, float uq)
@@ -54,9 +57,11 @@ void main(void)
 
         //vec3 vgamma = project(in_position[i], new_uc, new_ul, new_uq, new_p);
         //vec3 vgamma = in_uc_ul[i].yzw;
-        vec3 vgamma = project(in_position[i], uc, ul, uq, p);
+        vec3 vgamma = p; //project(in_position[i], uc, ul, uq, p);
 
         out_position = vgamma;
+        out_normal = in_normal[i];
+        out_uc_ul = vec4(uc, ul);
 
         mat4 mvp = transform.proj * transform.view * transform.model;
         gl_Position = mvp * vec4(out_position, 1.0);
