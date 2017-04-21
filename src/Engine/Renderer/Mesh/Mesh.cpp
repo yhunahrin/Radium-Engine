@@ -17,7 +17,8 @@ namespace Ra {
         {
             CORE_ASSERT( m_renderMode == RM_LINES
                       || m_renderMode == RM_LINES_ADJACENCY
-                      || m_renderMode == RM_TRIANGLES,
+                      || m_renderMode == RM_TRIANGLES
+                      || m_renderMode == RM_PATCHES,
                          "Unsupported render mode" );
         }
 
@@ -68,6 +69,12 @@ namespace Ra {
 
             // Check that when loading a triangle mesh we actually have triangles.
             CORE_ASSERT( m_renderMode != GL_TRIANGLES || nIdx % 3 == 0, "There should be 3 indices per triangle " );
+
+            /**
+             * @todo make it handle quad patches
+             */
+            CORE_ASSERT( m_renderMode != GL_PATCHES || nIdx % 3 == 0, "There should be 3 indices per triangle " );
+
             CORE_ASSERT( m_renderMode != GL_LINES     || nIdx % 2 == 0, "There should be 2 indices per lines" );
 
             for ( uint i = 0; i < indices.size(); i = i + 3 )
