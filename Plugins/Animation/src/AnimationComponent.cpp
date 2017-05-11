@@ -206,8 +206,6 @@ namespace AnimationPlugin
         m_animationTime = 0.0;
     }
 
-
-
     void AnimationComponent::createSkeleton( const Ra::Asset::HandleData* data, std::map< uint, uint >& indexTable )
     {
         const uint size = data->getComponentDataSize();
