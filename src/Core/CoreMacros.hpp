@@ -286,8 +286,9 @@ template<int x> struct size;
     std::stringstream stream;           \
     stream << DESC;                     \
     fprintf(stderr,                     \
-          FMT,__FILE__,__LINE__, #EXP, stream.str().c_str() );   \
-MACRO_END
+          FMT,__FILE__,__LINE__,        \
+          #EXP, stream.str().c_str() ); \
+    MACRO_END
 
 
 
