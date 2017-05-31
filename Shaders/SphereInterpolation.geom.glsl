@@ -26,20 +26,20 @@ vec3 project(vec3 q, float uc, vec3 ul, float uq, vec3 p)
     // turn to centered basis
     vec3 lq = q - p;
 
-    vec3 grad = vec3(0.0, 0.0, 0.0);
+    vec3 grad       = vec3(0.0, 0.0, 0.0);
     vec3 dir        = ul + 2.0 * uq * lq;
-    float ilg      = 1.0 / length(dir);
+    float ilg       = 1.0 / length(dir);
     dir             = ilg * dir;
-    float ad       = uc + dot(ul, lq) + uq * length(lq) * length(lq);
-    float delta    = -ad * min(ilg, 1.0);
+    float ad        = uc + dot(ul, lq) + uq * length(lq) * length(lq);
+    float delta     = -ad * min(ilg, 1.0);
     vec3 proj       = lq + dir * delta;
 
     for (int i = 0; i < 16; ++i)
     {
-        grad  = ul + 2.0 * uq * proj;
-        ilg   = 1.0 / length(grad);
-        delta = -(uc + dot(proj, ul) + uq * length(proj) * length(proj)) * min(ilg, 1.);
-        proj += dir * delta;
+        grad    = ul + 2.0 * uq * proj;
+        ilg     = 1.0 / length(grad);
+        delta   = -(uc + dot(proj, ul) + uq * length(proj) * length(proj)) * min(ilg, 1.);
+        proj    += dir * delta;
     }
 
     return proj + p;

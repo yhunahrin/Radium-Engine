@@ -22,6 +22,7 @@ include_directories(
     ${PATATE_INCLUDE_DIR}
     ${ASSIMP_INCLUDE_DIR}
     ${GLBINDING_INCLUDE_DIR}
+    /export/home/Pollock/michaud/Gurobi/gurobi702/linux64/include
 )
 
 message(STATUS "Compiling Radium with include dirs : ${EIGEN3_INCLUDE_DIR} -- ${PATATE_INCLUDE_DIR} -- ${ASSIMP_INCLUDE_DIR} -- ${GLBINDING_INCLUDE_DIR}" )
@@ -39,6 +40,7 @@ add_library(
     ${core_sources}
     ${core_headers}
     ${core_inlines}
+
 )
 
 add_dependencies( ${core_target} eigen3)
@@ -46,6 +48,7 @@ target_compile_definitions(${core_target} PRIVATE "-DRA_CORE_EXPORTS")
 
 target_link_libraries(
     ${core_target}
+    -L/export/home/Pollock/michaud/Gurobi/gurobi702/linux64/lib/ -lgurobi_c++ -lgurobi70
 )
 
 # Build Engine

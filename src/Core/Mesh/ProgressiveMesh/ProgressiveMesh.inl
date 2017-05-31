@@ -262,7 +262,7 @@ namespace Ra
                     }
 
                     Vector3 p = Vector3::Zero();
-                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j]);
+                    double edgeError = m_em.computeError(h, m_primitives_v, p, prims[j], file);
                     data[j] = PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p);
                     ids[j] = h->idx;
 
@@ -426,7 +426,7 @@ namespace Ra
                     he = he->Twin();
                 }
                 Primitive q;
-                edgeError = m_em.computeError(he, m_primitives_v, p, q);
+                edgeError = m_em.computeError(he, m_primitives_v, p, q, file);
                 m_primitives_he[he->idx] = q;
 
                 pQueue.insert(PriorityQueue::PriorityQueueData(he->V()->idx, he->Next()->V()->idx, he->idx, he->F()->idx, edgeError, p));
@@ -687,6 +687,7 @@ namespace Ra
             Scalar error_mean = 0.0;
             int nb_collapse = 0;
             std::vector<Scalar> errors;
+            //std::vector<int> idx_already_collapsed;
 
             while (m_nb_faces > targetNbFaces)
             //while (error_max < 0.00018698)
@@ -705,7 +706,22 @@ namespace Ra
 
                 // TODO !
                 if (!isEcolPossible(he->idx, d.m_p_result, m_primitives_he[he->idx]))
+                {
                     continue;
+                }
+
+                /*
+                bool already_collasped = false;
+                for (int i = 0; i < idx_already_collapsed.size(); i++)
+                {
+                    if (he->V()->idx == idx_already_collapsed[i])
+                        already_collasped = true;
+                    if (he->Next()->V()->idx == idx_already_collapsed[i])
+                        already_collasped = true;
+                }
+                if (already_collasped)
+                    continue;
+                */
 
                 if (he->Twin() == nullptr)
                 {
@@ -717,6 +733,9 @@ namespace Ra
                     m_nb_faces -= 2;
                 }
                 m_nb_vertices -= 1;
+
+                //idx_already_collapsed.push_back(he->V()->idx);
+                //idx_already_collapsed.push_back(he->Next()->V()->idx);
 
 #ifdef ENABLE_DEBUG_CONTENT
                 data.setError(d.m_err);
