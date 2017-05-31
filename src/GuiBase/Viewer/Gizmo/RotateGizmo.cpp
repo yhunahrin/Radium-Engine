@@ -33,7 +33,7 @@ namespace Ra
                 // Transform the torus from z-axis to axis i.
                 for (auto& v: torus.m_vertices)
                 {
-                    v = 0.33f * v;
+                    v = 0.5f * v;
                     if (i < 2)
                     {
                         std::swap( v[2], v[i]);
@@ -51,7 +51,7 @@ namespace Ra
                 Engine::RenderObject* arrowDrawable = new Engine::RenderObject("Gizmo Arrow", m_comp,
                                                                                Engine::RenderObjectType::UI);
 
-                Engine::RenderTechnique* rt = new Engine::RenderTechnique;
+                std::shared_ptr<Engine::RenderTechnique> rt (new Engine::RenderTechnique);
                 rt->shaderConfig = Ra::Engine::ShaderConfigurationFactory::getConfiguration("Plain");
                 rt->material = new Ra::Engine::Material("Default material");
                 arrowDrawable->setRenderTechnique(rt);
