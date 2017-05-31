@@ -176,7 +176,6 @@ namespace Ra {
                     GL_ASSERT( glBufferData( GL_ELEMENT_ARRAY_BUFFER, m_mesh.m_triangles.size() * sizeof( Ra::Core::Triangle ),
                                              m_mesh.m_triangles.data(), GL_DYNAMIC_DRAW ) );
                     m_dataDirty[INDEX] = false;
-
                 }
 
                 // Geometry data
@@ -192,6 +191,8 @@ namespace Ra {
                 sendGLData(m_v4Data[VERTEX_COLOR],      MAX_MESH + MAX_VEC3 + VERTEX_COLOR );
                 sendGLData(m_v4Data[VERTEX_WEIGHTS],    MAX_MESH + MAX_VEC3 + VERTEX_WEIGHTS);
                 sendGLData(m_v4Data[VERTEX_WEIGHT_IDX], MAX_MESH + MAX_VEC3 + VERTEX_WEIGHT_IDX);
+
+                m_numElements = m_mesh.m_triangles.size() * 3; // Xavier's remark
 
                 GL_ASSERT( glBindVertexArray( 0 ) );
 

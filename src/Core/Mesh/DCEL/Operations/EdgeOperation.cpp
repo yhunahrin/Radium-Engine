@@ -264,22 +264,25 @@ namespace DcelOperations {
     {
         Vector3 vtPos = dcel.m_vertex[vtId]->P();
         Vector3 vsPos = dcel.m_vertex[vsId]->P();
-        Scalar disVtVp = (vtPos - pResult).squaredNorm();
-        Scalar distVmVp = (((vtPos + vsPos) / 2.f) - pResult).squaredNorm();
+        Scalar distVtVp = (vtPos - pResult).squaredNorm();
+        Scalar distVmVp = (((vtPos + vsPos) / 2.0) - pResult).squaredNorm();
         Scalar distVsVp = (vsPos - pResult).squaredNorm();
-        short int ii = std::min(disVtVp, std::min(distVmVp, distVsVp));
-        if (ii == 0)
+        short int ii;
+        if (distVtVp <= distVmVp && distVtVp <= distVsVp)
         {
+            ii = 0;
             vadS = vtPos - pResult;
             vadL = vsPos - pResult;
         }
-        else if (ii == 1)
+        else if (distVsVp <= distVtVp && distVsVp <= distVmVp)
         {
+            ii = 1;
             vadS = vsPos - pResult;
             vadL = vtPos - pResult;
         }
         else
         {
+            ii = 2;
             vadS = ((vtPos + vsPos) / 2.f) - pResult;
             vadL = (vtPos - vsPos) / 2.f;
         }

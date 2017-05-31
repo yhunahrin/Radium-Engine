@@ -59,10 +59,8 @@ add_dependencies( FancyMesh radiumCore radiumEngine radiumGuiBase)
 target_compile_definitions( FancyMesh PRIVATE "-DFancyMesh_EXPORTS" )
 
 set(Qt5_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
-
 target_link_libraries( FancyMesh
                        ${Qt5_LIBRARIES}
                        ${RADIUM_LIBRARIES}
                      )
-
 

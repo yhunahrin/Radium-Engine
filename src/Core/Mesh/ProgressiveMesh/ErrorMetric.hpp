@@ -111,8 +111,9 @@ namespace Ra
 
             SimpleAPSSErrorMetric();
 
-            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
-            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
+            Scalar computeError         (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, std::ofstream &file);
+            Scalar computeQEMStyleError (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, std::ofstream &file);
+            Scalar computeEdgeMinErrorOnEdge  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, std::ofstream &file);
             Scalar computeEdgeMinErrorOnFace  (HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q);
 
             void projectOnPrimitive (Vertex_ptr v, const Primitive& q);

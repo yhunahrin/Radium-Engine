@@ -14,4 +14,5 @@ void main()
     // color
     
     out_color = vec4(normalize(in_uc_ul.yzw)*0.5 + vec3(0.5), 1.0);
+    //out_color = vec4(1.0, 0.0, 0.0, 1.0);
 }
