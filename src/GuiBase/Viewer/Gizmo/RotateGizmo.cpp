@@ -168,10 +168,11 @@ namespace Ra
                     }
                     m_stepped = stepped;
                     m_totalAngle += angle;
-                    auto newRot = Core::AngleAxis(angle, rotationAxis) * rotationMat;
-
-                    m_transform.fromPositionOrientationScale(origin, newRot, scaleMat.diagonal() );
-
+                    if (angle != 0)
+                    {
+                        auto newRot = Core::AngleAxis( angle, rotationAxis ) * rotationMat;
+                        m_transform.fromPositionOrientationScale( origin, newRot, scaleMat.diagonal() );
+                    }
                 }
                 m_initialPix = nextXY_;
             }
