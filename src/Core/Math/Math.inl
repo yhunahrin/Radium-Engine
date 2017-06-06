@@ -123,7 +123,6 @@ namespace Ra
             template <typename T>
             constexpr T lerp(const T& a, const T& b, Scalar t)
             {
-                CORE_ASSERT( t >=0 && t < 1.f, "Invalid lerp parameter");
                 return (1-t) * a + t * b;
             }
         }
