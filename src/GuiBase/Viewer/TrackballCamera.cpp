@@ -298,8 +298,6 @@ namespace Ra
     {
         Scalar x = dx * m_cameraSensitivity * m_quickCameraModifier * m_distFromCenter * 0.1;
         Scalar y = dy * m_cameraSensitivity * m_quickCameraModifier * m_distFromCenter * 0.1;
-
-
         // Move camera and trackball center, keep the distance to the center
         Core::Vector3 R = -m_camera->getRightVector();
         Core::Vector3 U = m_camera->getUpVector();
@@ -323,6 +321,7 @@ namespace Ra
         Core::Vector3 F = m_camera->getDirection();
 
         Scalar dist = (m_trackballCenter - m_camera->getPosition()).norm();
+
         if (dist < (m_camera->getZNear() + y))
         {
             y = dist - m_camera->getZNear();
@@ -352,5 +351,4 @@ namespace Ra
         m_phi   = ( R.z() == 0.f && R.x() == 0.f ) ? 0.f : std::atan2( R.z() , R.x() );
         CORE_ASSERT( std::isfinite( m_theta ) && std::isfinite( m_phi ), "Error in trackball camera" );
     }
-
 } // namespace Ra

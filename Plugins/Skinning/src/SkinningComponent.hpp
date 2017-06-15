@@ -13,7 +13,6 @@
 #include <Engine/Component/Component.hpp>
 #include <Engine/Managers/ComponentMessenger/ComponentMessenger.hpp>
 
-
 namespace SkinningPlugin
 {
     class SKIN_PLUGIN_API SkinningComponent : public Ra::Engine::Component
@@ -49,9 +48,10 @@ namespace SkinningPlugin
         const Ra::Core::Skinning::FrameData* getFrameData() const { return &m_frameData;}
         const Ra::Core::AlignedStdVector< Ra::Core::DualQuaternion >* getDQ() const {return &m_DQ;}
 
-    private:
+    public:
         void setupIO(const std::string &id);
         void setupSkinningType( SkinningType type);
+        void setContentsName (const std::string name);
 
     private:
         std::string m_contentsName;

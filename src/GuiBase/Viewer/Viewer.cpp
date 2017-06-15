@@ -183,6 +183,7 @@ namespace Ra
         m_currentRenderer->resize( width, height );
     }
 
+
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
     {
 
@@ -459,6 +460,7 @@ namespace Ra
 
     void Gui::Viewer::resetCamera()
     {
+
         m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
     }
 } // namespace Ra

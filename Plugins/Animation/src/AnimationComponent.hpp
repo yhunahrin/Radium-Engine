@@ -94,11 +94,13 @@ namespace AnimationPlugin
         void setupSkeletonDisplay();
 
         // Component communication
+        void setContentName (const std::string name);
         void setupIO( const std::string& id );
 
         const Ra::Core::Animation::Skeleton*     getSkeletonOutput() const;
         const Ra::Core::Animation::RefPose*      getRefPoseOutput() const;
         const Ra::Core::Animation::WeightMatrix* getWeightsOutput() const;
+        void setWeights (Ra::Core::Animation::WeightMatrix m);
         const bool*                              getWasReset() const;
 
     private:

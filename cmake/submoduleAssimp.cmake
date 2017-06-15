@@ -20,6 +20,9 @@ ExternalProject_Add(
             -DASSIMP_INSTALL_PDB=False
 )
 
+
+message(INFO  "${CMAKE_CURRENT_SOURCE_DIR}/3rdPartyLibraries/Assimp")
+
 add_custom_target(assimp_lib
     DEPENDS assimp
     )
