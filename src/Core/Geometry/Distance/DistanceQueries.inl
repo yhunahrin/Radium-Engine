@@ -167,6 +167,91 @@ namespace Ra
                 return output;
             }
 
+            SegmentToSegmentOutput SegmentToSegmentParams(const Vector3& a1, const Vector3& u, const Vector3& a2, const Vector3& v)
+            {
+                // Adapted from http://geomalgorithms.com/a07-_distance.html
+                const Vector3 w = a2 - a1;
+                const Scalar u2 = u.squaredNorm(); // a
+                const Scalar v2 = v.squaredNorm(); // c
+                const Scalar uv = u.dot(v);        // b
+                const Scalar uw = u.dot(w);        // d
+                const Scalar vw = v.dot(w);        // e
+
+                // Determinant of the quadratic matrix
+                const Scalar det = u2 * v2 - uv * uv;
+
+                Scalar sN, sD = det;
+                Scalar tN, tD = det;
+
+                // Degenerate case : segments are parallel
+                if ( Ra::Core::Math::areApproxEqual(det, 0.f) )
+                {
+                    sN = 0.f;
+                    sD = 1.f;
+                    tN = vw;
+                    tD = v2;
+                }
+                else // Segments are not parallel. Compute the closest points on the infinite lines.
+                {
+                    sN = uv * vw - v2 * uw;
+                    tN = u2 * vw - uv * uw;
+                    if (sN < 0.f)
+                    {
+                        sN = 0.f;
+                        tN = vw;
+                        tD = v2;
+                    }
+                    else if (sN > sD)
+                    {
+                        sN = sD;
+                        tN = vw + uw;
+                        tD = v2;
+                    }
+                }
+
+                if (tN < 0)
+                {
+                    tN = 0;
+                    if ( -uv < 0 )
+                    {
+                        sN = 0.f;
+                    }
+                    else if ( -uv > u2 )
+                    {
+                        sN = sD;
+                    }
+                    else
+                    {
+                        sN = -uv;
+                        sD = u2;
+                    }
+                }
+                else if ( tN > tD )
+                {
+                    tN = tD;
+                    const Scalar  uwv = uv - uw;
+                    if ( uwv  < 0 )
+                    {
+                        sN = 0.f;
+                    }
+                    else if ( uwv > u2 )
+                    {
+                        sN = sD;
+                    }
+                    else
+                    {
+                        sN = uwv;
+                        sD = u2;
+                    }
+                }
+
+                SegmentToSegmentOutput result{
+                        Math::clamp(sN/sD, 0.f, 1.f),
+                        Math::clamp(tN/tD, 0.f, 1.f)};
+
+                return result;
+            }
+
         } // ns Distance queries
     }// ns Core
 } // ns Ra

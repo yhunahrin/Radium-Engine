@@ -59,6 +59,29 @@ namespace Ra
             inline RA_CORE_API PointToTriangleOutput
             pointToTriSq(const Vector3& q, const Vector3& a, const Vector3& b, const Vector3& c);
 
+            //
+            // Segment-to-segment distance
+            //
+
+            /// Output of a segment to segment distance
+            struct SegmentToSegmentOutput
+            {
+                Scalar t1; //! Parameter on the first segment
+                Scalar t2; //! Parameter on the second segment
+            };
+
+            /// Given two segments A1B1 and A2B2 (with u = B1-A1 and v = B2-A2), returns the parameters
+            /// t1 and t2 in [0,1] of the closest points on each segments.
+            inline RA_CORE_API SegmentToSegmentOutput
+            SegmentToSegmentParams( const Vector3& a1, const Vector3& u, const Vector3& a2, const Vector3& v);
+
+            /// Returns the squared distance between two segments.
+            inline RA_CORE_API Scalar SegmentToSegmentSq( const Vector3& a1, const Vector3& u, const Vector3& a2, const Vector3& v )
+            {
+                SegmentToSegmentOutput out = SegmentToSegmentParams(a1,u,a2,v);
+                return (a1 - a2  + out.t1 * u  + out.t2 * v).squaredNorm();
+            }
+
         } // ns Distance queries
     }// ns Core
 } // ns Ra
