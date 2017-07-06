@@ -462,7 +462,7 @@ namespace Ra
             c.changeBasis(b.basisCenter());
             c.applyPrattNorm();
 
-            c.setParameters((c.tau() + b.tau()), (c.eta() + b.eta()), (c.kappa() + b.kappa()));
+            //c.setParameters((c.tau() + b.tau()), (c.eta() + b.eta()), (c.kappa() + b.kappa()));
 
             c.changeBasis(a.basisCenter());
             c.applyPrattNorm();
