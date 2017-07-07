@@ -75,10 +75,6 @@
     </widget>
     <addaction name="menuRenderers"/>
    </widget>
-   <addaction name="menuFILE"/>
-   <addaction name="menuMisc"/>
-   <addaction name="menuRendering"/>
-    </widget>
    <widget class="QMenu" name="menuKeymapping">
     <property name="title">
      <string>Keymapping</string>
@@ -89,6 +85,7 @@
    </widget>
    <addaction name="menuFILE"/>
    <addaction name="menuMisc"/>
+   <addaction name="menuRendering"/>
    <addaction name="menuKeymapping"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
