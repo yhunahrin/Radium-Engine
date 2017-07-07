@@ -105,7 +105,7 @@ namespace Algorithm {
                 }
                 uint n = v_he.size();
 //                const Scalar b = ( n>3 ? 3.0/(8*n) : 3.0/(16*n) );  // FISHER'S FORMULA
-                const Scalar b_ = (3.0/8.0 + 0.25*cos(2.0*M_PI / n)); // LOIC'S FORMULA
+                const Scalar b_ = (3.0/8.0 + 0.25*cos(2.0*Ra::Core::Math::Pi / n)); // LOIC'S FORMULA
                 const Scalar b = 1.0/n*(5.0/8.0-b_*b_);               //
                 new_pos[ v ] = (b*R + (1-n*b)*P);
                 new_nor[ v ] = (b*RN + (1-n*b)*PN);
