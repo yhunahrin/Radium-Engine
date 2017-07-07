@@ -21,9 +21,11 @@ include_directories(
     ${EIGEN3_INCLUDE_DIR}
     ${ASSIMP_INCLUDE_DIR}
     ${GLBINDING_INCLUDE_DIR}
+    ${GLOBJECTS_INCLUDE_DIR}
+    ${GLM_INCLUDE_DIR}
 )
 
-message(STATUS "Compiling Radium with include dirs : ${EIGEN3_INCLUDE_DIR} -- ${ASSIMP_INCLUDE_DIR} -- ${GLBINDING_INCLUDE_DIR}" )
+message(STATUS "Compiling Radium with include dirs : ${EIGEN3_INCLUDE_DIR} -- ${ASSIMP_INCLUDE_DIR} -- ${GLBINDING_INCLUDE_DIR} -- ${GLM_INCLUDE_DIR} -- ${GLOBJECTS_INCLUDE_DIR}" )
 # Build Core
 set(core_target radiumCore)
 
@@ -64,6 +66,8 @@ set(engine_libs
     ${OPENGL_LIBRARIES}
     ${ASSIMP_LIBRARIES}
     ${GLBINDING_LIBRARIES}
+    ${GLOBJECTS_LIBRARIES}
+    ${GLM_LIBRARIES}
    )
 
 add_library(
@@ -75,7 +79,7 @@ add_library(
     ${engine_shaders}
 )
 
-add_dependencies( ${engine_target} ${core_target} assimp_lib glbinding_lib)
+add_dependencies( ${engine_target} ${core_target} assimp_lib glbinding_lib globjects_lib glm_lib)
 
 target_compile_definitions(${engine_target} PRIVATE "-DRA_ENGINE_EXPORTS")
 
@@ -88,8 +92,10 @@ target_link_libraries(
 # Build GuiBase
 set(guibase_target radiumGuiBase)
 
+find_package(Qt5Xml REQUIRED)
+
 # Qt5
-set(Qt5_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
+set(Qt5_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Xml_LIBRARIES})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -98,6 +104,7 @@ set(CMAKE_AUTORCC ON)
 add_definitions(${Qt5Core_DEFINITIONS})
 add_definitions(${Qt5Widgets_DEFINITIONS})
 add_definitions(${Qt5OpenGL_DEFINITIONS})
+add_definitions(${Qt5Xml_DEFINITIONS})
 
 file(GLOB_RECURSE guibase_sources GuiBase/*.cpp)
 file(GLOB_RECURSE guibase_headers GuiBase/*.h guibase/*.hpp)
@@ -108,14 +115,14 @@ set (guibase_libs
     radiumCore
     ${Qt5_LIBRARIES}
     ${GLBINDING_LIBRARIES}
+    ${GLOBJECTS_LIBRARIES}
 )
 
 add_library(
     ${guibase_target} SHARED
     ${guibase_sources}
     ${guibase_headers}
-    ${guibase_inlines}
-)
+    ${guibase_inlines})
 
 add_dependencies( ${guibase_target} ${engine_target} )
 target_compile_definitions(${guibase_target} PRIVATE "-DRA_GUIBASE_EXPORTS")

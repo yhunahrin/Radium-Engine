@@ -7,11 +7,21 @@
 #include <Engine/Renderer/Camera/Camera.hpp>
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 
+#include <GuiBase/Utils/KeyMappingManager.hpp>
+
 
 namespace Ra
 {
     namespace Gui
     {
+        /*
+         * TODO : Mathias -- Beuurk. Creating gizmos by default implies that all
+         * applications developped on top of the engine will have them.
+         * This is not a good idea. Applications mus be able to define and
+         * create their their own gizmos
+         *
+         * \see issue #194
+         */
         GizmoManager::GizmoManager(QObject* parent)
                 : QObject(parent)
                 , m_currentGizmoType(NONE), m_mode(Gizmo::GLOBAL)
@@ -85,7 +95,7 @@ namespace Ra
 
         bool GizmoManager::handleMousePressEvent(QMouseEvent* event)
         {
-            if( event->button() != Qt::LeftButton || !canEdit() || m_currentGizmoType == NONE)
+            if( !( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::GIZMOMANAGER_MANIPULATION ) ) || !canEdit() || m_currentGizmoType == NONE)
             {
                 return false;
             }
@@ -101,7 +111,7 @@ namespace Ra
 
         bool GizmoManager::handleMouseReleaseEvent(QMouseEvent* event)
         {
-            if ( event->button() == Qt::LeftButton && currentGizmo())
+            if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::GIZMOMANAGER_MANIPULATION ) && currentGizmo() )
             {
                 currentGizmo()->selectConstraint(-1);
             }
@@ -110,11 +120,11 @@ namespace Ra
 
         bool GizmoManager::handleMouseMoveEvent(QMouseEvent* event)
         {
-            if ( event->buttons() & Qt::LeftButton && currentGizmo() )
+            if ( event->buttons() & Gui::KeyMappingManager::getInstance()->getKeyFromAction( Gui::KeyMappingManager::GIZMOMANAGER_MANIPULATION ) && currentGizmo() )
             {
                 Core::Vector2 currentXY(event->x(), event->y());
                 const Engine::Camera& cam = CameraInterface::getCameraFromViewer(parent());
-                Core::Transform newTransform = currentGizmo()->mouseMove(cam, currentXY, event->modifiers().testFlag( Qt::ControlModifier ) );
+                Core::Transform newTransform = currentGizmo()->mouseMove(cam, currentXY);
                 setTransform( newTransform );
             }
             return (currentGizmo() != nullptr);

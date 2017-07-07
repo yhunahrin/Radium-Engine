@@ -81,6 +81,9 @@ namespace Ra
             /// Read-only access to renderer
             const Engine::Renderer* getRenderer() const;
 
+            /// Read-write access to renderer
+            Engine::Renderer* getRenderer();
+
             //
             // Rendering management
             //
@@ -109,6 +112,9 @@ namespace Ra
 
             /// Write the current frame as an image. Supports either BMP or PNG file names.
             void grabFrame( const std::string& filename );
+
+            /// Add a renderer and return its index.
+            int addRenderer(std::unique_ptr<Engine::Renderer> e);
 
         signals:
             void rendererReady();               //! Emitted when the rendered is correctly initialized

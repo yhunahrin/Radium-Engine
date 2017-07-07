@@ -78,6 +78,18 @@
    <addaction name="menuFILE"/>
    <addaction name="menuMisc"/>
    <addaction name="menuRendering"/>
+    </widget>
+   <widget class="QMenu" name="menuKeymapping">
+    <property name="title">
+     <string>Keymapping</string>
+    </property>
+    <addaction name="actionReload_configuration"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_configuration_file"/>
+   </widget>
+   <addaction name="menuFILE"/>
+   <addaction name="menuMisc"/>
+   <addaction name="menuKeymapping"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <attribute name="dockWidgetArea">
@@ -738,6 +750,22 @@
    </property>
    <property name="text">
     <string>Experimental</string>
+   </property>
+  </action>
+  <action name="actionReload_configuration">
+   <property name="text">
+    <string>Reload configuration</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
+  <action name="actionLoad_configuration_file">
+   <property name="text">
+    <string>Load configuration file...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+O</string>
    </property>
   </action>
  </widget>

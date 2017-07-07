@@ -7,11 +7,14 @@
 /// GL_CHECK_ERROR : queries the last openGL error in debug (no effect in release)
 /// glFlushError() : Ignores the previous openGL errors (no effect in release).
 
-#include <Engine/RaEngine.hpp>
+//#include <Engine/RaEngine.hpp>
 #include <Core/Log/Log.hpp>
 
 #include <glbinding/gl45core/gl.h>
 using namespace gl45core;
+#include <glbinding/gl45ext/gl.h>
+using namespace gl45ext;
+
 
 /// Checks that an openGLContext is available (mostly for debug checks and asserts).
 inline bool checkOpenGLContext()

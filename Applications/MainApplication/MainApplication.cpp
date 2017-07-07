@@ -34,6 +34,8 @@
 
 #include <Gui/MainWindow.hpp>
 
+#include <GuiBase/Utils/KeyMappingManager.hpp>
+
 
 // Const parameters : TODO : make config / command line options
 
@@ -62,7 +64,7 @@ namespace Ra
         QCoreApplication::setApplicationName(applicationName);
 
         m_targetFPS = 60; // Default
-        std::string pluginsPath = "../Plugins";
+        std::string pluginsPath = "Plugins";
 
         QCommandLineParser parser;
         parser.setApplicationDescription("Radium Engine RPZ, TMTC");
@@ -180,6 +182,9 @@ namespace Ra
             numThreads = m_maxThreads;
         }
         m_taskQueue.reset( new Core::TaskQueue(numThreads) );
+
+        // Create the instance of the keymapping manager (should it be done here ?)
+        Gui::KeyMappingManager::createInstance();
 
         createConnections();
 
