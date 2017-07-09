@@ -30,7 +30,7 @@ namespace Algorithm {
     ///
     /// For more details, see:
     ///     https://en.wikipedia.org/wiki/Catmull%E2%80%93Clark_subdivision_surface
-    void CatmullClark( TriangleMesh& mesh, HalfEdgeData& heData,
+    void RA_CORE_API CatmullClark( TriangleMesh& mesh, HalfEdgeData& heData,
                        CatmullClarkOperation* operation = nullptr,
                        bool register_op = false );
 
