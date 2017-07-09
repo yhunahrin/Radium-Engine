@@ -59,6 +59,8 @@ namespace Ra
         const Engine::RadiumEngine* getEngine () const { return m_engine.get();}
 
         uint getFrameCount() const { return m_frameCounter; }
+
+        const std::string& getExportFolder() const {return m_exportFolderName;}
     signals:
         /// Fired when the engine has just started, before the frame timer is set.
         void starting();
@@ -84,8 +86,10 @@ namespace Ra
         void setRecordFrames( bool on );
         void setRecordTimings( bool on );
         void setRecordGraph( bool on );
+        void setRecordMeshes( bool on );
 
         void recordFrame();
+        void recordMeshes();
 
         void onSelectedItem(const Ra::Engine::ItemEntry& entry) { emit selectedItem(entry); }
 
@@ -126,10 +130,17 @@ namespace Ra
         /// Time since the last frame start.
         Core::Timer::TimePoint m_lastFrameStart;
 
+        // Frame count
+        /// How many frames have been run
         uint m_frameCounter;
+        /// Frequency for update of frame timings
         uint m_frameCountBeforeUpdate;
+        /// Number of frames to run before exiting. If 0, run forever.
         uint m_numFrames;
+
+        /// Maximum number of threads on which the app should run
         uint m_maxThreads;
+        /// Storage for the frame timings
         std::vector<FrameTimerData> m_timerData;
 
         /// If true, use the wall clock to advance the engine. If false, use a fixed time step.
@@ -137,7 +148,7 @@ namespace Ra
 
         // Options to control monitoring and outputs
         /// Name of the folder where exported data goes
-        std::string m_exportFoldername;
+        std::string m_exportFolderName;
 
         /// If true, dump each frame to a PNG file.
         bool m_recordFrames;
@@ -145,6 +156,8 @@ namespace Ra
         bool m_recordTimings;
         /// If true, print the task graph;
         bool m_recordGraph;
+        /// If true, export visible meshes at every frames
+        bool m_recordMeshes;
 
         bool m_isAboutToQuit;
     };

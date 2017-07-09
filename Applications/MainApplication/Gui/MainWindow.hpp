@@ -81,6 +81,15 @@ namespace Ra
             // Selection tools
             void onSelectionChanged( const QItemSelection& selected, const QItemSelection& deselected );
 
+            /// Exports a given mesh
+            void exportMesh( const std::string& folder,  uint roIdx );
+
+            /// Exports the mesh of the currently selected object to a file.
+            void exportCurrentMesh();
+
+            /// Exports all visible meshes.
+            void exportAllMeshes( const std::string& folder );
+
             // Gizmo buttons slots
             void gizmoShowNone();
             void gizmoShowTranslate();
@@ -141,8 +150,6 @@ namespace Ra
             /// Slot to accept a new renderer
             void onRendererReady();
 
-            /// Exports the mesh of the currently selected object to a file.
-            void exportCurrentMesh();
 
             /// Remove the currently selected item (entity, component or ro)
             void deleteCurrentItem();

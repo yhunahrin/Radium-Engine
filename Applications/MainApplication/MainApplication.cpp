@@ -55,6 +55,7 @@ namespace Ra
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
+        , m_recordMeshes( false )
         , m_isAboutToQuit( false )
     {
         // Set application and organization names in order to ensure uniform
@@ -90,7 +91,7 @@ namespace Ra
 
         std::time_t startTime = std::time(nullptr);
         std::tm* startTm = std::localtime(&startTime);
-        Ra::Core::StringUtils::stringPrintf(m_exportFoldername, "%4u%02u%02u-%02u%02u",
+        Ra::Core::StringUtils::stringPrintf(m_exportFolderName, "%4u%02u%02u-%02u%02u",
                                             1900 + startTm->tm_year,
                                             startTm->tm_mon,
                                             startTm->tm_mday,
@@ -98,7 +99,7 @@ namespace Ra
                                             startTm->tm_min);
 
 
-        QDir().mkdir(m_exportFoldername.c_str());
+        QDir().mkdir(m_exportFolderName.c_str());
 
         // Boilerplate print.
         LOG( logINFO ) << "*** Radium Engine Main App  ***";
@@ -351,6 +352,11 @@ namespace Ra
             recordFrame();
         }
 
+        if (m_recordMeshes)
+        {
+            recordMeshes();
+        }
+
         ++m_frameCounter;
 
         if (m_numFrames > 0  &&  m_frameCounter > m_numFrames )
@@ -381,12 +387,21 @@ namespace Ra
     {
         m_recordFrames = on;
     }
+    void BaseApplication::setRecordMeshes(bool on)
+    {
+        m_recordMeshes = on;
+    }
 
     void BaseApplication::recordFrame()
     {
         std::string filename;
-        Ra::Core::StringUtils::stringPrintf(filename, "%s/radiumframe_%06u.png", m_exportFoldername.c_str(), m_frameCounter);
+        Ra::Core::StringUtils::stringPrintf(filename, "%s/radiumframe_%06u.png", m_exportFolderName.c_str(), m_frameCounter);
         m_viewer->grabFrame(filename);
+    }
+
+    void BaseApplication::recordMeshes()
+    {
+       m_mainWindow->exportAllMeshes( m_exportFolderName );
     }
 
     BaseApplication::~BaseApplication()
@@ -396,7 +411,7 @@ namespace Ra
         m_mainWindow->cleanup();
         m_engine->cleanup();
         // This will remove the directory if empty.
-        QDir().rmdir( m_exportFoldername.c_str());
+        QDir().rmdir( m_exportFolderName.c_str());
     }
 
     bool BaseApplication::loadPlugins( const std::string& pluginsPath, const QStringList& loadList, const QStringList& ignoreList )

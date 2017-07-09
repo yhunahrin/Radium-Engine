@@ -599,6 +599,7 @@
    <addaction name="actionGizmoRotate"/>
    <addaction name="separator"/>
    <addaction name="actionRecord_Frames"/>
+   <addaction name="actionRecord_Meshes"/>
    <addaction name="separator"/>
   </widget>
   <action name="actionOpenMesh">
@@ -763,6 +764,22 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+O</string>
+   </property>
+  </action>
+  <action name="actionRecord_Meshes">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../../../icons.qrc">
+     <normaloff>:/Assets/Images/rec_g.png</normaloff>
+     <normalon>:/Assets/Images/rec_g_on.png</normalon>:/Assets/Images/rec_g.png</iconset>
+   </property>
+   <property name="text">
+    <string>Record Meshes</string>
+   </property>
+   <property name="toolTip">
+    <string>Record Meshes</string>
    </property>
   </action>
  </widget>

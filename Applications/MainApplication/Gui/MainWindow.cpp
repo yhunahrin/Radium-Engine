@@ -444,32 +444,49 @@ namespace Ra
         m_itemModel->removeItem(ent) ;
     }
 
+
+    void Gui::MainWindow::exportAllMeshes(const std::string& folder)
+    {
+        auto romgr = Engine::RadiumEngine::getInstance()->getRenderObjectManager();
+        std::vector<std::shared_ptr<Engine::RenderObject>> ros;
+        romgr->getRenderObjects(ros);
+        for (const auto& ro : ros)
+        {
+            if (ro->isVisible())
+            {
+                exportMesh(folder,ro->idx);
+            }
+        }
+    }
+
     void Gui::MainWindow::exportCurrentMesh()
     {
-        std::string filename;
-        Ra::Core::StringUtils::stringPrintf(filename, "radiummesh_%06u", mainApp->getFrameCount());
         ItemEntry e = m_selectionManager->currentItem();
-
         // For now we only export a mesh if the selected entry is a render object.
         // There could be a virtual method to get a mesh representation for any object.
         if (e.isRoNode())
         {
-            Ra::Core::OBJFileManager obj;
-            auto ro = Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getRenderObject(e.m_roIndex);
-            Ra::Core::TriangleMesh mesh = ro->getMesh()->getGeometry();
-            bool result = obj.save( filename, mesh );
-            if (result)
-            {
-                LOG(logINFO)<<"Mesh from "<<ro->getName()<<" successfully exported to "<<filename;
-            }
-            else
-            {
-                LOG(logERROR)<<"Mesh from "<<ro->getName()<<"failed to export";
-            }
+            exportMesh( mainApp->getExportFolder(), e.m_roIndex);
         }
         else
         {
             LOG(logWARNING)<< "Current entry was not a render object. No mesh was exported.";
+        }
+    }
+
+    void Gui::MainWindow::exportMesh(const std::string& folder, uint roIdx)
+    {
+        const std::shared_ptr<Engine::RenderObject> ro = Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getRenderObject(roIdx);
+
+        Ra::Core::OBJFileManager obj;
+        Ra::Core::TriangleMesh mesh = ro->getMesh()->getGeometry();
+
+        std::string filename = folder + "/";
+        Ra::Core::StringUtils::appendPrintf(filename, "%s_%06u.obj", ro->getName());
+        bool result = obj.save( filename, mesh );
+        if (!result)
+        {
+            LOG(logWARNING)<<"Could not save mesh to "<<filename;
         }
     }
 
