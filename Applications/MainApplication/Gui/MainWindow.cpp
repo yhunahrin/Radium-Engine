@@ -77,6 +77,7 @@ namespace Ra
         connect(actionGizmoRotate, &QAction::triggered, this, &MainWindow::gizmoShowRotate);
 
         connect(actionRecord_Frames, &QAction::toggled, mainApp, &MainApplication::setRecordFrames);
+        connect(actionRecord_Meshes, &QAction::toggled, mainApp, &BaseApplication::setRecordMeshes);
 
         connect(actionReload_configuration, &QAction::triggered, this, &MainWindow::reloadConfiguration);
         connect(actionLoad_configuration_file, &QAction::triggered, this, &MainWindow::loadConfiguration);
@@ -452,7 +453,7 @@ namespace Ra
         romgr->getRenderObjects(ros);
         for (const auto& ro : ros)
         {
-            if (ro->isVisible())
+            if (ro->isVisible() && ro->getType() != Engine::RenderObjectType::Debug)
             {
                 exportMesh(folder,ro->idx);
             }
@@ -481,9 +482,12 @@ namespace Ra
         Ra::Core::OBJFileManager obj;
         Ra::Core::TriangleMesh mesh = ro->getMesh()->getGeometry();
 
-        std::string filename = folder + "/";
-        Ra::Core::StringUtils::appendPrintf(filename, "%s_%06u.obj", ro->getName());
-        bool result = obj.save( filename, mesh );
+        std::string filename;
+        const uint fcount = mainApp->getFrameCount();
+        const std::string n = ro->getName();
+        Ra::Core::StringUtils::stringPrintf(filename, "%04u_%s_%06u", roIdx, n.c_str() , fcount);
+        std::string path = folder + "/" + filename;
+        bool result = obj.save( path, mesh );
         if (!result)
         {
             LOG(logWARNING)<<"Could not save mesh to "<<filename;
