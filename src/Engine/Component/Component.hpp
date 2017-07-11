@@ -34,7 +34,7 @@ namespace Ra
         public:
             /// CONSTRUCTOR
             Component( const std::string& name );
-
+            Component( const Component &c);
             // FIXME (Charly) : Should destructor call something like
             //                  System::removeComponent(this) ?
             /// DESTRUCTOR

@@ -40,7 +40,6 @@ MinimalApp::MinimalApp(int &argc, char** argv)
     m_frame_timer = new QTimer(this);
     m_frame_timer->setInterval(1000 / m_target_fps);
     connect(m_frame_timer, &QTimer::timeout, this, &MinimalApp::frame);
-
 }
 
 MinimalApp::~MinimalApp()

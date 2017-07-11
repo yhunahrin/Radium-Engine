@@ -183,7 +183,6 @@ namespace Ra
         m_currentRenderer->resize( width, height );
     }
 
-
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
     {
 

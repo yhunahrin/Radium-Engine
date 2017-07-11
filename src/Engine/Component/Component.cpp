@@ -21,6 +21,14 @@ namespace Ra
         {
         }
 
+        Component::Component( const Component &c):
+            m_name(c.m_name),
+            m_system(c.m_system),
+            m_renderObjects(c.m_renderObjects)
+        {
+            
+        }
+
         Component::~Component()
         {
             for (const auto& ro : m_renderObjects )

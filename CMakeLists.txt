@@ -182,3 +182,9 @@ add_custom_target( radium_configs
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CONFIG_DIR} "${EXECUTABLE_OUTPUT_PATH}/Configs"
         COMMENT "Copying configs (keymapping)" VERBATIM
         )
+else()
+    add_custom_target( radium_configs
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${CONFIG_DIR} "${EXECUTABLE_OUTPUT_PATH}/Configs"
+            COMMENT "Linking (symlink) configs (keymapping)" VERBATIM
+            )
+endif()
