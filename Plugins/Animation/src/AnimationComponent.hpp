@@ -11,6 +11,7 @@
 #include <Engine/Component/Component.hpp>
 #include <Engine/Assets/HandleData.hpp>
 #include <Engine/Assets/AnimationData.hpp>
+#include <Engine/Assets/HandleToSkeleton.hpp>
 
 namespace AnimationPlugin
 {
@@ -76,16 +77,6 @@ namespace AnimationPlugin
         // Loading data functions
         //
 
-        // Create a skeleton from a file data.
-        void createSkeleton( const Ra::Asset::HandleData* data, std::map< uint, uint >& indexTable );
-
-        // Internal recursive method to create bones
-        void addBone( const int parent,
-                      const uint dataID,
-                      const Ra::Core::AlignedStdVector< Ra::Asset::HandleComponentData >& data,
-                      const Ra::Core::AlignedStdVector< Ra::Core::Vector2i >& edgeList,
-                      std::vector< bool >& processed,
-                      std::map< uint, uint >& indexTable );
 
         // Internal function to create the skinning weights.
         void createWeightMatrix( const Ra::Asset::HandleData* data, const std::map< uint, uint >& indexTable, const std::map< uint, uint >& duplicateTable );
