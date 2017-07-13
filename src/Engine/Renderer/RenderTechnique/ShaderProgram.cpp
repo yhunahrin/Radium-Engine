@@ -85,7 +85,7 @@ namespace Ra
 
             // FIXME Where are defined the global replacement?
             auto shaderSource = globjects::Shader::applyGlobalReplacements( fullsource.get() );
-
+//            auto shaderSource = fullsource.get();
 
             auto shader = globjects::Shader::create( getTypeAsGLEnum( type ) );
             shader->setIncludePaths( { std::string("/") } );
@@ -337,6 +337,7 @@ namespace Ra
          ****************************************************/
         std::string ShaderProgram::preprocessIncludes(const std::string &name, const std::string& shader, int level, int line)
         {
+            
             CORE_ERROR_IF(level < 32, "Shader inclusion depth limit reached.");
 
             std::string result = "";

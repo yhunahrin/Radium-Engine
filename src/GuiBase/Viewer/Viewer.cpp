@@ -39,6 +39,9 @@
 
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
+#include <Engine/Renderer/RenderTechnique/ShaderProgramManager.hpp>
+
+
 namespace Ra
 {
     Gui::Viewer::Viewer( QWidget* parent )
@@ -69,6 +72,9 @@ namespace Ra
         //glbinding::Binding::initialize(false);
         // no need to initalize glbinding. globjects (magically) do this internally.
         globjects::init(globjects::Shader::IncludeImplementation::Fallback);
+
+        Ra::Engine::ShaderProgramManager::createInstance("Shaders/Default.vert.glsl",
+                                                         "Shaders/Default.frag.glsl");
 
         LOG( logINFO ) << "*** Radium Engine Viewer ***";
         LOG( logINFO ) << "Renderer (glbinding) : " << glbinding::ContextInfo::renderer();

@@ -118,11 +118,13 @@ add_subdirectory(${RADIUM_SRC_DIR})
 # ----------------------------------------------------------------------------------------------------------------------
 #   Applications
 #   Set Base directories for dependencies
+
 add_subdirectory(Applications)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 #   External plugins
+# FIXME(Charly) Not sure this is really the greatest idea ever
 add_subdirectory(Plugins)
 
 
@@ -188,3 +190,7 @@ else()
             COMMENT "Linking (symlink) configs (keymapping)" VERBATIM
             )
 endif()
+
+
+install(TARGETS ${core_target} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/Bundle-${CMAKE_CXX_COMPILER_ID})
+	
