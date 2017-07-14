@@ -3,8 +3,7 @@
 # Compilation flag for each platforms =========================================
 
 if (APPLE)
-#    message(STATUS "${PROJECT_NAME} : Compiling on Apple with compiler " ${CMAKE_CXX_COMPILER_ID})
-
+    set(WARNING_DISABLES "")
     if ( (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") )
         set(OMP_FLAG "-fopenmp -ftree-vectorize")
         set(MATH_FLAG "-mfpmath=sse -ffast-math")
@@ -15,19 +14,21 @@ if (APPLE)
 
     if (NOT ${RADIUM_WITH_OMP})
         set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
+        set (WARNING_DISABLES "${WARNING_DISABLES} -Wno-unknown-pragmas" )  # gcc/mingw prints a lot of warnings due to open mp pragmas
     else()
         set(RADIUM_WITH_OMP ON)
     endif()
 
     set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${CMAKE_CXX_FLAGS} ${WARNING_DISABLES}")
     set(CMAKE_CXX_FLAGS_DEBUG          "-D_DEBUG -DCORE_DEBUG -g3 -ggdb ${CMAKE_CXX_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3 ${MATH_FLAG}")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 ${CMAKE_CXX_FLAGS_RELEASE}")
 
     add_definitions( -Wno-deprecated-declarations ) # Do not warn for eigen bind being deprecated
 elseif (UNIX OR MINGW)
+    set(WARNING_DISABLES "")
+
     if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
         set(OMP_FLAG "-fopenmp=libiomp5")
         set(MATH_FLAG "-mfpmath=sse")
@@ -38,7 +39,7 @@ elseif (UNIX OR MINGW)
 
     if (NOT ${RADIUM_WITH_OMP})
         set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
+        set (WARNING_DISABLES "${WARNING_DISABLES} -Wno-unknown-pragmas" )  # gcc/mingw prints a lot of warnings due to open mp pragmas
     endif()
 
     if( MINGW )
@@ -47,21 +48,23 @@ elseif (UNIX OR MINGW)
         set( EIGEN_ALIGNMENT_FLAG "" )
     endif()
 
+
+# Prevent Eigen from spitting thousands of warnings with gcc 6+
+    set ( WARNING_DISABLES "${WARNING_DISABLES} -Wno-deprecated-declarations")
+    if( NOT(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 5.4))
+        set (WARNING_DISABLES "${WARNING_DISABLES} -Wno-ignored-attributes -Wno-misleading-indentation")
+    endif()
+
     set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${EIGEN_ALIGNMENT_FLAG} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${EIGEN_ALIGNMENT_FLAG} ${CMAKE_CXX_FLAGS} ${WARNING_DISABLES}")
     set(CMAKE_CXX_FLAGS_DEBUG          "-D_DEBUG -DCORE_DEBUG -g3 -ggdb ${CMAKE_CXX_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3 ${MATH_FLAG}")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 -ggdb ${CMAKE_CXX_FLAGS_RELEASE}")
 
-    # Prevent Eigen from spitting thousands of warnings with gcc 6+
-    add_definitions(-Wno-deprecated-declarations)
-    if( NOT(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 5.4))
-        add_definitions(-Wno-ignored-attributes -Wno-misleading-indentation)
-    endif()
-
   if (MINGW)
       add_definitions( -static-libgcc -static-libstdc++) # Compile with static libs
   endif()
+
 elseif (MSVC)
     # Visual studio flags breakdown
     # /GR- : no rtti ; /Ehs-c- : no exceptions
