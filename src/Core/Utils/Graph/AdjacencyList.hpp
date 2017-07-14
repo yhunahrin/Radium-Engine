@@ -53,6 +53,8 @@ public:
     inline bool isJoint( const uint i ) const;              // Return true if the node is a joint node. ( |child| == 1 )
     inline bool isEdge( const uint i, const uint j ) const; // Return true if the edge { i, j } exists.
 
+    inline std::vector<std::pair<uint,uint>> getEdges();    // Return the list of edges in the graph.
+
 
     //////////////////////////////////////////////////////////////////////////////
     // VARIABLE

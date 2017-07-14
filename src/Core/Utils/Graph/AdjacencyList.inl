@@ -113,6 +113,19 @@ namespace Graph {
         return false;
     }
 
+    std::vector<std::pair<uint, uint> > AdjacencyList::getEdges()
+    {
+        std::vector<std::pair<uint,uint>> result;
+        for (uint i = 0; i < m_child.size();++i)
+        {
+            for (const auto&j : m_child[i])
+            {
+                result.push_back({i,j});
+            }
+        }
+        return result;
+    }
+
 } // namespace GraphicsEntity
 } // namespace Core
 } // namespace Ra
