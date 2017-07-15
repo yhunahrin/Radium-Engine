@@ -65,7 +65,7 @@ namespace Ra
     }
 
     void Gui::Viewer::initializeGL()
-    {        
+    {
         //glbinding::Binding::initialize(false);
         // no need to initalize glbinding. globjects (magically) do this internally.
         globjects::init(globjects::Shader::IncludeImplementation::Fallback);
@@ -404,6 +404,17 @@ namespace Ra
             m_camera->fitScene(aabb);
         }
     }
+
+    void Gui::Viewer::loadCamera(std::istream &in)
+    {
+        m_camera->load(in);
+    }
+
+    void Gui::Viewer::saveCamera(std::ostream& out) const
+    {
+        m_camera->save(out);
+    }
+
 
     std::vector<std::string> Gui::Viewer::getRenderersName() const
     {

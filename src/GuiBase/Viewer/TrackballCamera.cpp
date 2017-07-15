@@ -28,12 +28,6 @@ namespace Ra
         , m_cameraRotateMode( false )
         , m_cameraPanMode( false )
         , m_cameraZoomMode( false )
-        , m_walkingOn( false )
-        , m_strafingOn( false )
-        , m_climbingOn( false )
-        , m_walking( 0 )
-        , m_strafing( 0 )
-        , m_climbing( 0 )
     {
         resetCamera();
     }
@@ -171,6 +165,58 @@ namespace Ra
     bool Gui::TrackballCamera::handleKeyReleaseEvent( QKeyEvent* e )
     {
         return false;
+    }
+
+    void Gui::TrackballCamera::save(std::ostream &out) const
+    {
+        out<<"#Radium_trackball_camera_state"<<std::endl;
+        out<<m_camera->getFrame().matrix()<<std::endl;
+        out<<std::endl;
+        out<<m_camera->getFOV()<<" "<<m_camera->getZNear()<<" "<<m_camera->getZFar()<<std::endl;
+        out<<std::endl;
+        out<<m_trackballCenter.transpose();
+    }
+
+    void Gui::TrackballCamera::load(std::istream &in )
+    {
+        std::string str;
+        Scalar M[16]; // 4x4 view matrix;
+        Scalar fov, znear, zfar, x , y, z;
+
+        in>>str;
+        bool result = !in.fail();
+        for (uint i =0; i < 16; ++i)
+        {
+            in>>M[i];
+            result &= !in.fail();
+        }
+        in>> fov>>znear>>zfar>>x>>y>>z;
+        result &= !in.fail();
+
+        if (!result)
+        {
+            LOG(logWARNING)<<"Could not load camera file data";
+            return;
+        }
+
+        Core::Matrix4 frame;
+        frame << M[0],  M[1],  M[2], M[3],
+                 M[4],  M[5],  M[6], M[7],
+                 M[8],  M[9],  M[10],M[11],
+                 M[12], M[13], M[14],M[15];
+
+        Core::Transform T (frame);
+        m_camera->setFrame(T);
+        m_camera->setFOV(fov);
+        m_camera->setZNear(znear);
+        m_camera->setZFar(zfar);
+        m_trackballCenter = Core::Vector3(x,y,x);
+
+        updatePhiTheta();
+
+        emit cameraPositionChanged( m_camera->getPosition() );
+        emit cameraTargetChanged( m_trackballCenter );
+
     }
 
     void Gui::TrackballCamera::setCameraPosition( const Core::Vector3& position )

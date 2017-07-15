@@ -113,6 +113,8 @@ namespace Ra
         connect(m_removeEntityButton, &QPushButton::clicked, this, &MainWindow::deleteCurrentItem);
         connect(m_clearSceneButton, &QPushButton::clicked, this, &MainWindow::resetScene);
         connect(m_fitCameraButton, &QPushButton::clicked, this, &MainWindow::fitCamera);
+        connect(m_saveCameraButton, &QPushButton::clicked, this, &MainWindow::saveCamera);
+        connect(m_loadCameraButton, &QPushButton::clicked, this, &MainWindow::loadCamera);
 
         // Renderer stuff
 
@@ -165,6 +167,14 @@ namespace Ra
             settings.setValue("files/load", path);
             emit fileLoading(path);
         }
+    }
+
+    void Gui::MainWindow::loadCamera()
+    {
+        QSettings settings;
+        QString path = settings.value("files/load", QDir::homePath()).toString();
+        path = QFileDialog::getOpenFileName(this, "Open Camera", path, "");
+        loadCameraFromFile(path);
     }
 
     void Gui::MainWindow::onUpdateFramestats(const std::vector<FrameTimerData>& stats)
@@ -555,6 +565,36 @@ namespace Ra
     void Gui::MainWindow::fitCamera()
     {
         m_viewer->fitCameraToScene(Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getSceneAabb());
+    }
+
+    void Gui::MainWindow::saveCamera()
+    {
+        std::string filename = mainApp->getExportFolder()+"/camera_"+
+                std::to_string(mainApp->getFrameCount())+".cam";
+        std::ofstream outFile (filename);
+        if (outFile.is_open())
+        {
+            m_viewer->saveCamera( outFile );
+            LOG(logINFO)<< "Saved camera state to"<<filename;
+        }
+        else
+        {
+            LOG(logWARNING) <<"Could not open file to save camera";
+        }
+    }
+
+    void Gui::MainWindow::loadCameraFromFile(const QString path)
+    {
+       std::ifstream file(path.toStdString().c_str());
+       if (file.is_open())
+       {
+           LOG(logINFO)<<"Loading camera from"<<path.toStdString();
+           m_viewer->loadCamera(file);
+       }
+       else
+       {
+           LOG(logWARNING)<<"Could not open camera file"<<path.toStdString();
+       }
     }
 
 } // namespace Ra

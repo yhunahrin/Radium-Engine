@@ -106,6 +106,12 @@ namespace Ra
             /// Reset the camera to see all visible objects
             void fitCamera();
 
+            /// Save the current camera state
+            void saveCamera();
+
+            ///  Load camera state from a file
+            void loadCameraFromFile(const QString path);
+
             /// Slot for the "edit" button.
             void editRO();
 
@@ -134,6 +140,9 @@ namespace Ra
         private slots:
             /// Slot for the "load file" menu.
             void loadFile();
+
+            /// Slot for the "load camera" button
+            void loadCamera();
 
             /// Slot for the "material editor"
             void openMaterialEditor();

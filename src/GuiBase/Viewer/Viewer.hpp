@@ -107,6 +107,12 @@ namespace Ra
             /// Moves the camera so that the whole scene is visible.
             void fitCameraToScene( const Core::Aabb& sceneAabb );
 
+            /// Save the camera state to a file
+            void saveCamera(std::ostream & out) const;
+
+            /// Load the camera state from a fil
+            void loadCamera(std::istream &in);
+
             /// Returns the names of the different registred renderers.
             std::vector<std::string> getRenderersName() const;
 

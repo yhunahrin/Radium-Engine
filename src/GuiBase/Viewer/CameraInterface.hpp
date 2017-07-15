@@ -48,6 +48,10 @@ namespace Ra
             Core::Matrix4 getProjMatrix() const;
             Core::Matrix4 getViewMatrix() const;
 
+            /// Serialization methods
+            virtual void save( std::ostream& out ) const = 0;
+            virtual void load( std::istream& in ) = 0;
+
             /// @return true if the event has been taken into account, false otherwise
             virtual bool handleMousePressEvent( QMouseEvent* event ) = 0;
             /// @return true if the event has been taken into account, false otherwise

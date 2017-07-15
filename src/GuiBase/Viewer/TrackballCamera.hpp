@@ -29,6 +29,9 @@ namespace Ra
             /// @return true if the event has been taken into account, false otherwise
             virtual bool handleKeyReleaseEvent( QKeyEvent* event ) override;
 
+            virtual void save( std::ostream& out ) const override;
+            virtual void load( std::istream &in ) override;
+
         public slots:
             virtual void setCameraPosition( const Core::Vector3& position ) override;
             virtual void setCameraTarget( const Core::Vector3& target ) override;
@@ -65,13 +68,6 @@ namespace Ra
             // TODO(Charly): fps mode
             bool m_cameraZoomMode;
 
-            bool m_walkingOn;
-            bool m_strafingOn;
-            bool m_climbingOn;
-
-            Scalar m_walking;
-            Scalar m_strafing;
-            Scalar m_climbing;
         };
     } // namespace Engine
 } // namespace Ra
