@@ -79,7 +79,7 @@ namespace Ra
 
     public slots:
 
-        void loadFile( QString path );
+        void loadFile( QString path, bool fitCam = true );
         void framesCountForStatsChanged( uint count );
         void appNeedsToQuit();
         void setRealFrameRate( bool on );

@@ -165,7 +165,7 @@ namespace Ra
         if (path.size() > 0)
         {
             settings.setValue("files/load", path);
-            emit fileLoading(path);
+            emit fileLoading(path, true); // (val) This could be an option somewhere.
         }
     }
 

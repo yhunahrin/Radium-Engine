@@ -79,8 +79,9 @@ namespace Ra
         QCommandLineOption pluginLoadOpt(QStringList{"l", "load", "loadPlugin"}, "Only load plugin with the given name (filename without the extension). If this option is not used, all plugins in the plugins folder will be loaded. ", "name");
         QCommandLineOption pluginIgnoreOpt(QStringList{"i", "ignore", "ignorePlugin"}, "Ignore plugins with the given name. If the name appears within both load and ignore options, it will be ignored.", "name");
         QCommandLineOption fileOpt(QStringList{"f", "file", "scene"}, "Open a scene file at startup.", "file name", "foo.bar");
+        QCommandLineOption camOpt(QStringList{"c", "camera", "can"}, "Open a camera file at startup", "file name", "foo.bar");
 
-        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, maxThreadsOpt, numFramesOpt });
+        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
@@ -193,9 +194,18 @@ namespace Ra
         emit starting();
 
         // A file has been required, load it.
-        if (parser.isSet(fileOpt))
+        const bool doLoadFile = parser.isSet(fileOpt);
+        const bool doLoadCam = parser.isSet(camOpt);
+
+
+        if (doLoadFile)
         {
-            loadFile(parser.value(fileOpt));
+            loadFile(parser.value(fileOpt), !doLoadCam);
+        }
+
+        if (doLoadCam)
+        {
+            m_mainWindow->loadCameraFromFile(parser.value(camOpt));
         }
 
         m_lastFrameStart = Core::Timer::Clock::now();
@@ -230,15 +240,17 @@ namespace Ra
         }
     }
 
-    void BaseApplication::loadFile( QString path )
+    void BaseApplication::loadFile( QString path, bool fitCam )
     {
         std::string pathStr = path.toLocal8Bit().data();
         LOG(logINFO) << "Loading file " << pathStr << "...";
         bool res = m_engine->loadFile( pathStr );
         CORE_UNUSED( res );
         m_viewer->handleFileLoading( pathStr );
-        m_mainWindow->fitCamera();
-
+        if (fitCam)
+        {
+            m_mainWindow->fitCamera();
+        }
         emit loadComplete();
     }
 

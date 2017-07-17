@@ -214,6 +214,12 @@ namespace Ra
 
         updatePhiTheta();
 
+        if (m_hasLightAttached)
+        {
+            m_light->setPosition( m_camera->getPosition() );
+            m_light->setDirection( m_camera->getDirection() );
+        }
+
         emit cameraPositionChanged( m_camera->getPosition() );
         emit cameraTargetChanged( m_trackballCenter );
 

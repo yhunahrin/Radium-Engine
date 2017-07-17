@@ -123,7 +123,7 @@ namespace Ra
             void closed();
 
             /// Emitted when the frame loads
-            void fileLoading( const QString path );
+            void fileLoading( const QString path, bool fitCam );
 
             /// Emitted when the user changes the timer box ("Frame average over count")
             void framescountForStatsChanged( int count );
