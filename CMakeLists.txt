@@ -118,13 +118,11 @@ add_subdirectory(${RADIUM_SRC_DIR})
 # ----------------------------------------------------------------------------------------------------------------------
 #   Applications
 #   Set Base directories for dependencies
-
 add_subdirectory(Applications)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 #   External plugins
-# FIXME(Charly) Not sure this is really the greatest idea ever
 add_subdirectory(Plugins)
 
 
@@ -180,7 +178,7 @@ endif()
 set(CONFIG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Configs")
 
 if(MSVC OR MSVC_IDE OR MINGW)
-add_custom_target( radium_configs
+    add_custom_target( radium_configs
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CONFIG_DIR} "${EXECUTABLE_OUTPUT_PATH}/Configs"
         COMMENT "Copying configs (keymapping)" VERBATIM
         )
@@ -190,7 +188,3 @@ else()
             COMMENT "Linking (symlink) configs (keymapping)" VERBATIM
             )
 endif()
-
-
-install(TARGETS ${core_target} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/Bundle-${CMAKE_CXX_COMPILER_ID})
-	
