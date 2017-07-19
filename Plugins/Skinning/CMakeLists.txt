@@ -45,12 +45,30 @@ add_definitions( ${Qt5Core_DEFINITIONS} )
 add_definitions( ${Qt5Widges_DEFINITIONS} )
 add_definitions( ${Qt5OpenGL_DEFINITIONS} )
 
+option(SKINNING_BBW "Use BBW instead of given weights"  OFF)
+
+
+if (SKINNING_BBW)
+    add_definitions( -DSKINNING_WITH_BBW -DTETLIBRARY)
+    set(IGL_DIR "${RADIUM_ROOT_DIR}/../igl/libigl/include")
+    set(TETGEN_DIR "${RADIUM_ROOT_DIR}/../tetgen/tetgen1.5.0")
+    set(TETGEN_LIB "${TETGEN_DIR}/build/libtet.a")
+
+    set(BBW_INC ${IGL_DIR} ${TETGEN_DIR})
+    set(BBW_LIBS ${TETGEN_LIB})
+else()
+    set(BBW_INC "")
+    set(BBW_LIBS "")
+endif()
+
+
 include_directories(
     src/
     ${CMAKE_CURRENT_BINARY_DIR} # MOC
     ${RADIUM_INCLUDE_DIR}
     ${EIGEN3_INCLUDE_DIR}
     ${ASSIMP_INCLUDE_DIR}
+    ${BBW_INC}
     )
 
 add_library( Skinning SHARED ${sources} ${headers} ${inlines} )
@@ -63,6 +81,7 @@ target_link_libraries( Skinning
                        ${Qt5_LIBRARIES}
                        ${RADIUM_LIBRARIES}
                        ${GLBINDING_LIBRARIES}           # Radium dep
+                       ${BBW_LIBS}
                      )
 
 

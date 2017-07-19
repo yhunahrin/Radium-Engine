@@ -1,17 +1,14 @@
-// Application to
+#if defined (SKINNING_WITH_BBW)
+#include <BBW/BoundedBiharmonicWeights.hpp>
 
-#include <string>
-
-#include <Core/Math/LinearAlgebra.hpp>
 #include <Core/Mesh/TriangleMesh.hpp>
 #include <Core/Animation/Handle/Skeleton.hpp>
+#include <Core/Animation/Handle/HandleWeight.hpp>
+#include <Core/Animation/Handle/HandleWeightOperation.hpp>
 #include <Core/Animation/Handle/SkeletonUtils.hpp>
 
-#include <Engine/Assets/FileData.hpp>
-#include <Engine/Assets/HandleToSkeleton.hpp>
 
 #include <tetgen.h>
-
 #ifdef DEBUG
 #   define VERBOSE
 #endif
@@ -19,73 +16,25 @@
 #undef VERBOSE
 #include <igl/bbw.h>
 
+typedef Ra::Core::Animation::Handle::SpaceType SpaceType;
+
 using namespace Ra;
 
-void print_usage()
+namespace SkinningPlugin
 {
-    std::cout<<"Usage : bbwcomputer <rigged_mesh_file>"<<std::endl;
-    std::cout<<"Input file must have a mesh and a skeleton (Assimp input formats only)."<<std::endl;
-    std::cout<<"If there are several meshes or skeletons, the first one of each will be used."<<std::endl;
-}
+namespace BBW
+{
 
-// This function compute bounded biharmonic weights on a surface mesh with a skeleton.
-// see "Bounded biharmonic Weights for Real-Time deformation", Jacobson et al. SIGGRAPH 2011.
-
-// The computation of BBW relies on having a volumetric mesh (tetrahedral), and requires
-// that some of the tet-mesh vertices are positionned precisely on the handles.
-// In our case, this means that some tet-mesh points have to be on the bones segments,
-// (but not on the joints).
-
-// This function first compute the volumetric tetmesh using Tetgen, then calls
-// the igl implementation of BBW.
-
-
-int main(int argc, char**argv)
+void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::Skeleton& skel, Ra::Core::Animation::WeightMatrix& weightsOut)
 {
     // options
     const bool verbose = true;
     const bool outputTetMesh = false;
     const uint nBoneSamples = 5;
 
-    if (argc < 2)
-    {
-        print_usage();
-        exit(0);
-    }
 
-    // Load data
-    // =========
-
-    // Load the file given as argument. First mesh and first skeleton will be taken as input.
-    std::string filename(argv[1]);
-
-    Asset::FileData fileData(filename, verbose);
-
-    auto geomData = fileData.getGeometryData();
-    auto skelData = fileData.getHandleData();
-
-    if (geomData.empty() || skelData.empty())
-    {
-        std::cerr<<"Error : file must contain mesh and skeleton"<<std::endl;
-        exit(1);
-    }
-
-    std::map<uint,uint> indexTable;
-    Core::Animation::Skeleton skel;
-    Asset::createSkeleton(*skelData[0], skel, indexTable);
-
-    Core::TriangleMesh mesh;
-    mesh.m_vertices = geomData[0]->getVertices();
-    mesh.m_normals = geomData[0]->getNormals();
-
-    for (const auto& face : geomData[0]->getFaces() )
-    {
-        mesh.m_triangles.push_back(face.head<3>());
-    }
-
+    // Sample points on the skeleton bones (but not at the joints)
     Core::Vector3Array boneSamples;
-
-    // Sample points on the skeleton bones
     for (uint j = 0; j < skel.size(); ++j)
     {
         Core::Vector3 a, b;
@@ -97,7 +46,6 @@ int main(int argc, char**argv)
             boneSamples.push_back( (1-t) * a + t *b);
         }
     }
-
 
     // PART 1
     // create tet mesh from mesh + skeleton
@@ -184,7 +132,7 @@ int main(int argc, char**argv)
         if (outputTetMesh)
         {
             tetrahedralize(flags.c_str(), &input, NULL);
-            return 0;
+            return;
         }
         else
         {
@@ -228,7 +176,6 @@ int main(int argc, char**argv)
         }
     }
 
-
     // PART 2
     // Compute weights with igl BBW algorithm
     // =======================================
@@ -238,7 +185,7 @@ int main(int argc, char**argv)
 
         Eigen::MatrixXd C( skel.m_graph.size(), 3); // Handle position ( joints )
         uint i = 0;
-        for (const auto& t : skel.getPose(Core::Animation::Handle::SpaceType::MODEL))
+        for (const auto& t : skel.getPose(SpaceType::MODEL))
         {
             C(i,0) = t.translation()[0];
             C(i,1) = t.translation()[1];
@@ -246,7 +193,7 @@ int main(int argc, char**argv)
             ++i;
         }
 
-        auto edges = skel.m_graph.getEdges();
+        const auto edges = skel.m_graph.getEdges();
         Eigen::MatrixXi E( edges.size(), 2); // Edges of skeleton graph
         for (uint i = 0; i < edges.size(); ++i)
         {
@@ -268,7 +215,7 @@ int main(int argc, char**argv)
         }
 
         igl::BBWData bbw_data;
-        bbw_data.active_set_params.max_iter = 10;
+        bbw_data.active_set_params.max_iter = 50;
         bbw_data.verbosity = verbose ? 2 : 0;
 
         // Do BBW
@@ -284,5 +231,26 @@ int main(int argc, char**argv)
         igl::normalize_row_sums(W,W);
     }
 
-    return 0;
+
+    // Convert the weights into our sparse matrix representation
+
+    weightsOut.resize(mesh.m_vertices.size(), skel.size());
+    auto edges = skel.m_graph.getEdges();
+    for (uint i = 0; i < mesh.m_vertices.size(); ++i)
+    {
+        for (uint c = 0; c < W.cols();++c)
+        {
+            if (W(i,c) > Ra::Core::Math::dummyEps )
+            {
+                uint j = edges[c].first;
+                weightsOut.coeffRef(i,j)  = W(i,c);
+            }
+        }
+
+    }
+    Ra::Core::Animation::checkWeightMatrix(weightsOut, true);
 }
+
+}
+}
+#endif // SKINNING_WITH_BBW

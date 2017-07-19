@@ -6,6 +6,11 @@
 #include <Core/Animation/Skinning/DualQuaternionSkinning.hpp>
 #include <Core/Animation/Skinning/RotationCenterSkinning.hpp>
 
+
+#if defined (SKINNING_WITH_BBW)
+    #include <BBW/BoundedBiharmonicWeights.hpp>
+#endif
+
 using Ra::Core::Quaternion;
 using Ra::Core::DualQuaternion;
 
@@ -42,8 +47,11 @@ void SkinningComponent::setupSkinning()
         m_refData.m_skeleton        = ComponentMessenger::getInstance()->get<Skeleton>( getEntity(), m_contentsName );
         m_refData.m_referenceMesh   = ComponentMessenger::getInstance()->get<TriangleMesh>( getEntity(), m_contentsName );
         m_refData.m_refPose         = ComponentMessenger::getInstance()->get<RefPose> ( getEntity(), m_contentsName );
+#ifndef SKINNING_WITH_BBW
         m_refData.m_weights         = ComponentMessenger::getInstance()->get<WeightMatrix> ( getEntity(), m_contentsName );
-
+#else
+        BBW::computeBBW( m_refData.m_referenceMesh, m_refData.m_skeleton, m_refData.m_weights);
+#endif
         m_frameData.m_previousPose = m_refData.m_refPose;
         m_frameData.m_doSkinning = false;
         m_frameData.m_doReset = false;
