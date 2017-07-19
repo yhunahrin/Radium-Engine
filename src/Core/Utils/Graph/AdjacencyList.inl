@@ -113,7 +113,7 @@ namespace Graph {
         return false;
     }
 
-    std::vector<std::pair<uint, uint> > AdjacencyList::getEdges()
+    std::vector<std::pair<uint, uint> > AdjacencyList::getEdges() const
     {
         std::vector<std::pair<uint,uint>> result;
         for (uint i = 0; i < m_child.size();++i)
