@@ -45,10 +45,11 @@ add_definitions( ${Qt5Core_DEFINITIONS} )
 add_definitions( ${Qt5Widges_DEFINITIONS} )
 add_definitions( ${Qt5OpenGL_DEFINITIONS} )
 
-option(SKINNING_BBW "Use BBW instead of given weights"  OFF)
+option(SKINNING_BBW "Use BBW instead of given weights"  ON)
 
 
-if (SKINNING_BBW)
+
+if (${SKINNING_BBW})
     add_definitions( -DSKINNING_WITH_BBW -DTETLIBRARY)
     set(IGL_DIR "${RADIUM_ROOT_DIR}/../igl/libigl/include")
     set(TETGEN_DIR "${RADIUM_ROOT_DIR}/../tetgen/tetgen1.5.0")

@@ -50,7 +50,7 @@ void SkinningComponent::setupSkinning()
 #ifndef SKINNING_WITH_BBW
         m_refData.m_weights         = ComponentMessenger::getInstance()->get<WeightMatrix> ( getEntity(), m_contentsName );
 #else
-        BBW::computeBBW( m_refData.m_referenceMesh, m_refData.m_skeleton, m_refData.m_weights);
+        m_framedata.m_weights = BBW::computeBBW( m_refData.m_referenceMesh, m_refData.m_skeleton );
 #endif
         m_frameData.m_previousPose = m_refData.m_refPose;
         m_frameData.m_doSkinning = false;

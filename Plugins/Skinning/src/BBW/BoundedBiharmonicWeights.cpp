@@ -25,24 +25,25 @@ namespace SkinningPlugin
 namespace BBW
 {
 
-void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::Skeleton& skel, Ra::Core::Animation::WeightMatrix& weightsOut)
+WeightMatrix computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::Skeleton& skel, const BBWOptions& options)
 {
-    // options
-    const bool verbose = true;
-    const bool outputTetMesh = false;
-    const uint nBoneSamples = 5;
 
+    const bool& verbose = options.verbose;
 
+    WeightMatrix result;
+
+    // INITIALIZATION
     // Sample points on the skeleton bones (but not at the joints)
+    // ------------------------------------------------------------
     Core::Vector3Array boneSamples;
     for (uint j = 0; j < skel.size(); ++j)
     {
         Core::Vector3 a, b;
         Core::Animation::SkeletonUtils::getBonePoints(skel, j, a ,b);
 
-        for (uint i = 1; i <nBoneSamples; ++i)
+        for (uint i = 1; i <options.nBoneSamples; ++i)
         {
-            Scalar t = Scalar(i) / Scalar(nBoneSamples);
+            Scalar t = Scalar(i) / Scalar(options.nBoneSamples);
             boneSamples.push_back( (1-t) * a + t *b);
         }
     }
@@ -126,18 +127,17 @@ void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::S
         flags +="p"; // use PLC
         flags +="q"; // refine mesh
         if (verbose){flags +="V";} // verbosity
-        if (outputTetMesh){ flags +="g";} // export .mesh file
+        if (options.outputTetMesh){ flags +="g";} // export .mesh file
 
         // Run tetmesh.
-        if (outputTetMesh)
+        tetrahedralize(flags.c_str(),&input, &output);
+
+        // Run tetmesh a second time if debug output is requested.
+        if (options.outputTetMesh)
         {
             tetrahedralize(flags.c_str(), &input, NULL);
-            return;
         }
-        else
-        {
-            tetrahedralize(flags.c_str(),&input, &output);
-        }
+
 
         // Export output data
         V.resize(output.numberofpoints,3);
@@ -206,25 +206,25 @@ void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::S
 
         // Automatically create the boundary condition matrices
         // telling which vertices are on the bones and have a fixed weight of 1
-        bool result = igl::boundary_conditions(V,T,C,Eigen::VectorXi(), E, Eigen::MatrixXi(),b,bc);
+        const bool bcOK = igl::boundary_conditions(V,T,C,Eigen::VectorXi(), E, Eigen::MatrixXi(),b,bc);
 
-        if ( !result )
+        if ( !bcOK )
         {
             std::cout<<"Boundary condition error"<<std::endl;
-            exit(1);
+            return result;
         }
 
         igl::BBWData bbw_data;
-        bbw_data.active_set_params.max_iter = 50;
+        bbw_data.active_set_params.max_iter = options.nBBWIter;
         bbw_data.verbosity = verbose ? 2 : 0;
 
         // Do BBW
-        result = igl::bbw(V,T,b,bc,bbw_data, W);
+        const bool bbwOK = igl::bbw(V,T,b,bc,bbw_data, W);
 
-        if ( !result )
+        if ( !bbwOK )
         {
             std::cout<<"bbw error "<<std::endl;
-            exit(1);
+            return result;
         }
 
         // Normalize the weights.
@@ -232,9 +232,11 @@ void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::S
     }
 
 
+    // OUTPUT
     // Convert the weights into our sparse matrix representation
+    // ----------------------------------------------------------
 
-    weightsOut.resize(mesh.m_vertices.size(), skel.size());
+    result.resize(mesh.m_vertices.size(), skel.size());
     auto edges = skel.m_graph.getEdges();
     for (uint i = 0; i < mesh.m_vertices.size(); ++i)
     {
@@ -243,12 +245,14 @@ void computeBBW(const Ra::Core::TriangleMesh& mesh, const Ra::Core::Animation::S
             if (W(i,c) > Ra::Core::Math::dummyEps )
             {
                 uint j = edges[c].first;
-                weightsOut.coeffRef(i,j)  = W(i,c);
+                result.coeffRef(i,j)  = W(i,c);
             }
         }
 
     }
-    Ra::Core::Animation::checkWeightMatrix(weightsOut, true);
+
+    Ra::Core::Animation::checkWeightMatrix(result, true);
+    return result;
 }
 
 }
