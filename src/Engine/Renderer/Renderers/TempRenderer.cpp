@@ -140,9 +140,10 @@ namespace Ra
             GL_ASSERT( glClearBufferfv( GL_COLOR, 1, clearZeros.data() ) );   // Clear normals
             GL_ASSERT( glClearBufferfv( GL_COLOR, 2, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_COLOR, 3, clearZeros.data() ) );
-
+//1sh pass
+            GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS) );
-            GL_ASSERT( glDepthMask( GL_FALSE ) );
+            GL_ASSERT( glDepthMask( GL_TRUE ) );
 
             GL_ASSERT( glEnable( GL_BLEND ) );
             GL_ASSERT( glBlendFunc( GL_ONE, GL_ONE ) );
@@ -158,12 +159,17 @@ namespace Ra
                     ro->render(params, renderData, shader);
                 }
             }
+// 2nd pass
+            GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
+            GL_ASSERT( glDepthFunc( GL_LESS) );
+            GL_ASSERT( glDepthMask( GL_TRUE ) );
 
             shader = m_shaderMgr->getShaderProgram("Quad");
             shader->bind();
-            shader->setUniform("color", m_textures[RendererTextures_Position].get(), 0);
+            shader->setUniform("position", m_textures[RendererTextures_Position].get(), 0);
             shader->setUniform("normal", m_textures[RendererTextures_Normal].get(), 1);
             shader->setUniform("useNormal", m_useNormal);
+            shader->setUniform("depthThresh", m_dThresh);
             shader->setUniform("neighSize", m_neighSize);
             shader->setUniform("WindowSize", Core::Vector2(m_width,m_height));
 
@@ -185,7 +191,10 @@ namespace Ra
         {
             m_neighSize = neighSize;
         }
-
+        void TempRenderer::setDepthThresh(double dThresh)
+        {
+            m_dThresh = dThresh;
+        }
         // Draw debug stuff, do not overwrite depth map but do depth testing
         void TempRenderer::debugInternal( const RenderData& renderData )
         {}
