@@ -130,6 +130,7 @@ namespace Ra
             const ShaderProgram* shader;
             const Core::Colorf clearColor = Core::Colors::FromChars<Core::Colorf>(42, 42, 42, 0);
             const Core::Colorf clearZeros = Core::Colors::Black<Core::Colorf>();
+            const float clearDepth( 1.0 );
 
             m_fbo->bind();
 
@@ -140,6 +141,7 @@ namespace Ra
             GL_ASSERT( glClearBufferfv( GL_COLOR, 1, clearZeros.data() ) );   // Clear normals
             GL_ASSERT( glClearBufferfv( GL_COLOR, 2, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_COLOR, 3, clearZeros.data() ) );
+            GL_ASSERT( glClearBufferfv( GL_DEPTH, 0, &clearDepth ) );         // Clear depth
 //1sh pass
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS) );
@@ -163,6 +165,7 @@ namespace Ra
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS) );
             GL_ASSERT( glDepthMask( GL_TRUE ) );
+        //    GL_ASSERT( glDisable( GL_BLEND ) );
 
             shader = m_shaderMgr->getShaderProgram("Quad");
             shader->bind();
