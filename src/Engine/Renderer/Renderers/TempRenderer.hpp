@@ -50,6 +50,7 @@ namespace Ra
         private:
             enum RendererTextures
             {
+                RendererTextures_Depth,
                 RendererTextures_Normal,
                 RendererTextures_Position,
                 RendererTextures_Quad,

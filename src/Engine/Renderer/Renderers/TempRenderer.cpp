@@ -91,6 +91,11 @@ namespace Ra
             m_fbo.reset( new globjects::Framebuffer() );
             GL_ASSERT( glViewport( 0, 0, m_width, m_height ) );
 
+            m_textures[RendererTextures_Depth].reset(new Texture("Depth"));
+            m_textures[RendererTextures_Depth]->internalFormat = GL_DEPTH_COMPONENT24;
+            m_textures[RendererTextures_Depth]->dataType = GL_UNSIGNED_INT;
+            m_secondaryTextures["Depth Texture"]    = m_textures[RendererTextures_Depth].get();
+
             m_textures[RendererTextures_Normal].reset(new Texture("Normal Texture"));
             m_textures[RendererTextures_Normal]->internalFormat = GL_RGBA32F;
             m_textures[RendererTextures_Normal]->dataType = GL_FLOAT;
@@ -129,43 +134,48 @@ namespace Ra
             GL_ASSERT( glClearBufferfv( GL_COLOR, 3, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_COLOR, 4, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_DEPTH, 0, &clearDepth ) );         // Clear depth
+
 //1sh pass
+            GL_ASSERT( glDepthMask( GL_TRUE ) );
+            GL_ASSERT( glDrawBuffers( 5, buffers ) );
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS) );
-            GL_ASSERT( glDepthMask( GL_TRUE ) );
+            GL_ASSERT( glDisable( GL_BLEND ) );
 
-            GL_ASSERT( glEnable( GL_BLEND ) );
-            GL_ASSERT( glBlendFunc( GL_ONE, GL_ONE ) );
-
-            shader = m_shaderMgr->getShaderProgram("New");
+            shader = m_shaderMgr->getShaderProgram("FirstPass");
+            shader->setUniform("radius", m_radius);
             for ( const auto& l : m_lights )
             {
                 RenderParameters params;
                 l->getRenderParameters( params );
-
+                params.addParameter("WindowSize", Core::Vector2(m_width,m_height));;
                 for ( const auto& ro : m_fancyRenderObjects )
                 {
                     ro->render(params, renderData, shader);
                 }
             }
 // 2nd pass
+            GL_ASSERT( glDepthMask( GL_TRUE ) );
+            GL_ASSERT( glDrawBuffers( 5, buffers ) );
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS) );
-            GL_ASSERT( glDepthMask( GL_TRUE ) );
-        //    GL_ASSERT( glDisable( GL_BLEND ) );
+            GL_ASSERT( glDisable( GL_BLEND ) );
 
             shader = m_shaderMgr->getShaderProgram("Quad");
             shader->bind();
             shader->setUniform("position", m_textures[RendererTextures_Position].get(), 0);
             shader->setUniform("normal", m_textures[RendererTextures_Normal].get(), 1);
-            shader->setUniform("useNormal", m_useNormal);
+            shader->setUniform("showPos", m_showPos);
+            shader->setUniform("planeFit", m_planeFit);
             shader->setUniform("depthThresh", m_dThresh);
             shader->setUniform("neighSize", m_neighSize);
+            shader->setUniform("depthCalc", m_depthCalc);
             shader->setUniform("WindowSize", Core::Vector2(m_width,m_height));
 
             m_quadMesh->render();
 
             // Restore state
+            GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS ) );
             GL_ASSERT( glDisable( GL_BLEND ) );
             GL_ASSERT( glDepthMask( GL_TRUE ) );
@@ -199,7 +209,8 @@ namespace Ra
         }
         // Draw debug stuff, do not overwrite depth map but do depth testing
         void TempRenderer::debugInternal( const RenderData& renderData )
-        {}
+        {
+        }
 
         // Draw UI stuff, always drawn on top of everything else + clear ZMask
         void TempRenderer::uiInternal( const RenderData& renderData )
@@ -210,6 +221,9 @@ namespace Ra
 
         void TempRenderer::resizeInternal()
         {
+            m_pingPongSize = std::pow(2.0, Scalar(uint(std::log2(std::min(m_width, m_height)))));
+
+            m_textures[RendererTextures_Depth]->Generate(m_width, m_height, GL_DEPTH_COMPONENT);
             m_textures[RendererTextures_Normal]->Generate(m_width, m_height, GL_RGBA);
             m_textures[RendererTextures_Position]->Generate(m_width, m_height, GL_RGBA);
             m_textures[RendererTextures_Quad]->Generate(m_width, m_height, GL_RGBA);
@@ -217,6 +231,7 @@ namespace Ra
             m_fbo->bind();
             glViewport( 0, 0, m_width, m_height );
 
+            m_fbo->attachTexture(GL_DEPTH_ATTACHMENT , m_textures[RendererTextures_Depth].get()->texture());
             m_fbo->attachTexture(GL_COLOR_ATTACHMENT0, m_fancyTexture.get()->texture());
             m_fbo->attachTexture(GL_COLOR_ATTACHMENT1, m_textures[RendererTextures_Normal].get()->texture());
             m_fbo->attachTexture(GL_COLOR_ATTACHMENT2, m_textures[RendererTextures_Position].get()->texture());
