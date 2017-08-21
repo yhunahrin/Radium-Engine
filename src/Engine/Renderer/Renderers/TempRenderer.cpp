@@ -76,7 +76,12 @@ namespace Ra
 
         void TempRenderer::initShaders()
         {
-            m_shaderMgr->addShaderProgram("New", "Shaders/Simple.vert.glsl", "Shaders/Simple.frag.glsl");
+            ShaderConfiguration configPointCloud("FirstPass");
+            configPointCloud.addShader(ShaderType_VERTEX,   "Shaders/Simple.vert.glsl");
+            configPointCloud.addShader(ShaderType_GEOMETRY, "Shaders/Splatt.geom.glsl");
+            configPointCloud.addShader(ShaderType_FRAGMENT, "Shaders/Simple.frag.glsl");
+            ShaderConfigurationFactory::addConfiguration(configPointCloud);
+            m_shaderMgr->addShaderProgram(configPointCloud);
             m_shaderMgr->addShaderProgram("Quad", "Shaders/Quad.vert.glsl", "Shaders/Quad.frag.glsl");
         }
 
@@ -104,25 +109,6 @@ namespace Ra
 
         void TempRenderer::updateStepInternal( const RenderData& renderData )
         {
-#ifndef NO_TRANSPARENCY
-            m_transparentRenderObjects.clear();
-
-            for (auto it = m_fancyRenderObjects.begin(); it != m_fancyRenderObjects.end();)
-            {
-                std::shared_ptr<RenderObject> ro = *it;
-                if (ro->isTransparent())
-                {
-                    m_transparentRenderObjects.push_back(ro);
-                    it = m_fancyRenderObjects.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
-
-            m_fancyTransparentCount = m_transparentRenderObjects.size();
-#endif
         }
 
         void TempRenderer::renderInternal( const RenderData& renderData )
@@ -135,12 +121,13 @@ namespace Ra
             m_fbo->bind();
 
             GL_ASSERT( glColorMask( 1, 1, 1, 1 ) );
-            GL_ASSERT( glDrawBuffers( 4, buffers ) );
+            GL_ASSERT( glDrawBuffers( 5, buffers ) );
 
             GL_ASSERT( glClearBufferfv( GL_COLOR, 0, clearColor.data() ) );   // Clear color
             GL_ASSERT( glClearBufferfv( GL_COLOR, 1, clearZeros.data() ) );   // Clear normals
             GL_ASSERT( glClearBufferfv( GL_COLOR, 2, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_COLOR, 3, clearZeros.data() ) );
+            GL_ASSERT( glClearBufferfv( GL_COLOR, 4, clearZeros.data() ) );
             GL_ASSERT( glClearBufferfv( GL_DEPTH, 0, &clearDepth ) );         // Clear depth
 //1sh pass
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
@@ -186,9 +173,9 @@ namespace Ra
             m_fbo->unbind();
 
         }
-        void TempRenderer::setUseNormal(bool useNormal)
+        void TempRenderer::setShowPos(bool showPos)
         {
-            m_useNormal = useNormal;
+            m_showPos = showPos;
         }
         void TempRenderer::setNeighSize(int neighSize)
         {
@@ -197,6 +184,18 @@ namespace Ra
         void TempRenderer::setDepthThresh(double dThresh)
         {
             m_dThresh = dThresh;
+        }
+        void TempRenderer::setPlaneFit(bool planeFit)
+        {
+            m_planeFit = planeFit;
+        }
+        void TempRenderer::setRadius(double radius)
+        {
+            m_radius = radius;
+        }
+        void TempRenderer::setDepthCalc(int index)
+        {
+            m_depthCalc = index;
         }
         // Draw debug stuff, do not overwrite depth map but do depth testing
         void TempRenderer::debugInternal( const RenderData& renderData )
