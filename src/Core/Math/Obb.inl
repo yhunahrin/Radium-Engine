@@ -8,9 +8,10 @@ namespace Ra
         // Bounding boxes functions.
         //
 
-        inline Aabb Obb::toAabb() const
+        template<uint D>
+        inline typename ObbD<D>::AabbD ObbD<D>::toAabb() const
         {
-            Aabb tmp;
+            AabbD tmp;
             for ( int i = 0; i < 8; ++i )
             {
                 tmp.extend( m_transform * m_aabb.corner( static_cast<Aabb::CornerType>( i ) ) );
@@ -18,17 +19,20 @@ namespace Ra
             return tmp;
         }
 
-        inline Vector3 Obb::corner(int i) const
+        template<uint D>
+        inline typename ObbD<D>::Vector ObbD<D>::corner(int i) const
         {
-            return m_aabb.corner(static_cast<Aabb::CornerType>(i));
+            return m_aabb.corner(static_cast<typename ObbD<D>::AabbD::CornerType>(i));
         }
 
-        inline Vector3 Obb::worldCorner( int i ) const
+        template<uint D>
+        inline typename ObbD<D>::Vector ObbD<D>::worldCorner( int i ) const
         {
-            return m_transform * m_aabb.corner( static_cast<Aabb::CornerType>( i ) );
+            return m_transform * m_aabb.corner( static_cast<typename ObbD<D>::AabbD::CornerType>( i ) );
         }
 
-        inline void Obb::addPoint( const Vector3& p )
+        template<uint D>
+        inline void ObbD<D>::addPoint( const typename ObbD<D>::Vector& p )
         {
             m_aabb.extend( p );
         }
