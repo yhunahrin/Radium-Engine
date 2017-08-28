@@ -36,6 +36,13 @@
 
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
+#ifdef IO_USE_ASSIMP
+    #include <IO/AssimpLoader/AssimpFileLoader.hpp>
+#endif
+#ifdef IO_USE_PBRT
+    #include <IO/PbrtLoader/PbrtFileLoader.hpp>
+#endif
+
 
 // Const parameters : TODO : make config / command line options
 
@@ -135,9 +142,9 @@ namespace Ra
 
         config.str( std::string() );
         config<<"core build: "<<Version::compiler<<" - "<<Version::compileDate<<" "<<Version::compileTime;
-
-
         LOG( logINFO ) << config.str();
+
+        LOG( logINFO ) << "Git changeset: " << Version::gitChangeSet;
 
         LOG(logINFO) << "Qt Version: " << qVersion();
 
@@ -156,11 +163,16 @@ namespace Ra
         m_engine.reset(Engine::RadiumEngine::createInstance());
         m_engine->initialize();
         addBasicShaders();
+#ifdef IO_USE_ASSIMP
+        m_engine->registerFileLoader( new IO::AssimpFileLoader() );
+#endif
+#ifdef IO_USE_PBRT
+        m_engine->registerFileLoader( new IO::PbrtFileLoader() );
+#endif
 
         // Create main window.
         m_mainWindow.reset( new Gui::MainWindow );
         m_mainWindow->show();
-
 
         // Allow all events to be processed (thus the viewer should have
         // initialized the OpenGL context..)
@@ -245,7 +257,18 @@ namespace Ra
         std::string pathStr = path.toLocal8Bit().data();
         LOG(logINFO) << "Loading file " << pathStr << "...";
         bool res = m_engine->loadFile( pathStr );
-        CORE_UNUSED( res );
+        
+        if ( !res )
+        {
+           LOG ( logERROR ) << "Aborting file loading !";
+
+            return;
+        }
+
+        m_viewer->handleFileLoading( m_engine->getFileData() );
+
+        m_engine->releaseFile();
+        
         m_viewer->handleFileLoading( pathStr );
         if (fitCam)
         {

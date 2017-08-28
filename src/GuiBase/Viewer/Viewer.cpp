@@ -39,6 +39,8 @@
 
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
+#include <Engine/Renderer/RenderTechnique/ShaderProgramManager.hpp>
+
 namespace Ra
 {
     Gui::Viewer::Viewer( QWidget* parent )
@@ -65,8 +67,7 @@ namespace Ra
     }
 
     void Gui::Viewer::initializeGL()
-    {
-        //glbinding::Binding::initialize(false);
+    {        
         // no need to initalize glbinding. globjects (magically) do this internally.
         globjects::init(globjects::Shader::IncludeImplementation::Fallback);
 
@@ -76,13 +77,10 @@ namespace Ra
         LOG( logINFO ) << "OpenGL   (glbinding) : " << glbinding::ContextInfo::version().toString();
         LOG( logINFO ) << "GLSL                 : " << gl::glGetString(gl::GLenum(GL_SHADING_LANGUAGE_VERSION));
 
-        // FIXME(Charly): Renderer type should not be changed here
-        // m_renderers.resize( 3 );
-        // FIXME (Mathias): width and height might be wrong the first time ResizeGL is called (see QOpenGLWidget doc). This may cause problem on Retina display under MacOsX (and this happens)
-        m_renderers.push_back(std::unique_ptr<Engine::Renderer>(new Engine::ForwardRenderer( width(), height()))); // Forward
+        Engine::ShaderProgramManager::createInstance("Shaders/Default.vert.glsl",
+                                                     "Shaders/Default.frag.glsl");
 
-//        m_renderers[1].reset( nullptr ); // deferred
-        // m_renderers[2].reset( new Engine::ExperimentalRenderer( width(), height() ) ); // experimental
+        m_renderers.push_back(std::unique_ptr<Engine::Renderer>(new Engine::ForwardRenderer( width(), height())));
 
         for ( auto& renderer : m_renderers )
         {
@@ -378,6 +376,16 @@ namespace Ra
         }
     }
 
+    void Gui::Viewer::handleFileLoading(const Ra::Asset::FileData &filedata) {
+        for ( auto& renderer : m_renderers )
+        {
+            if (renderer)
+            {
+                renderer->handleFileLoading( filedata );
+            }
+        }
+    }
+
     void Gui::Viewer::processPicking()
     {
         CORE_ASSERT( m_currentRenderer->getPickingQueries().size() == m_currentRenderer->getPickingResults().size(),
@@ -403,6 +411,10 @@ namespace Ra
         {
             m_camera->fitScene(aabb);
         }
+        else
+        {
+            LOG( logINFO ) << "Unable to fit the camera to the scene : empty Bbox.";
+        }
     }
 
     void Gui::Viewer::loadCamera(std::istream &in)
@@ -414,7 +426,6 @@ namespace Ra
     {
         m_camera->save(out);
     }
-
 
     std::vector<std::string> Gui::Viewer::getRenderersName() const
     {
@@ -472,4 +483,5 @@ namespace Ra
     {
         m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
     }
+
 } // namespace Ra

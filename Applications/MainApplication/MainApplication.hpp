@@ -61,6 +61,7 @@ namespace Ra
         uint getFrameCount() const { return m_frameCounter; }
 
         const std::string& getExportFolder() const {return m_exportFolderName;}
+
     signals:
         /// Fired when the engine has just started, before the frame timer is set.
         void starting();

@@ -32,6 +32,9 @@ namespace Ra
             virtual void save( std::ostream& out ) const override;
             virtual void load( std::istream &in ) override;
 
+            void setCameraRadius(Scalar rad);
+            Scalar getCameraRadius();
+
         public slots:
             virtual void setCameraPosition( const Core::Vector3& position ) override;
             virtual void setCameraTarget( const Core::Vector3& target ) override;
@@ -39,15 +42,15 @@ namespace Ra
 
             virtual void resetCamera() override;
 
-        private:
-            void handleCameraRotate( Scalar dx, Scalar dy );
-            void handleCameraPan( Scalar dx, Scalar dy );
-            void handleCameraZoom( Scalar dx, Scalar dy );
-            void handleCameraZoom( Scalar z );
+        protected:
+            virtual void handleCameraRotate( Scalar dx, Scalar dy );
+            virtual void handleCameraPan( Scalar dx, Scalar dy );
+            virtual void handleCameraZoom( Scalar dx, Scalar dy );
+            virtual void handleCameraZoom( Scalar z );
 
             void updatePhiTheta();
 
-        private:
+        protected:
             Core::Vector3 m_trackballCenter;
 
             Scalar m_lastMouseX;
@@ -68,6 +71,13 @@ namespace Ra
             // TODO(Charly): fps mode
             bool m_cameraZoomMode;
 
+            bool m_walkingOn;
+            bool m_strafingOn;
+            bool m_climbingOn;
+
+            Scalar m_walking;
+            Scalar m_strafing;
+            Scalar m_climbing;
         };
     } // namespace Engine
 } // namespace Ra

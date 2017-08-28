@@ -4,7 +4,7 @@
 #include <QFileDialog>
 #include <QToolButton>
 
-#include <Core/Utils/File/OBJFileManager.hpp>
+#include <Core/File/deprecated/OBJFileManager.hpp>
 #include <assimp/Importer.hpp>
 
 #include <Engine/Managers/SignalManager/SignalManager.hpp>
@@ -272,9 +272,10 @@ namespace Ra
                 m_editRenderObjectButton->setEnabled(true);
 
                 m_materialEditor->changeRenderObject(ent.m_roIndex);
-                const std::string& shaderName = mainApp->m_engine->getRenderObjectManager()->getRenderObject(
-                                                               ent.m_roIndex)
-                                                       ->getRenderTechnique()->getBasicConfiguration().m_name;
+                const std::string& shaderName = mainApp->m_engine->getRenderObjectManager()
+                                                       ->getRenderObject(ent.m_roIndex)
+                                                       ->getRenderTechnique()
+                                                       ->getBasicConfiguration().m_name;
 
 
                 if (m_currentShaderBox->findText(shaderName.c_str()) == -1)
@@ -478,12 +479,12 @@ namespace Ra
         if (e.isRoNode())
         {
             exportMesh( mainApp->getExportFolder(), e.m_roIndex);
-        }
-        else
-        {
+            }
+            else
+            {
             LOG(logWARNING)<< "Current entry was not a render object. No mesh was exported.";
+            }
         }
-    }
 
     void Gui::MainWindow::exportMesh(const std::string& folder, uint roIdx)
     {
