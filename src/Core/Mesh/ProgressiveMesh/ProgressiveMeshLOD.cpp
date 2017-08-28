@@ -152,6 +152,11 @@ namespace Ra
             return m_pm;
         }
 
+        void ProgressiveMeshLOD::setProgressiveMesh(ProgressiveMeshBase<>* pm)
+        {
+            m_pm = pm;
+        }
+
         std::vector<ProgressiveMeshData> ProgressiveMeshLOD::getProgressiveMeshDataVector()
         {
             return m_pmdata;

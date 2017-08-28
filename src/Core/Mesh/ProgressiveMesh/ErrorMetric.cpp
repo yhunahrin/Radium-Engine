@@ -527,36 +527,54 @@ namespace Ra
             return min_error;
         }
 
-        static bool apssem_optimize(GRBEnv* env, double  sum_uc2, double* sum_A, double  sum_uq2, double* sum_uc_ul, double  sum_uc_uq, double* sum_uq_ul, double* solution, double* objvalP)
+        static bool apssem_optimize4(GRBEnv* env, double  sum_uc2, double* sum_A, double  sum_uq2, double* sum_uc_ul, double  sum_uc_uq, double* sum_uq_ul, double* solution, double* objvalP)
         {
             // Init
             GRBModel model = GRBModel(*env);
-            int i, j;
+            uint i, j;
             bool success = false;
 
             // Create variables
             GRBVar* vars = model.addVars(4); //x, y, z, d
 
             // Init objective
-            GRBQuadExpr obj = 0;
+            GRBQuadExpr obj;
 
             // Set objective
-            obj += sum_uc2 + sum_uq2*vars[3]*vars[3] + 2.0*sum_uc_uq*vars[3]; //uc^2 + uq^2*d^2 + 2.0*uc*uq*d
+            // uc^2
+            obj += sum_uc2;
+
+            // (x^T)*(ul*ul^T)*x
             for (i = 0; i < 3; i++)
             {
                 for (j = 0; j < 3; j++)
                 {
-                    obj += sum_A[i*3+j]*vars[i]*vars[j]; //(x^T)*(ul*ul^T)*x
+                    obj += sum_A[i*3+j]*vars[i]*vars[j];
                 }
             }
+
+            // uq^2 * d^2
+            obj +=  sum_uq2*vars[3]*vars[3];
+
+            // 2.0 * uc * (ul^T) * x
             for (j = 0; j < 3; j++)
             {
-                obj += 2.0*sum_uc_ul[j]*vars[j] + 2.0*vars[3]*sum_uq_ul[j]*vars[j]; //2.0*uc*(ul^T)*x + uq*d*(ul^T)*x
+                obj += 2.0*sum_uc_ul[j]*vars[j];
             }
+
+            // 2.0 * uc * uq * d
+            obj += 2.0*sum_uc_uq*vars[3];
+
+            // 2.0 * uq * (ul^T) * x * d
+            for (j = 0; j < 3; j++)
+            {
+                obj += 2.0*sum_uq_ul[j]*vars[j]*vars[3];
+            }
+
             model.setObjective(obj);
 
             // Add second-order cone: x^2 + y^2 + z^2 - d = 0
-            model.addQConstr(vars[0]*vars[0] + vars[1]*vars[1] + vars[2]*vars[2] - vars[3] <= 0.001, "qc0");
+            model.addQConstr(vars[0]*vars[0] + vars[1]*vars[1] + vars[2]*vars[2] - vars[3] <= 0.0001, "qc0");
 
             // Optimize model
             model.optimize();
@@ -565,8 +583,79 @@ namespace Ra
             // Get solution
             if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL)
             {
-                *objvalP = model.get(GRB_DoubleAttr_ObjVal); // objective value
+                //*objvalP = obj.getValue();
+                *objvalP = obj.getValue(); //model.get(GRB_DoubleAttr_ObjVal); // objective value
                 for (i = 0; i < 4; i++)
+                {
+                    solution[i] = vars[i].get(GRB_DoubleAttr_X); // solution value
+                }
+                success = true;
+            }
+            else
+            {
+                LOG(logINFO) << "pas de solution optimale";
+            }
+
+            delete[] vars;
+            return success;
+        }
+
+        static bool apssem_optimize3(GRBEnv* env, double  sum_uc2, double* sum_A, double  sum_uq2, double* sum_uc_ul, double  sum_uc_uq, double* sum_uq_ul, double* solution, double* objvalP)
+        {
+            // Init
+            GRBModel model = GRBModel(*env);
+            uint i, j;
+            bool success = false;
+
+            // Create variables
+            GRBVar* vars = model.addVars(3); //x, y, z
+
+            // Init objective
+            GRBQuadExpr obj;
+
+            // Set objective
+            // uc^2
+            obj += sum_uc2;
+
+            // (x^T)*(ul*ul^T)*x
+            for (i = 0; i < 3; i++)
+            {
+                for (j = 0; j < 3; j++)
+                {
+                    obj += sum_A[i*3+j]*vars[i]*vars[j];
+                }
+            }
+
+            // uq^2 * x^T * x
+            obj +=  sum_uq2;
+
+            // 2.0 * uc * (ul^T) * x
+            for (j = 0; j < 3; j++)
+            {
+                obj += 2.0*sum_uc_ul[j]*vars[j];
+            }
+
+            // 2.0 * uc * uq * x^T * x
+            obj += 2.0*sum_uc_uq;
+
+            // 2.0 * uq * (ul^T) * x
+            for (j = 0; j < 3; j++)
+            {
+                obj += 2.0*sum_uq_ul[j]*vars[j];
+            }
+
+            model.setObjective(obj);
+
+            // Optimize model
+            model.optimize();
+            model.write("test_qem_style.lp");
+
+            // Get solution
+            if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL)
+            {
+                //*objvalP = obj.getValue();
+                *objvalP = obj.getValue(); //model.get(GRB_DoubleAttr_ObjVal); // objective value
+                for (i = 0; i < 3; i++)
                 {
                     solution[i] = vars[i].get(GRB_DoubleAttr_X); // solution value
                 }
@@ -590,21 +679,17 @@ namespace Ra
             Vertex_ptr vt = he->Next()->V();
 
             Scalar sum_uc2   = 0.0;
-            Scalar sum_uc    = 0.0;
             Matrix3 sum_A  = Matrix3::Zero();
             Scalar sum_uq2   = 0.0;
-            Scalar sum_uq   = 0.0;
             Vector3 sum_uc_ul  = Vector3::Zero();
             Scalar sum_uc_uq = 0.0;
-            Vector3 sum_ul = Vector3::Zero();
             Vector3 sum_uq_ul = Vector3::Zero();
-            Vector3 sum_up = Vector3::Zero();
             uint nb_verts_nei = adjVertices.size();
-            Vector3 vs_basis = v_primitives[vs->idx].basisCenter();
+            Vector3 vs_basis = Vector3(0.0, 0.0, 0.0); //v_primitives[vs->idx].basisCenter();
+            Scalar pRes_norm = 0.0;
             for (uint i = 0; i < nb_verts_nei; i++)
             {
                 Primitive q_nei_same_basis  = v_primitives[adjVertices[i]->idx];
-                Primitive q_nei             = v_primitives[adjVertices[i]->idx];
                 q_nei_same_basis.changeBasis(vs_basis);
                 q_nei_same_basis.applyPrattNorm();
 
@@ -618,14 +703,6 @@ namespace Ra
                 sum_uc_ul   += uc * ul;
                 sum_uc_uq   += uc * uq;
                 sum_uq_ul   += uq * ul;
-
-                if (adjVertices[i]->idx != vs->idx && adjVertices[i]->idx != vt->idx)
-                {
-                    sum_uc      += q_nei.m_uc;
-                    sum_ul      += q_nei.m_ul;
-                    sum_uq      += q_nei.m_uq;
-                    sum_up      += q_nei.basisCenter();
-                }
             }
             Scalar error = 0.0;
 
@@ -634,6 +711,7 @@ namespace Ra
                 LOG(logINFO) << "IT IS A PLANE";
                 pResult = (vs->P() + vt->P()) / 2.0;
             }
+            /*
             else
             {
                 GRBEnv* env = 0;
@@ -651,13 +729,10 @@ namespace Ra
                     double  grb_sum_uq_ul[] = {sum_uq_ul[0], sum_uq_ul[1], sum_uq_ul[2]};
                     double  objval, sol[3];
                     bool    success;
-                    success = apssem_optimize(env, grb_sum_uc2, &grb_sum_A[0][0], grb_sum_uq2, grb_sum_uc_ul, grb_sum_uc_uq, grb_sum_uq_ul, sol, &objval);
+                    success = apssem_optimize3(env, grb_sum_uc2, &grb_sum_A[0][0], grb_sum_uq2, grb_sum_uc_ul, grb_sum_uc_uq, grb_sum_uq_ul, sol, &objval);
                     pResult = Vector3(sol[0], sol[1], sol[2]) + vs_basis;
+                    //pRes_norm = sol[3];
                     error = objval;
-                    if ((pResult - Vector3(0.0, 0.0, 0.0)).norm() < 0.0001)
-                    {
-                        LOG(logINFO) << "probleme presult à l'origine...";
-                    }
                     CORE_ASSERT(error >= 0, "Bad error in gurobi solution");
                     delete env;
                 }
@@ -673,7 +748,61 @@ namespace Ra
                     //pResult = (vs->P() + vt->P()) / 2.0;
                 }
             }
+            */
+            Scalar test_det = sum_A.determinant();
+            if (test_det > 0.0001)
+            {
+                pResult = -sum_A.inverse() * (sum_uc_ul + sum_uq_ul);
+                LOG(logINFO) << pResult.norm();
+            }
+            else
+            {
+                pResult = (vs->P() + vt->P()) / 2.0;
+                LOG(logINFO) << "mid " << pResult.norm();
+            }
 
+            Scalar error_pre = 0.0;
+            Scalar error_math_pre = 0.0;
+            Scalar error_math_pre_total = 0.0;
+            Scalar error_vs = 0.0;
+            Scalar error_vt = 0.0;
+            Scalar error_mid = 0.0;
+            for (uint i = 0; i < nb_verts_nei; i++)
+            {
+                Primitive q_nei = v_primitives[adjVertices[i]->idx];
+                q_nei.changeBasis(vs_basis);
+                q_nei.applyPrattNorm();
+                error   += q_nei.potential(pResult) * q_nei.potential(pResult);
+                error_pre   += q_nei.potential(pResult) * q_nei.potential(pResult);
+                error_vs    += q_nei.potential(vs->P()) * q_nei.potential(vs->P());
+                error_vt    += q_nei.potential(vt->P()) * q_nei.potential(vt->P());
+                error_mid   += q_nei.potential((vs->P() / 2.0) + (vt->P() / 2.0)) * q_nei.potential((vs->P() / 2.0) + (vt->P() / 2.0));
+            }
+            Vector3 pres_vs = pResult - vs_basis;
+
+
+            error_math_pre =    sum_uc2 +
+                                pres_vs.transpose() * sum_A * pres_vs +
+                                sum_uq2 * pres_vs.dot(pres_vs) * pres_vs.dot(pres_vs) +
+                                2.0 * sum_uc_ul.dot(pres_vs) +
+                                2.0 * sum_uc_uq * pres_vs.dot(pres_vs) +
+                                2.0 * sum_uq_ul.dot(pres_vs) * pres_vs.dot(pres_vs);
+            /*
+            error_math_pre_total =  sum_uc2 +
+                                    pres_vs.transpose() * sum_A * pres_vs +
+                                    sum_uq2 * pRes_norm * pRes_norm +
+                                    2.0 * sum_uc_ul.dot(pres_vs) +
+                                    2.0 * sum_uc_uq * pRes_norm +
+                                    2.0 * sum_uq_ul.dot(pres_vs) * pRes_norm;
+
+            if (std::abs(((pResult - vs_basis).norm()*(pResult - vs_basis).norm()) - pRes_norm) > 0.05)
+            {
+                LOG(logINFO) << he->F()->idx << ": " << he->V()->idx << ", " << he->Next()->V()->idx;
+                //LOG(logINFO) << "error with pResult = " << error_math_pre;
+                //LOG(logINFO) << "error with pResult and a norm = " << error_math_pre_total;
+                //LOG(logINFO) << "error of the constraint = " << ((pResult - vs_basis).norm()*(pResult - vs_basis).norm()) - pRes_norm;
+            }
+            */
 
             /*
             sum_uc    = 0.0;
@@ -694,16 +823,47 @@ namespace Ra
             }
             */
 
-
-
-            VHEIterator hevsIt = VHEIterator(vs);
-            VHEIterator hevtIt = VHEIterator(vt);
-            HalfEdgeList adjHeVs = hevsIt.list();
-            HalfEdgeList adjHeVt = hevtIt.list();
+            /*
+            EFIterator hefIt = EFIterator(he);
+            FaceList adjFaces = hefIt.list();
+            Face_ptr f;
             sum_uc    = 0.0;
             sum_ul = Vector3::Zero();
             sum_uq   = 0.0;
             sum_up = Vector3::Zero();
+            for (uint i = 0; i < adjFaces.size(); i++)
+            {
+                Vector3 p = adjFaces[i]->HE()->V()->P();
+                Vector3 q = adjFaces[i]->HE()->Next()->V()->P();
+                Vector3 r = adjFaces[i]->HE()->Prev()->V()->P();
+                Vector3 baryCoord = Geometry::barycentricCoordinate(pResult, p, q, r);
+                if (baryCoord.x() > 0.0 && baryCoord.x() < 1.0 &&
+                    baryCoord.y() > 0.0 && baryCoord.y() < 1.0 &&
+                    baryCoord.z() > 0.0 && baryCoord.z() < 1.0)
+                {
+                    f = adjFaces[i];
+                    Primitive q_p = v_primitives[adjFaces[i]->HE()->V()->idx];
+                    Primitive q_q = v_primitives[adjFaces[i]->HE()->Next()->V()->idx];
+                    Primitive q_r = v_primitives[adjFaces[i]->HE()->Prev()->V()->idx];
+                    sum_uc = q_p.m_uc * baryCoord.x() + q_q.m_uc * baryCoord.y() + q_r.m_uc * baryCoord.z();
+                    sum_ul = q_p.m_ul * baryCoord.x() + q_q.m_ul * baryCoord.y() + q_r.m_ul * baryCoord.z();
+                    sum_uq = q_p.m_uq * baryCoord.x() + q_q.m_uq * baryCoord.y() + q_r.m_uq * baryCoord.z();
+                    sum_up = q_p.basisCenter() * baryCoord.x() + q_q.basisCenter() * baryCoord.y() + q_r.basisCenter() * baryCoord.z();
+                    break;
+                }
+            }
+            */
+
+
+            // COTAN WEIGHT
+            VHEIterator hevsIt = VHEIterator(vs);
+            VHEIterator hevtIt = VHEIterator(vt);
+            HalfEdgeList adjHeVs = hevsIt.list();
+            HalfEdgeList adjHeVt = hevtIt.list();
+            Scalar sum_uc    = 0.0;
+            Vector3 sum_ul = Vector3::Zero();
+            Scalar sum_uq   = 0.0;
+            Vector3 sum_up = Vector3::Zero();
             Scalar sum_cotan_weight = 0.0;
             Scalar cotan_weight = 0.0;
             Vector3 v1, v2, v3, v4;
@@ -754,24 +914,110 @@ namespace Ra
             //LOG(logINFO) << "sum_cotan_weight = " << sum_cotan_weight;
 
             //q.combine(v_primitives[vs->idx], v_primitives[vt->idx], 0.5);
-            //q.setParameters(sum_uc/nb_verts_nei, sum_ul/nb_verts_nei, sum_uq/nb_verts_nei, sum_up/nb_verts_nei);
-            q.setParameters(sum_uc, sum_ul, sum_uq, sum_up);
+            q.setParameters(sum_uc/nb_verts_nei, sum_ul/nb_verts_nei, sum_uq/nb_verts_nei, sum_up/nb_verts_nei);
+            //q.setParameters(sum_uc, sum_ul, sum_uq, sum_up);
             q.applyPrattNorm();
 
             return error;
         }
 
+        void SimpleAPSSErrorMetric::createPLYDistributionError(HalfEdge_ptr he, std::vector<Primitive>& v_primitives)
+        {
+            EVIterator evIt = EVIterator(he);
+            VertexList adjVert = evIt.list();
+
+            // compute bbox of the 1-ring
+            Vector3 minBBox, maxBBox;
+            minBBox = adjVert[0]->P();
+            maxBBox = adjVert[0]->P();
+            for (int i = 0; i < adjVert.size(); i++)
+            {
+                if (adjVert[i]->P().x() < minBBox.x()) minBBox.x() = adjVert[i]->P().x();
+                if (adjVert[i]->P().x() > maxBBox.x()) maxBBox.x() = adjVert[i]->P().x();
+                if (adjVert[i]->P().y() < minBBox.y()) minBBox.y() = adjVert[i]->P().y();
+                if (adjVert[i]->P().y() > maxBBox.y()) maxBBox.y() = adjVert[i]->P().y();
+                if (adjVert[i]->P().z() < minBBox.z()) minBBox.z() = adjVert[i]->P().z();
+                if (adjVert[i]->P().z() > maxBBox.z()) maxBBox.z() = adjVert[i]->P().z();
+            }
+
+            // go through bbox and compute error
+            std::ofstream file_distrib;
+            file_distrib.open("error_distrib.ply");
+            Scalar step_wide = 75.0;
+            Scalar x_step = (maxBBox.x() - minBBox.x()) / step_wide;
+            Scalar y_step = (maxBBox.y() - minBBox.y()) / step_wide;
+            Scalar z_step = (maxBBox.z() - minBBox.z()) / step_wide;
+            file_distrib << "ply" << "\n"
+                         << "format ascii 1.0" << "\n"
+                         << "element vertex " << step_wide*step_wide*step_wide << "\n"
+                         << "property float x" << "\n"
+                         << "property float y" << "\n"
+                         << "property float z" << "\n"
+                         << "property uchar red" << "\n"
+                         << "property uchar green" << "\n"
+                         << "property uchar blue" << "\n"
+                         << "property uchar alpha" << "\n"
+                         //<< "property float quality" << "\n"
+                         << "end_header" << "\n";
+            for (Scalar i = minBBox.x(); i < maxBBox.x(); i += x_step)
+            {
+                for (Scalar j = minBBox.y(); j < maxBBox.y(); j += y_step)
+                {
+                    for (Scalar k = minBBox.z(); k < maxBBox.z(); k += z_step)
+                    {
+                        Vector3 pRes = Vector3(i, j, k);
+                        Scalar error = 0.0;
+                        for (uint l = 0; l < adjVert.size(); l++)
+                        {
+                            Primitive q_nei = v_primitives[adjVert[l]->idx];
+                            error   += q_nei.potential(pRes) * q_nei.potential(pRes);
+                        }
+
+                        Scalar error_grey = std::log(error) / 10.0;
+                        Scalar a = (1.0 - error_grey) / 0.25;	//invert and group
+                        int X = std::floor(a);	//this is the integer part
+                        int Y = std::floor(255 * (a - X)); //fractional part from 0 to 255
+                        int r, g, b;
+                        switch(X)
+                        {
+                            case 0: r = 255;    g = Y;          b = 0;      break;
+                            case 1: r = 255 - Y;g = 255;        b = 0;      break;
+                            case 2: r = 0;      g = 255;        b = Y;      break;
+                            case 3: r = 0;      g = 255 - Y;    b = 255;    break;
+                            case 4: r = 0;      g = 0;          b = 255;    break;
+                        }
+
+                        //file_distrib << error << "\n";
+                        //file_distrib << i << " " << j << " " << k << " " << std::log(error) << "\n";
+                        Scalar alpha = 255;
+                        if (error_grey < 0.1)
+                        {
+                            alpha = 0;
+                        }
+                        file_distrib << i << " " << j << " " << k << " " << r << " " << g << " " << b << " " << alpha << "\n";
+                     //   file_distrib << i << " " << j << " " << k << " " << r << " " << g << " " << b << "\n";
+
+                    }
+                }
+            }
+            file_distrib.close();
+        }
+
         Scalar SimpleAPSSErrorMetric::computeError(HalfEdge_ptr he, std::vector<Primitive>& v_primitives, Vector3& pResult, Primitive &q, std::ofstream &file)
         {
+
+            createPLYDistributionError(he, v_primitives);
+            Scalar min_error = computeQEMStyleError(he, v_primitives, pResult, q, file);
+
             //Scalar min_error = computeEdgeMinErrorOnEdge(he, v_primitives, pResult, q, file);
             //Scalar min_error = computeEdgeMinErrorOnFace(he, v_primitives, pResult, q, gradient_weight, file);
             //return min_error;
-            return computeQEMStyleError(he, v_primitives, pResult, q, file);
+            return min_error;
         }
 
         Scalar SimpleAPSSErrorMetric::computeFaceGradDotN(Primitive& q, const Vector3& v0, const Vector3& v1, const Vector3& v2, const Vector3& n0, const Vector3& n1, const Vector3& n2)
         {
-            Scalar dist_face_sphere = q.AlgebraicSphere::gradientFaceSphere(v0, v1, v2, n0, n1, n2);
+            Scalar dist_face_sphere = q.AlgebraicSphere::gradientFaceSphere(v0, v1,  v2, n0, n1, n2);
             return dist_face_sphere;
         }
 
@@ -786,7 +1032,7 @@ namespace Ra
         }
 
         void SimpleAPSSErrorMetric::setNormal(Vertex_ptr v, const Primitive& q)
-        {
+            {
             Vector3 normal = q.m_ul;
             normal.normalize();
             v->setN(normal);

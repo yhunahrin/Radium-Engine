@@ -457,7 +457,7 @@ namespace Ra
                         countIntersection++;
                         if (countIntersection > 2)
                         {
-                            //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
+                            LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : T-Intersection";
                             hasTIntersection = true;
                             return false;
                         }
@@ -467,8 +467,13 @@ namespace Ra
 
             // Look if normals are consistents
             bool consitent = true;
+            /*
             if (!isEcolConsistent(halfEdgeIndex, pResult))
+            {
+                LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " is not consistent";
                 return false;
+            }
+            */
 
             // Look if grad.dot(normals) of faces increase after collapse
             bool isGradDotNBetter = true;
@@ -578,7 +583,7 @@ namespace Ra
                     if (fpnDotFn < 0.0) //-0.5
                     {
                         isFlipped = true;
-                        //LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : Flipped face";
+                        LOG(logINFO) << "The edge " << he->V()->idx << ", " << he->Next()->V()->idx << " in face " << he->F()->idx << " is not collapsable for now : Flipped face";
                         return false;
                         break;
                     }
@@ -705,10 +710,12 @@ namespace Ra
                 HalfEdge_ptr he = m_dcel->m_halfedge[d.m_edge_id];
 
                 // TODO !
+                /*
                 if (!isEcolPossible(he->idx, d.m_p_result, m_primitives_he[he->idx]))
                 {
                     continue;
                 }
+                */
 
                 /*
                 bool already_collasped = false;

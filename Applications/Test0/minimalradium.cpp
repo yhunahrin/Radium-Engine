@@ -6,10 +6,9 @@
 #include <Core/Tasks/TaskQueue.hpp>
 #include <Core/Mesh/MeshPrimitives.hpp>
 
-#include <Engine/Renderer/Mesh/Mesh.hpp>
-
 #include <Engine/Renderer/RenderObject/RenderObjectManager.hpp>
 #include <Engine/Renderer/RenderObject/RenderObject.hpp>
+#include <Engine/Renderer/Mesh/Mesh.hpp>
 
 /* This file contains a minimal radium/qt application which shows the
 classic "Spinning Cube" demo. */
@@ -23,6 +22,7 @@ classic "Spinning Cube" demo. */
         /// This function is called when the component is properly
         /// setup, i.e. it has an entity.
         void  MinimalComponent::initialize() {
+
             // Create a cube mesh render object.
             std::shared_ptr<Ra::Engine::Mesh> display(new Ra::Engine::Mesh("Cube"));
             display->loadGeometry(Ra::Core::MeshUtils::makeBox({0.1f, 0.1f, 0.1f}));
@@ -30,6 +30,7 @@ classic "Spinning Cube" demo. */
                                                                              Ra::Engine::RenderObjectType::Fancy,
                                                                              display);
             addRenderObject(renderObject);
+
         }
 
         /// This function will spin our cube

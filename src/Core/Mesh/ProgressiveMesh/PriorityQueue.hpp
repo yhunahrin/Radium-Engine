@@ -4,6 +4,7 @@
 #include <set>
 #include <Core/Math/LinearAlgebra.hpp>
 #include <Core/Index/Index.hpp>
+#include <Core/Log/Log.hpp>
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMeshData.hpp>
 #include <Core/Mesh/DCEL/Dcel.hpp>
 

@@ -10,5 +10,5 @@ message(STATUS "Building applications with radium libs : ${RADIUM_LIBRARIES}")
 # Add Painty source code
 
 add_subdirectory(MainApplication)
-add_subdirectory(Test0)
+#add_subdirectory(Test0)
 #add_subdirectory(OpenGLExperiment)

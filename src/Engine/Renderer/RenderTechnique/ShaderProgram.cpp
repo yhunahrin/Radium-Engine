@@ -93,8 +93,6 @@ namespace Ra
             m_properties = properties;
             GL_ASSERT( m_id = glCreateShader( type ) );
 
-            LOG(logINFO) << "type = " << type;
-
             std::string shader;
             if (type == GL_VERTEX_SHADER)
             {

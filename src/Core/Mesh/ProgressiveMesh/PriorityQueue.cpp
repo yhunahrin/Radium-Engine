@@ -57,7 +57,8 @@ namespace Ra
             std::cout << "__________________" << std::endl;
             for(const auto& el : m_priority_queue)
             {
-                LOG(logINFO) << ", vs_id = "   << (el.m_vs_id).getValue()
+                LOG(logINFO) << "fl_id = "  << (el.m_fl_id).getValue()
+                             << ", vs_id = "   << (el.m_vs_id).getValue()
                              << ", vt_id = "   << (el.m_vt_id).getValue()
                              << " et error = " << el.m_err;
                 //LOG(logINFO) << el.m_err;
@@ -66,7 +67,8 @@ namespace Ra
             std::cout << "__________________" << std::endl;
             for(const auto& el : m_vertex_hash)
             {
-                LOG(logINFO) << ", vs_id = "   << (el.m_vs_id).getValue()
+                LOG(logINFO) << "fl_id = "  << (el.m_fl_id).getValue()
+                             << ", vs_id = "   << (el.m_vs_id).getValue()
                              << ", vt_id = "   << (el.m_vt_id).getValue()
                              << " et error = " << el.m_err;
                 //LOG(logINFO) << el.m_err;

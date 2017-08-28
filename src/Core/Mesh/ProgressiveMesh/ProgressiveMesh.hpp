@@ -1,7 +1,6 @@
 #ifndef PROGRESSIVEMESH_H
 #define PROGRESSIVEMESH_H
 
-
 #include <Core/Mesh/MeshTypes.hpp>
 #include <Core/Mesh/MeshUtils.hpp>
 #include <Core/Mesh/TriangleMesh.hpp>

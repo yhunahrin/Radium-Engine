@@ -118,6 +118,7 @@ namespace Ra
 
             void projectOnPrimitive (Vertex_ptr v, const Primitive& q);
             void setNormal(Vertex_ptr v, const Primitive& q);
+            void createPLYDistributionError(HalfEdge_ptr he, std::vector<Primitive>& v_primitives);
 
             Scalar computeGeometricError(const Primitive& q, const Vector3& p);
 

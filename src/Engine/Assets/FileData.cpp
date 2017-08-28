@@ -50,15 +50,15 @@ void FileData::loadFile( const bool FORCE_RELOAD ) {
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile( getFileName(),
-                                              aiProcess_ValidateDataStructure |
-                                              aiProcess_GenSmoothNormals
-                                              //aiProcess_Triangulate           | // This could/should be taken away if we want to deal with mesh types other than trimehses
-                                              //aiProcess_JoinIdenticalVertices |
-                                              //aiProcess_GenSmoothNormals      |
+                                              //aiProcess_ValidateDataStructure |
+                                              //aiProcess_GenSmoothNormals      //|
+                                              //aiProcess_Triangulate             | // This could/should be taken away if we want to deal with mesh types other than trimehses
+                                              aiProcess_JoinIdenticalVertices |
+                                              aiProcess_GenSmoothNormals      |
                                               //aiProcess_SortByPType           |
                                               //aiProcess_FixInfacingNormals    |
-                                              //aiProcess_CalcTangentSpace      |
-                                              //aiProcess_GenUVCoords
+                                              aiProcess_CalcTangentSpace      |
+                                              aiProcess_GenUVCoords
                                               );
 
     // File was not loaded

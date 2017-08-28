@@ -45,6 +45,7 @@ namespace Ra
             int getNbPMData();
             ProgressiveMeshData* getCurrPMData();
             ProgressiveMeshBase<>* getProgressiveMesh();
+            void setProgressiveMesh(ProgressiveMeshBase<>* pm);
             std::vector<ProgressiveMeshData> getProgressiveMeshDataVector();
             ProgressiveMeshData getPMData(int i);
 
