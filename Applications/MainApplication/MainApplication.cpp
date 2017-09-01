@@ -52,7 +52,7 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
-        , m_recordFrames( false )
+        , m_recordFrames(  true )
         , m_recordTimings( false )
         , m_recordGraph( false )
         , m_recordMeshes( false )
@@ -64,7 +64,7 @@ namespace Ra
         QCoreApplication::setOrganizationName(organizationName);
         QCoreApplication::setApplicationName(applicationName);
 
-        m_targetFPS = 60; // Default
+        m_targetFPS = 30; // Default
         std::string pluginsPath = "Plugins";
 
         QCommandLineParser parser;
@@ -81,13 +81,28 @@ namespace Ra
         QCommandLineOption fileOpt(QStringList{"f", "file", "scene"}, "Open a scene file at startup.", "file name", "foo.bar");
         QCommandLineOption camOpt(QStringList{"c", "camera", "can"}, "Open a camera file at startup", "file name", "foo.bar");
 
+
+
+        QCommandLineOption showAnatOpt(QStringList{"showanat"}, "show anatomy","","");
+        QCommandLineOption runAnatOpt(QStringList{"runanat"}, "run anatomy","","");
+        QCommandLineOption transISOpt(QStringList{"trans"}, "transparent skin","","");
+        QCommandLineOption subdivOpt(QStringList{"subdiv"}, "run subdivision","","");
+
+
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
+        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt });
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
         if (parser.isSet(pluginOpt))    pluginsPath = parser.value(pluginOpt).toStdString();
         if (parser.isSet(numFramesOpt)) m_numFrames = parser.value(numFramesOpt).toUInt();
         if (parser.isSet(maxThreadsOpt)) m_maxThreads = parser.value(maxThreadsOpt).toUInt();
+
+        if (parser.isSet(showAnatOpt)) g_show_anat = true;
+        if (parser.isSet(runAnatOpt)) g_run_anat = true;
+        if (parser.isSet(transISOpt)) g_is_trans = true;
+        if (parser.isSet(subdivOpt)) g_show_subdiv = true;
+
 
 
         std::time_t startTime = std::time(nullptr);
@@ -139,7 +154,20 @@ namespace Ra
 
         LOG( logINFO ) << config.str();
 
-        LOG(logINFO) << "Qt Version: " << qVersion();
+        std::stringstream cline;
+        cline << "Command line arguments :";
+        if (argc < 2) 
+        {
+            cline << " (none)";
+        }
+        for (uint i = 1; i < argc; ++i)
+        {
+            cline << " " << argv[i];
+        }
+
+        LOG( logINFO ) << cline.str();
+
+        LOG( logINFO ) << "Qt Version: " << qVersion();
 
         // Create default format for Qt.
         QSurfaceFormat format;
@@ -166,7 +194,6 @@ namespace Ra
         // initialized the OpenGL context..)
         processEvents();
 
-        Ra::Engine::RadiumEngine::getInstance()->getEntityManager()->createEntity("Test");
         // Load plugins
         if ( !loadPlugins( pluginsPath, parser.values(pluginLoadOpt), parser.values(pluginIgnoreOpt) ) )
         {
@@ -218,6 +245,8 @@ namespace Ra
 
     void BaseApplication::setupScene()
     {
+
+        return; // LALALA
         using namespace Engine::DrawPrimitives;
 
         Engine::SystemEntity::uiCmp()->addRenderObject(
@@ -242,6 +271,7 @@ namespace Ra
 
     void BaseApplication::loadFile( QString path, bool fitCam )
     {
+        path.replace("\\", "/");
         std::string pathStr = path.toLocal8Bit().data();
         LOG(logINFO) << "Loading file " << pathStr << "...";
         bool res = m_engine->loadFile( pathStr );

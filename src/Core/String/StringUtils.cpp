@@ -15,6 +15,7 @@
 #include <memory>
 #include <sstream>
 
+
 namespace Ra
 {
     namespace Core
@@ -30,28 +31,31 @@ namespace Ra
             }
 
 
-            std::string getDirName( const std::string& path )
+            std::string getDirName( const std::string& path, char sep )
             {
+                const char seps[2]{ sep, '\0' };
+
                 // We remove any trailing slashes.
-                ulong pos = path.find_last_not_of( '/' );
+                ulong pos = path.find_last_not_of( sep );
 
                 // Don't strip the last / from "/"
                 if ( pos == std::string::npos )
                 {
-                    pos = path.find_first_of( "/" );
+                    pos = path.find_first_of( seps );
+
                 }
 
                 std::string res;
                 res = path.substr( 0, pos + 1 );
 
                 // Now find the previous slash and cut the string.
-                pos = res.find_last_of( '/' );
+                pos = res.find_last_of( sep );
 
                 // The directory is actually "/" because the last slash is in first position.
                 // In that case we should return "/"
                 if ( pos == 0 )
                 {
-                    res = "/";
+                    res = seps;
                 }
                 else if ( pos != std::string::npos )
                 {
@@ -65,21 +69,22 @@ namespace Ra
                 return res;
             }
 
-            std::string getBaseName( const std::string& path, bool keepExtension )
+            std::string getBaseName( const std::string& path, bool keepExtension, char sep )
             {
+                const char seps[2]{ sep, '\0' };
                 std::string res;
                 // We remove any trailing slashes.
-                ulong pos = path.find_last_not_of( '/' );
+                ulong pos = path.find_last_not_of( sep );
                 // Don't strip the last / from "/"
                 if ( pos == std::string::npos )
                 {
-                    pos = path.find_first_of( "/" );
+                    pos = path.find_first_of( seps );
                 }
 
                 res = path.substr( 0, pos + 1 );
 
                 // Now find the previous slash and cut the string.
-                pos = res.find_last_of( '/' );
+                pos = res.find_last_of( sep );
 
                 if ( pos != std::string::npos )
                 {

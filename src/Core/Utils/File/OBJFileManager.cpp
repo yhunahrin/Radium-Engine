@@ -92,14 +92,29 @@ bool OBJFileManager::exportData( std::ostream& file, const TriangleMesh& data ) 
                            std::to_string( n[2] ) + "\n";
     }
     // Face
-    for( uint i = 0; i < data.m_faces.size(); ++i ) {
-        const VectorNui f = data.m_faces.at( i );
-        content += "f ";
-        for (uint v = 0; v<f.size(); ++v)
-        {
-            content += std::to_string( f[v] + 1 ) + " ";
+    if (data.m_faces.empty())
+    {
+        for (uint i = 0; i < data.m_triangles.size(); ++i) {
+            const VectorNui f = data.m_triangles.at(i);
+            content += "f ";
+            for (uint v = 0; v < f.size(); ++v)
+            {
+                content += std::to_string(f[v] + 1) + " ";
+            }
+            content += "\n";
         }
-        content += "\n";
+    }
+    else
+    {
+        for (uint i = 0; i < data.m_faces.size(); ++i) {
+            const VectorNui f = data.m_faces.at(i);
+            content += "f ";
+            for (uint v = 0; v < f.size(); ++v)
+            {
+                content += std::to_string(f[v] + 1) + " ";
+            }
+            content += "\n";
+        }
     }
     file << content;
     return true;

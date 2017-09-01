@@ -24,7 +24,7 @@ namespace Ra
             /// @return the path to a parent directory of a given file's full path.
             /// Most of the time this function behaves similarly to the unix dirname(1)
             /// command. It will ignore any trailing slash.
-            RA_CORE_API std::string getDirName( const std::string& path );
+            RA_CORE_API std::string getDirName( const std::string& path, char sep ='/' );
 
             /// @return the file name from a given file's full path.
             /// Most of the time this function behaves similarly to the unix basename(1)
@@ -32,7 +32,7 @@ namespace Ra
             /// @param keepExtension If true it will behave like unix basename(1)
             /// (path/to/file.ext will give file.ext) ;
             /// otherwise it will remove the extension (path/to/file.ext will give file)
-            RA_CORE_API std::string getBaseName( const std::string& path, bool keepExtension = true );
+            RA_CORE_API std::string getBaseName( const std::string& path, bool keepExtension = true, char sep = '/'  );
 
             //
             // Printf-like interface for people who dislike streams.

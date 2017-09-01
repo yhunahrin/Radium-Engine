@@ -1,5 +1,9 @@
 #include <Core/Math/PolyLine.hpp>
 
+bool g_show_anat;
+bool g_run_anat;
+bool g_is_trans;
+bool g_show_subdiv;
 
 namespace Ra {
 namespace Core {
@@ -61,7 +65,7 @@ Scalar PolyLine::project( const Vector3& p ) const
 {
     CORE_ASSERT( m_pts.size() > 1, "Line must have at least two points" );
     Scalar sqDist = std::numeric_limits<Scalar>::max();
-    uint segment = 0;
+    int segment = -1;
     std::vector<Scalar> ts;
     std::vector<Scalar> ds;
     ts.reserve( m_ptsDiff.size());

@@ -136,6 +136,8 @@ namespace FancyMeshPlugin
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
+        // LALALA
+        ro->setVisible(false);
     }
 
     Ra::Core::Index FancyMeshComponent::getRenderObjectIndex() const

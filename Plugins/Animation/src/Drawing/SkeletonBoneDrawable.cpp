@@ -37,6 +37,7 @@ namespace AnimationPlugin
         displayMesh->loadGeometry( makeBoneShape() );
         renderObject->setMesh( displayMesh );
 
+        renderObject->setVisible(false);
         m_roIdx  = m_roMgr->addRenderObject(renderObject);
         updateLocalTransform();
 
