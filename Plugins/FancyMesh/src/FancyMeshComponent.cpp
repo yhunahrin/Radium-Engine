@@ -129,6 +129,7 @@ namespace FancyMeshPlugin
 
         auto ro = Ra::Engine::RenderObject::createRenderObject(roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, config, mat);
         if ( mat->m_alpha < 1.0 ) ro->setTransparent(true);
+        ro->setVisible( false );
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
