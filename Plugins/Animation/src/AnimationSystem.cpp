@@ -15,6 +15,9 @@
 
 namespace AnimationPlugin
 {
+
+    static bool anim_init = true;
+
     AnimationSystem::AnimationSystem()
     {
         m_isPlaying = false;
@@ -38,6 +41,10 @@ namespace AnimationPlugin
         }
 
         m_oneStep = false;
+        if (!anim_init) {
+            m_isPlaying = true;
+            anim_init = true;
+        }
     }
 
     void AnimationSystem::reset()
@@ -134,7 +141,7 @@ namespace AnimationPlugin
             component->setXray( m_xrayOn );
             registerComponent( entity, component );
         }
-        m_isPlaying = true;
+        anim_init = false;
     }
 
     Scalar AnimationSystem::getTime(const Ra::Engine::ItemEntry& entry) const
