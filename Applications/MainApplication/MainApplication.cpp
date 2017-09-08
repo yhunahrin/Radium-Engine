@@ -59,10 +59,17 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
+#if 0
+        , m_recordFrames( true )
+        , m_recordTimings( true )
+        , m_recordGraph( true )
+        , m_recordMeshes( true )
+#else
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
         , m_recordMeshes( false )
+#endif
         , m_isAboutToQuit( false )
     {
         // Set application and organization names in order to ensure uniform
@@ -239,7 +246,6 @@ namespace Ra
 
         Engine::SystemEntity::uiCmp()->addRenderObject(
                     Primitive(Engine::SystemEntity::uiCmp(), Frame(Ra::Core::Transform::Identity(), 0.05f)));
-
 
         auto em =  Ra::Engine::RadiumEngine::getInstance()->getEntityManager();
         Ra::Engine::Entity* e = em->entityExists("Test") ?
