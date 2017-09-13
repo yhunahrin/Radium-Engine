@@ -54,6 +54,8 @@ namespace Ra
                 RendererTextures_Normal,
                 RendererTextures_Position,
                 RendererTextures_Quad,
+                RendererTextures_OSmooth,
+                RendererTextures_ESmooth,
                 RendererTexture_Count
             };
 
@@ -62,6 +64,7 @@ namespace Ra
             std::unique_ptr<globjects::Framebuffer> m_postprocessFbo;
 
             uint m_pingPongSize;
+            std::unique_ptr<globjects::Framebuffer> m_evenSmoothFbo, m_oddSmoothFbo;
 
             std::vector<RenderObjectPtr> m_transparentRenderObjects;
             uint m_fancyTransparentCount;
@@ -74,6 +77,7 @@ namespace Ra
             bool m_planeFit = false;
             double m_radius = 0;
             int m_depthCalc;
+            int m_smoothNum = 0;
         public:
             void setShowPos(bool showPos);
             void setPlaneFit(bool planeFit);
@@ -81,6 +85,7 @@ namespace Ra
             void setDepthThresh(double dThresh);
             void setRadius(double radius);
             void setDepthCalc(int index);
+            void setSmoothNum(int sNum);
         };
 
     } // namespace Engine

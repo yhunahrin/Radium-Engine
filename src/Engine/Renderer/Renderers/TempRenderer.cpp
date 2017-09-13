@@ -83,6 +83,7 @@ namespace Ra
             ShaderConfigurationFactory::addConfiguration(configPointCloud);
             m_shaderMgr->addShaderProgram(configPointCloud);
             m_shaderMgr->addShaderProgram("Quad", "Shaders/Quad.vert.glsl", "Shaders/Quad.frag.glsl");
+            m_shaderMgr->addShaderProgram("imp2", "Shaders/Basic2D.vert.glsl", "Shaders/implicit02.frag.glsl");
         }
 
         void TempRenderer::initBuffers()
@@ -91,6 +92,13 @@ namespace Ra
             m_fbo.reset( new globjects::Framebuffer() );
             GL_ASSERT( glViewport( 0, 0, m_width, m_height ) );
 
+            LOG ( logDEBUG ) << "even smooth Framebuffer.";
+            m_evenSmoothFbo.reset( new globjects::Framebuffer() );
+            GL_ASSERT( glViewport( 0, 0, m_width, m_height ) );
+
+            LOG ( logDEBUG ) << "odd smooth Framebuffer.";
+            m_oddSmoothFbo.reset( new globjects::Framebuffer() );
+            GL_ASSERT( glViewport( 0, 0, m_width, m_height ) );
             m_textures[RendererTextures_Depth].reset(new Texture("Depth"));
             m_textures[RendererTextures_Depth]->internalFormat = GL_DEPTH_COMPONENT24;
             m_textures[RendererTextures_Depth]->dataType = GL_UNSIGNED_INT;
@@ -110,6 +118,15 @@ namespace Ra
             m_textures[RendererTextures_Quad]->internalFormat = GL_RGBA32F;
             m_textures[RendererTextures_Quad]->dataType = GL_FLOAT;
             m_secondaryTextures["Quad"] = m_textures[RendererTextures_Quad].get();
+            m_textures[RendererTextures_ESmooth].reset(new Texture("Even Smooth Texture"));
+            m_textures[RendererTextures_ESmooth]->internalFormat = GL_RGBA32F;
+            m_textures[RendererTextures_ESmooth]->dataType = GL_FLOAT;
+            m_secondaryTextures["2-Smooth Even"] = m_textures[RendererTextures_ESmooth].get();
+
+            m_textures[RendererTextures_OSmooth].reset(new Texture("Odd Smooth Texture"));
+            m_textures[RendererTextures_OSmooth]->internalFormat = GL_RGBA32F;
+            m_textures[RendererTextures_OSmooth]->dataType = GL_FLOAT;
+            m_secondaryTextures["2-Smooth Odd"] = m_textures[RendererTextures_OSmooth].get();
         }
 
         void TempRenderer::updateStepInternal( const RenderData& renderData )
@@ -171,6 +188,26 @@ namespace Ra
             shader->setUniform("neighSize", m_neighSize);
             shader->setUniform("depthCalc", m_depthCalc);
             shader->setUniform("WindowSize", Core::Vector2(m_width,m_height));
+// implicit02 Pass
+
+            for (int i=0; i<m_smoothNum; i++)
+            {
+                i%2 == 0 ? m_evenSmoothFbo->bind() : m_oddSmoothFbo->bind();
+
+                GL_ASSERT(glColorMask(1, 1, 1, 1));
+                GL_ASSERT(glDrawBuffers(1, buffers));
+                GL_ASSERT(glClearBufferfv(GL_COLOR, 0, clearColor.data()));   // Clear color
+
+                GL_ASSERT(glDisable(GL_DEPTH_TEST));
+                GL_ASSERT(glDisable(GL_BLEND));
+
+                shader = m_shaderMgr->getShaderProgram("imp2");
+                shader->bind();
+                shader->setUniform("grad", m_textures[(i%2 == 0 ? RendererTextures_OSmooth : RendererTextures_ESmooth)].get(), 0);
+
+                m_quadMesh->render();
+                i%2 == 0 ? m_evenSmoothFbo->unbind() : m_oddSmoothFbo->unbind();
+            }
 
             m_quadMesh->render();
 
