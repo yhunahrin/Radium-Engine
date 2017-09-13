@@ -1,12 +1,5 @@
-#version 130
-#extension GL_ARB_draw_buffers : enable
-#extension GL_ARB_compatibility : enable
-#extension GL_EXT_gpu_shader4 : enable
-
 uniform sampler2D grad;
-uniform float     sw;
-uniform float     sh;
-uniform int       type;
+int type;
 
 // type = 0: nothing
 // type = 1: suggestive contours (SC)
@@ -18,30 +11,27 @@ uniform int       type;
 // type = 7: demarcating curves
 
 vec4 vals[8];
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out vec4 fragData;
+
+in vec2 varTexcoord;
 
 void loadValues() {
   // |v[0]|v[1]|v[2]|
   // |v[3]|v[8]|v[4]|
   // |v[5]|v[6]|v[7]|
 
-  // coordinates
-  float xc = gl_TexCoord[0].s;
-  float xm = gl_TexCoord[0].s-sw;
-  float xp = gl_TexCoord[0].s+sw;
-
-  float yc = gl_TexCoord[0].t;
-  float ym = gl_TexCoord[0].t-sh;
-  float yp = gl_TexCoord[0].t+sh;
 
   // automatically load view values (for depth discontinuities)
-  vals[0] = texture2D(grad,vec2(xm,yp));
-  vals[1] = texture2D(grad,vec2(xc,yp));
-  vals[2] = texture2D(grad,vec2(xp,yp));
-  vals[3] = texture2D(grad,vec2(xm,yc));
-  vals[4] = texture2D(grad,vec2(xp,yc));
-  vals[5] = texture2D(grad,vec2(xm,ym));
-  vals[6] = texture2D(grad,vec2(xc,ym));
-  vals[7] = texture2D(grad,vec2(xp,ym));
+
+  vals[0] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(-1,+1),0);
+  vals[1] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2( 0,+1),0);
+  vals[2] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(+1,+1),0);
+  vals[3] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(-1, 0),0);
+  vals[4] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(+1, 0),0);
+  vals[5] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(-1,-1),0);
+  vals[6] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2( 0,-1),0);
+  vals[7] = texelFetch(grad,ivec2(gl_FragCoord.xy)+ivec2(+1,-1),0);
 }
 
 float mtanh(float c) {
@@ -61,7 +51,7 @@ vec4 depthDiscontinuities() {
 }
 
 vec3 gradient() {
-  vec2 g = texture2D(grad,gl_TexCoord[0].st).xy;
+  vec2 g = texelFetch(grad,ivec2(gl_FragCoord.xy),0).xy;
 
   return g==vec2(0.0) ? vec3(0.0) : vec3(normalize(vec2(-g.y,g.x)),mtanh(length(g)));
 }
@@ -117,12 +107,13 @@ float meanCurvature(in vec3 h) {
 }
 
 void main(void) {
+    type = 1;
   // return tangent of gradient and magnitude of gradient for
   // silhouettes and user lines
 
-/*   if(texture2D(grad,gl_TexCoord[0].st)==vec4(0.0)) { */
-/*     gl_FragData[0] = vec4(0.0); */
-/*     gl_FragData[1] = vec4(0.0); */
+/*   if(texture2D(grad,varTexcoord.st)==vec4(0.0)) { */
+/*     fragColor = vec4(0.0); */
+/*     fragData = vec4(0.0); */
 /*     gl_FragData[2] = vec4(1.0); */
 /*     return; */
 /*   } */
@@ -131,27 +122,26 @@ void main(void) {
   vec3 h = hessian();
   vec4 d = depthDiscontinuities();
 
-  gl_FragData[0]   = d;
-  //gl_FragData[0].w = meanCurvature(h);
-  gl_FragData[0].w = texture2D(grad,gl_TexCoord[0].st).x;
-
+  fragColor   = d;
+  //fragColor.w = meanCurvature(h);
+  fragColor.w = texelFetch(grad, ivec2(gl_FragCoord.xy),0).x;
   if(type<=0) {
     // nothing
-    gl_FragData[1] = vec4(0.0);
+    fragData = vec4(0.0);
 
   } else if(type<=3) {
     // first order: SC, SH, SC+SH
     vec4 g = vec4(gradient(),0.0);
-    gl_FragData[1] = g;
+    fragData = g;
 
   } else if(type<=6) {
     // second order: AR, AV, AR+AV
     vec4 c = curvature(h,type);
-    gl_FragData[1] = c;
+    fragData = c;
 
   } else {
     // third order: demarcating curves
-    gl_FragData[1] = vec4(0.0);
+    fragData = vec4(0.0);
 
   }
 }
