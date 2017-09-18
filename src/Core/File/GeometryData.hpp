@@ -104,31 +104,31 @@ public:
     inline uint getVerticesSize() const;
 
     inline const Vector3Array& getVertices() const;
-    inline void setVertices( const std::vector< Core::Vector3 >& vertexList );
+    inline void setVertices( const Vector3Array& vertexList );
 
     inline const Vector2uArray& getEdges() const;
-    inline void setEdges( const std::vector< Core::Vector2ui >& edgeList );
+    inline void setEdges( const Vector2uArray& edgeList );
 
     inline const VectorNuArray& getFaces() const;
-    inline void setFaces( const std::vector< Core::VectorNui >& faceList );
+    inline void setFaces( const VectorNuArray& faceList );
 
     inline const VectorNuArray& getPolyhedra() const;
-    inline void setPolyhedron( const std::vector< Core::VectorNui >& polyList );
+    inline void setPolyhedra( const VectorNuArray& polyList );
 
     inline const Vector3Array& getNormals() const;
-    inline void setNormals( const std::vector< Core::Vector3 >& normalList );
+    inline void setNormals( const Vector3Array& normalList );
 
     inline const Vector3Array& getTangents() const;
-    inline void setTangents( const std::vector< Core::Vector3 >& tangentList );
+    inline void setTangents( const Vector3Array& tangentList );
 
     inline const Vector3Array& getBiTangents() const;
-    inline void setBitangents( const std::vector< Core::Vector3 >& bitangentList );
+    inline void setBitangents( const Vector3Array& bitangentList );
 
     inline const Vector3Array& getTexCoords() const;
-    inline void setTextureCoordinates( const std::vector< Core::Vector3 >& texCoordList );
+    inline void setTexCoords( const Vector3Array& texCoordList );
 
     inline const ColorArray& getColors() const;
-    inline void setColors( const std::vector< Core::Color >& colorList );
+    inline void setColors( const ColorArray& colorList );
 
     inline const WeightArray& getWeights() const;
     inline void setWeights(const WeightArray& weightList);
