@@ -101,7 +101,7 @@ namespace Ra {
             return m_vertex;
         }
 
-        inline void GeometryData::setVertices( const std::vector< Core::Vector3 >& vertexList )
+        inline void GeometryData::setVertices( const GeometryData::Vector3Array& vertexList )
         {
             const uint size = vertexList.size();
             m_vertex.resize( size );
@@ -116,7 +116,7 @@ namespace Ra {
             return m_edge;
         }
 
-        inline void GeometryData::setEdges( const std::vector< Core::Vector2ui >& edgeList )
+        inline void GeometryData::setEdges( const GeometryData::Vector2uArray& edgeList )
         {
             const uint size = edgeList.size();
             m_edge.resize( size );
@@ -131,7 +131,7 @@ namespace Ra {
             return m_faces;
         }
 
-        inline void GeometryData::setFaces( const std::vector< Core::VectorNui >& faceList )
+        inline void GeometryData::setFaces( const GeometryData::VectorNuArray& faceList )
         {
             const uint size = faceList.size();
             m_faces.resize( size );
@@ -146,7 +146,7 @@ namespace Ra {
             return m_polyhedron;
         }
 
-        inline void GeometryData::setPolyhedron( const std::vector< Core::VectorNui >& polyList )
+        inline void GeometryData::setPolyhedra( const GeometryData::VectorNuArray& polyList )
         {
             const uint size = polyList.size();
             m_polyhedron.resize( size );
@@ -161,7 +161,7 @@ namespace Ra {
             return m_normal;
         }
 
-        inline void GeometryData::setNormals( const std::vector< Core::Vector3 >& normalList )
+        inline void GeometryData::setNormals( const GeometryData::Vector3Array& normalList )
         {
             const uint size = normalList.size();
             m_normal.resize( size );
@@ -176,7 +176,7 @@ namespace Ra {
             return m_tangent;
         }
 
-        inline void GeometryData::setTangents( const std::vector< Core::Vector3 >& tangentList )
+        inline void GeometryData::setTangents( const GeometryData::Vector3Array& tangentList )
         {
             const uint size = tangentList.size();
             m_tangent.resize( size );
@@ -191,7 +191,7 @@ namespace Ra {
             return m_bitangent;
         }
 
-        inline void GeometryData::setBitangents( const std::vector< Core::Vector3 >& bitangentList )
+        inline void GeometryData::setBitangents( const GeometryData::Vector3Array& bitangentList )
         {
             const uint size = bitangentList.size();
             m_bitangent.resize( size );
@@ -206,7 +206,7 @@ namespace Ra {
             return m_texCoord;
         }
 
-        inline void GeometryData::setTextureCoordinates( const std::vector< Core::Vector3 >& texCoordList )
+        inline void GeometryData::setTexCoords( const GeometryData::Vector3Array& texCoordList )
         {
             const uint size = texCoordList.size();
             m_texCoord.resize( size );
@@ -221,7 +221,7 @@ namespace Ra {
             return m_color;
         }
 
-        inline void GeometryData::setColors( const std::vector< Core::Color >& colorList )
+        inline void GeometryData::setColors( const GeometryData::ColorArray& colorList )
         {
             const uint size = colorList.size();
             m_color.resize( size );

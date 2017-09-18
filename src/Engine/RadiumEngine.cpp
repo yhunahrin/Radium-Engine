@@ -11,6 +11,7 @@
 
 
 #include <Core/Log/Log.hpp>
+#include <Core/File/FileUtils.hpp>
 #include <Core/String/StringUtils.hpp>
 #include <Core/Event/EventEnums.hpp>
 #include <Core/Event/KeyEvent.hpp>
@@ -125,6 +126,8 @@ namespace Ra
 
                 return false;
             }
+
+            Asset::reoder_points_per_bone( m_loadedFile.get() );
 
             std::string entityName = Core::StringUtils::getBaseName( filename, false );
 

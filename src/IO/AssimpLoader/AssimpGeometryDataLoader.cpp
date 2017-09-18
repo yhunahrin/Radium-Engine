@@ -205,14 +205,14 @@ namespace Ra {
         void AssimpGeometryDataLoader::fetchVertices( const aiMesh& mesh, Asset::GeometryData& data ) {
             const uint size = mesh.mNumVertices;
 #if 0
-            std::vector< Core::Vector3 > vertex( size );
+            Asset::GeometryData::Vector3Array vertex( size );
             vertex.resize( size );
             #pragma omp parallel for
             for( uint i = 0; i < size; ++i ) {
                 vertex[i] = assimpToCore( mesh.mVertices[i] );
             }
 #else
-            std::vector< Core::Vector3 > vertex;
+            Asset::GeometryData::Vector3Array vertex;
             std::map< Triplet, uint > uniqueTable;
             std::map< uint, uint > duplicateTable;
             for( uint i = 0; i < size; ++i ) {
@@ -221,7 +221,7 @@ namespace Ra {
                 auto it = uniqueTable.find( t );
                 if( ( it == uniqueTable.end() ) || data.isLoadingDuplicates() ) {
                     vertex.push_back( v );
-                    uniqueTable[t]           = vertex.size() - 1;
+                    uniqueTable[t]    = vertex.size() - 1;
                     duplicateTable[i] = vertex.size() - 1;
                 } else {
                     duplicateTable[i] = it->second;
@@ -235,7 +235,7 @@ namespace Ra {
         /// EDGE
         void AssimpGeometryDataLoader::fetchEdges( const aiMesh& mesh, Asset::GeometryData& data ) const {
             const uint size = mesh.mNumFaces;
-            std::vector< Core::Vector2ui > edge( size );
+            Asset::GeometryData::Vector2uArray edge( size );
             #pragma omp parallel for
             for( int i = 0; i < int(size); ++i ) {
                 edge[i] = assimpToCore( mesh.mFaces[i].mIndices, mesh.mFaces[i].mNumIndices ).cast<uint>();
@@ -247,7 +247,7 @@ namespace Ra {
 
         void AssimpGeometryDataLoader::fetchFaces( const aiMesh& mesh, Asset::GeometryData& data ) const {
             const uint size = mesh.mNumFaces;
-            std::vector< Core::VectorNui > face( size );
+            Asset::GeometryData::VectorNuArray face( size );
             #pragma omp parallel for
             for( int i = 0; i < int(size); ++i ) {
                 face[i] = assimpToCore( mesh.mFaces[i].mIndices, mesh.mFaces[i].mNumIndices ).cast<uint>();
@@ -265,7 +265,7 @@ namespace Ra {
 
         void AssimpGeometryDataLoader::fetchNormals( const aiMesh& mesh, Asset::GeometryData& data ) const {
             const uint size = mesh.mNumVertices;
-            std::vector<Core::Vector3> normal(data.getVerticesSize(), Core::Vector3::Zero());
+            Asset::GeometryData::Vector3Array normal(data.getVerticesSize(), Core::Vector3::Zero());
             #pragma omp parallel for
             for( int i = 0; i < int(size); ++i )
             {
@@ -283,7 +283,7 @@ namespace Ra {
         void AssimpGeometryDataLoader::fetchTangents( const aiMesh& mesh, Asset::GeometryData& data ) const {
 #if defined(LOAD_TEXTURES)
             const uint size = mesh.mNumVertices;
-            std::vector<Core::Vector3> tangent(data.getVerticesSize(), Core::Vector3::Zero());
+            Asset::GeometryData::Vector3Array tangent(data.getVerticesSize(), Core::Vector3::Zero());
             #pragma omp parallel for
             for( uint i = 0; i < size; ++i )
             {
@@ -296,7 +296,7 @@ namespace Ra {
         void AssimpGeometryDataLoader::fetchBitangents( const aiMesh& mesh, Asset::GeometryData& data ) const {
 #if defined(LOAD_TEXTURES)
             const uint size = mesh.mNumVertices;
-            std::vector<Core::Vector3> bitangent(data.getVerticesSize());
+            Asset::GeometryData::Vector3Array bitangent(data.getVerticesSize());
             #pragma omp parallel for
             for( uint i = 0; i < size; ++i )
             {
@@ -309,8 +309,7 @@ namespace Ra {
         void AssimpGeometryDataLoader::fetchTextureCoordinates( const aiMesh& mesh, Asset::GeometryData& data ) const {
 #if ( defined(LOAD_TEXTURES) )
             const uint size = mesh.mNumVertices;
-            std::vector<Core::Vector3> texcoord;
-            texcoord.resize(data.getVerticesSize());
+            Asset::GeometryData::Vector3Array texcoord(data.getVerticesSize());
             #pragma omp parallel for
             for ( uint i = 0; i < size; ++i )
             {
