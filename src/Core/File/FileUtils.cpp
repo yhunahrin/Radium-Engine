@@ -39,6 +39,7 @@ namespace Ra
                 {
                     vmap[ new_bmap[j] ] = last++;
                 }
+                // go to bone children -- depth first
                 for( const auto& edge : edgeList ) {
                     if( edge[0] == current ) {
                         compute_points_ordering( current, edge[1], skel, edgeList, vertices, bmap, vmap, last );
@@ -87,7 +88,8 @@ namespace Ra
                 GeometryData* geom = *g;
 
                 // get the max weighted bone for each vertex
-                const uint nb_v = geom->getVerticesSize();
+                const auto &duplicates = geom->getDuplicateTable();
+                const uint nb_v = duplicates.size();
                 std::vector<uint> bmap(nb_v, -1); // bmap[old vertex index] = max weight bone index
                 std::vector<Scalar> wmax(nb_v, -std::numeric_limits<Scalar>::max());
                 const uint nb_b = skel->getComponentDataSize();
@@ -108,16 +110,24 @@ namespace Ra
 
                 // sort vertices per max weighted bone
                 std::vector<std::vector<uint>> old_bmap(nb_b+1); // old_bmap[bone index] = old vertices indices
-                for (uint i=0; i<nb_v; ++i)
+                std::set<uint> dupli;
+                uint d = 0;
+                for( uint i = 0 ; i < nb_v ; ++i, ++d )
                 {
-                    if (bmap[i] == -1)
+                    if( d != duplicates.at(i) )
+                    {
+                        // register as duplicates, not in old_bmap
+                        dupli.insert( i );
+                        --d;
+                    }
+                    else if( bmap[i] == -1 )
                     {
                         LOG(logWARNING) << "Found a vertex without bone weight" << std::endl;
-                        old_bmap[nb_b].push_back( i );
+                        old_bmap[ nb_b ].push_back( duplicates.at(i) );
                     }
                     else
                     {
-                        old_bmap[ bmap[i] ].push_back( i );
+                        old_bmap[ bmap[i] ].push_back( duplicates.at(i) );
                     }
                 }
                 bmap.clear();
@@ -141,14 +151,24 @@ namespace Ra
                     compute_points_ordering( -1, r, skel, edgeList, vertices, old_bmap, vmap, last);
                 }
 
-                // just put vertices without bones at the end
-                for (uint j=0; j<old_bmap[nb_b].size(); ++j)
+                // just put vertices without bones after that
+                for( uint j = 0 ; j < old_bmap[nb_b].size() ; ++j )
                 {
                     vmap[ old_bmap[nb_b][j] ] = last++;
                 }
-                if (last != nb_v)
+
+                // compute another reordering for all-vertices data
+                std::vector<uint> vmap_d(nb_v, -1); // vmap[old vertex index] = new vertex index
+                for( const auto d : duplicates )
                 {
-                    std::cerr << "Error: " << last << " != " << nb_v << std::endl;
+                    if( dupli.find( d.first )==dupli.end() )
+                    {
+                        vmap_d[ d.first ] = vmap[ d.second ];
+                    }
+                    else // put duplicates data at the very end
+                    {
+                        vmap_d[ d.first ] = last++;
+                    }
                 }
 
                 // apply vertices reordering to skel and geom data
@@ -159,7 +179,7 @@ namespace Ra
                     auto& comp = comps[i];
                     for (auto& w : comp.m_weight)
                     {
-                        w.first = vmap[ w.first ];
+                        w.first = vmap_d[ w.first ];
                     }
                 }
                 skel->setComponents( comps );
@@ -197,21 +217,36 @@ namespace Ra
                 auto normals = geom->getNormals();
                 apply_reorder( normals, vmap );
                 geom->setNormals( normals );
-                auto tangents = geom->getTangents();
-                apply_reorder( tangents, vmap );
-                geom->setTangents( tangents );
-                auto bitangents = geom->getBiTangents();
-                apply_reorder( bitangents, vmap );
-                geom->setBitangents( bitangents );
-                auto texcoords = geom->getTexCoords();
-                apply_reorder( texcoords, vmap );
-                geom->setTexCoords( texcoords );
-                auto colors = geom->getColors();
-                apply_reorder( colors, vmap );
-                geom->setColors( colors );
                 auto weights = geom->getWeights();
                 apply_reorder( weights, vmap );
                 geom->setWeights( weights );
+
+                auto tangents = geom->getTangents();
+                apply_reorder( tangents, vmap_d );
+                geom->setTangents( tangents );
+                auto bitangents = geom->getBiTangents();
+                apply_reorder( bitangents, vmap_d );
+                geom->setBitangents( bitangents );
+                auto texcoords = geom->getTexCoords();
+                apply_reorder( texcoords, vmap_d );
+                geom->setTexCoords( texcoords );
+                auto colors = geom->getColors();
+                apply_reorder( colors, vmap_d );
+                geom->setColors( colors );
+
+                std::map< uint, uint > table;
+                for( const auto &d : duplicates )
+                {
+                    if (dupli.find( d.first ) != dupli.end())
+                    {
+                        table[ vmap_d[ d.first ] ] = vmap[ d.second ];
+                    }
+                    else
+                    {
+                        table[ vmap[ d.second ] ] = vmap[ d.second ];
+                    }
+                }
+                geom->setDuplicateTable( table );
             }
         }
     }
