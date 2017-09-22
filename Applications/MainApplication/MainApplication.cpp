@@ -60,10 +60,10 @@ namespace Ra
         , m_numFrames( 0 )
         , m_realFrameRate( false )
 #if 0
-        , m_recordFrames( true )
+        , m_recordFrames( false )
         , m_recordTimings( true )
         , m_recordGraph( true )
-        , m_recordMeshes( true )
+        , m_recordMeshes( false )
 #else
         , m_recordFrames( false )
         , m_recordTimings( false )
@@ -203,6 +203,7 @@ namespace Ra
             numThreads = m_maxThreads;
         }
         m_taskQueue.reset( new Core::TaskQueue(numThreads) );
+        std::cout << "Using " << numThreads << " threads." << std::endl;
 
         // Create the instance of the keymapping manager (should it be done here ?)
         Gui::KeyMappingManager::createInstance();
