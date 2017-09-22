@@ -157,34 +157,70 @@ namespace Ra
         template <class ErrorMetric>
         typename ErrorMetric::Primitive ProgressiveMesh<ErrorMetric>::computeEdgeQuadric(Index halfEdgeIndex)
         {
-            EFIterator eIt = EFIterator(m_dcel->m_halfedge[halfEdgeIndex]);
-            FaceList adjFaces = eIt.list();
+//            EFIterator eIt = EFIterator(m_dcel->m_halfedge[halfEdgeIndex]);
+//            FaceList adjFaces = eIt.list();
 
-            // We go all over the faces which contain vs and vt
-            // We add the quadrics of all the faces
-            Primitive q, qToAdd;
+//            // We go all over the faces which contain vs and vt
+//            // We add the quadrics of all the faces
+//            Primitive q, qToAdd;
+//            Index fIdx;
+
+//            Scalar weight = 1.0/adjFaces.size();
+//            q = m_primitives[adjFaces[0]->idx];
+//            q *= weight;
+
+//            for (unsigned int i = 1; i < adjFaces.size(); i++)
+//            {
+//                Face_ptr f = adjFaces[i];
+//                fIdx = f->idx;
+////                Scalar area = Ra::Core::Geometry::triangleArea
+////                                ( f->HE()->V()->P(),
+////                                  f->HE()->Next()->V()->P(),
+////                                  f->HE()->Prev()->V()->P());
+////                Scalar wedgeAngle = getWedgeAngle(fIdx,
+////                                                m_dcel->m_halfedge[halfEdgeIndex]->V()->idx,
+////                                                m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx);
+//                qToAdd = m_primitives[fIdx];
+//                qToAdd *= weight;
+
+//                q += qToAdd;
+//            }
+//            return q;
+
+            VFIterator v1It = VFIterator(m_dcel->m_halfedge[halfEdgeIndex]->V());
+            FaceList adjFacesv1 = v1It.list();
+
+            VFIterator v2It = VFIterator(m_dcel->m_halfedge[halfEdgeIndex]->Next()->V());
+            FaceList adjFacesv2 = v2It.list();
+
+            Primitive q, q1, q2, qToAdd;
             Index fIdx;
 
-            Scalar weight = 1.0/adjFaces.size();
-            q = m_primitives[adjFaces[0]->idx];
-            q *= weight;
+            Scalar weightv1 = 1.0/adjFacesv1.size();
+            Scalar weightv2 = 1.0/adjFacesv2.size();
 
-            for (unsigned int i = 1; i < adjFaces.size(); i++)
+            q1 = m_primitives[adjFacesv1[0]->idx];
+            for (unsigned int i = 1; i < adjFacesv1.size(); i++)
             {
-                Face_ptr f = adjFaces[i];
+                Face_ptr f = adjFacesv1[i];
                 fIdx = f->idx;
-//                Scalar area = Ra::Core::Geometry::triangleArea
-//                                ( f->HE()->V()->P(),
-//                                  f->HE()->Next()->V()->P(),
-//                                  f->HE()->Prev()->V()->P());
-//                Scalar wedgeAngle = getWedgeAngle(fIdx,
-//                                                m_dcel->m_halfedge[halfEdgeIndex]->V()->idx,
-//                                                m_dcel->m_halfedge[halfEdgeIndex]->Next()->V()->idx);
                 qToAdd = m_primitives[fIdx];
-                qToAdd *= weight;
-
-                q += qToAdd;
+                q1 += qToAdd;
             }
+            q1 *= weightv1;
+
+            q2 = m_primitives[adjFacesv2[0]->idx];
+            for (unsigned int i = 1; i < adjFacesv2.size(); i++)
+            {
+                Face_ptr f = adjFacesv2[i];
+                fIdx = f->idx;
+                qToAdd = m_primitives[fIdx];
+                q2 += qToAdd;
+            }
+            q2 *= weightv2;
+
+            q = q1 + q2;
+            q *= 0.5;
             return q;
         }
 
@@ -248,15 +284,44 @@ namespace Ra
         //--------------------------------------------------
 
         template <class ErrorMetric>
-        int ProgressiveMesh<ErrorMetric>::vertexContact(Index vertexIndex, std::vector<Super4PCS::KdTree<Scalar>*> kdtrees, int idxOtherObject, Scalar threshold)
+        int ProgressiveMesh<ErrorMetric>::vertexContact(Index vertexIndex, std::vector<Super4PCS::KdTree<>*> kdtrees, int idxOtherObject, Scalar threshold)
         {
             Vertex_ptr v = m_dcel->m_vertex[vertexIndex];
 
             // Look if the vertex is too close to another object
-            const Super4PCS::KdTree<Scalar>::VectorType& p = reinterpret_cast<const Super4PCS::KdTree<Scalar>::VectorType&>(v->P());
+            const Super4PCS::KdTree<>::VectorType& p = reinterpret_cast<const Super4PCS::KdTree<>::VectorType&>(v->P());
 
             int contact = kdtrees[idxOtherObject]->doQueryRestrictedClosestIndex(p, threshold);
             return contact;
+        }
+
+        template <class ErrorMetric>
+        int ProgressiveMesh<ErrorMetric>::edgeContact(Index vertexIndex1, Index vertexIndex2, std::vector<Super4PCS::TriangleKdTree<>*> trianglekdtrees, int idxOtherObject, Scalar threshold)
+        {
+            Vertex_ptr v1 = m_dcel->m_vertex[vertexIndex1];
+            Vertex_ptr v2 = m_dcel->m_vertex[vertexIndex2];
+
+
+            const Super4PCS::TriangleKdTree<>::VectorType& p1 = reinterpret_cast<const Super4PCS::TriangleKdTree<>::VectorType&>(v1->P());
+            const Super4PCS::TriangleKdTree<>::VectorType& p2 = reinterpret_cast<const Super4PCS::TriangleKdTree<>::VectorType&>(v2->P());
+
+            // Look if the edge is too close to another object
+            int contact = trianglekdtrees[idxOtherObject]->doQueryRestrictedClosestIndex(p1, p2, threshold);
+            return contact;
+        }
+
+        template <class ErrorMetric>
+        void ProgressiveMesh<ErrorMetric>::edgeContacts(Index vertexIndex1, Index vertexIndex2, std::vector<Super4PCS::TriangleKdTree<>*> trianglekdtrees, int idxOtherObject, Scalar threshold, std::vector<int>& contacts)
+        {
+            Vertex_ptr v1 = m_dcel->m_vertex[vertexIndex1];
+            Vertex_ptr v2 = m_dcel->m_vertex[vertexIndex2];
+
+
+            const Super4PCS::TriangleKdTree<>::VectorType& p1 = reinterpret_cast<const Super4PCS::TriangleKdTree<>::VectorType&>(v1->P());
+            const Super4PCS::TriangleKdTree<>::VectorType& p2 = reinterpret_cast<const Super4PCS::TriangleKdTree<>::VectorType&>(v2->P());
+
+            // Look if the edge is too close to another object
+            trianglekdtrees[idxOtherObject]->doQueryRestrictedClosestIndexes(p1, p2, threshold, contacts);
         }
 
 //        template <class ErrorMetric>
@@ -736,7 +801,7 @@ namespace Ra
 //        }
 
         template <class ErrorMetric>
-        bool ProgressiveMesh<ErrorMetric>::isConstructM0(std::vector<Super4PCS::KdTree<Scalar>*> kdtrees, int idx, PriorityQueue &pQueue)
+        bool ProgressiveMesh<ErrorMetric>::isConstructM0(std::vector<Super4PCS::KdTree<>*> kdtrees, int idx, PriorityQueue &pQueue)
         {
             PriorityQueue::PriorityQueueData d = pQueue.firstData();
             HalfEdge_ptr he = m_dcel->m_halfedge[d.m_edge_id];

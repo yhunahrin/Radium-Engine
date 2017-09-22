@@ -96,6 +96,16 @@ inline FaceList EFIterator::list() const
     Face_ptr f1 = h1->F();
     Face_ptr f2 = h2->F();
 
+    // To include twice the shared faces by the endpoints of the edge
+//    if (h1 != NULL)
+//    {
+//        L.push_back(f1);
+//    }
+//    if (h2 != NULL)
+//    {
+//        L.push_back(f2);
+//    }
+
     // First path around v2
     do {
         if (h1 != NULL)
