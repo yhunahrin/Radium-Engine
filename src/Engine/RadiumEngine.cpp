@@ -127,7 +127,7 @@ namespace Ra
                 return false;
             }
 
-            Asset::reoder_points_per_bone( m_loadedFile.get() );
+//            Asset::reoder_points_per_bone( m_loadedFile.get() );
 
             std::string entityName = Core::StringUtils::getBaseName( filename, false );
 
