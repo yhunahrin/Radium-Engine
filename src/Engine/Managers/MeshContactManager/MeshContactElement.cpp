@@ -19,6 +19,7 @@
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 
 #include <Core/TreeStructures/kdtree.hpp>
+#include <Core/TreeStructures/trianglekdtree.hpp>
 #include <Core/Mesh/DCEL/Face.hpp>
 #include <Core/Mesh/ProgressiveMesh/PriorityQueue.hpp>
 
@@ -61,10 +62,17 @@ namespace Ra
         }
 
 
-        Super4PCS::KdTree<Scalar>* MeshContactElement::computeKdTree()
+        Super4PCS::KdTree<>* MeshContactElement::computeKdTree()
         {
-            const Super4PCS::KdTree<Scalar>::PointList& points = reinterpret_cast<const Super4PCS::KdTree<Scalar>::PointList&>(*(m_verticesWriter()));
-            return (new Super4PCS::KdTree<Scalar>(points));
+            const Super4PCS::KdTree<>::PointList& points = reinterpret_cast<const Super4PCS::KdTree<>::PointList&>(*(m_verticesWriter()));
+            return (new Super4PCS::KdTree<>(points));
+        }
+
+        Super4PCS::TriangleKdTree<>* MeshContactElement::computeTriangleKdTree()
+        {
+            const Super4PCS::TriangleKdTree<>::TriangleList& triangles = reinterpret_cast<const Super4PCS::TriangleKdTree<>::TriangleList&>(*(m_trianglesWriter()));
+            const Super4PCS::TriangleKdTree<>::PointList& points = reinterpret_cast<const Super4PCS::TriangleKdTree<>::PointList&>(*(m_verticesWriter()));
+            return (new Super4PCS::TriangleKdTree<>(triangles, points));
         }
 
         Ra::Core::PriorityQueue* MeshContactElement::getPriorityQueue()
@@ -154,9 +162,19 @@ namespace Ra
             }
          }
 
+        void MeshContactElement::computeFacePrimitives()
+        {
+            m_faceprimitives = getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics();
+         }
+
          Ra::Core::ProgressiveMesh<>::Primitive MeshContactElement::getPrimitive(int vertexIndex)
          {
              return m_primitives[vertexIndex];
+         }
+
+         Ra::Core::ProgressiveMesh<>::Primitive MeshContactElement::getFacePrimitive(int faceIndex)
+         {
+             return m_faceprimitives[faceIndex];
          }
 
          void MeshContactElement::setIndex(int idx)

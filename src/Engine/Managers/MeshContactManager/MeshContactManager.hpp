@@ -6,6 +6,7 @@
 #include <Engine/System/System.hpp>
 
 #include <Core/TreeStructures/kdtree.hpp>
+#include <Core/TreeStructures/trianglekdtree.hpp>
 
 #include <Core/Mesh/ProgressiveMesh/PriorityQueue.hpp>
 
@@ -14,6 +15,8 @@
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMeshData.hpp>
 
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMesh.hpp>
+
+#include <Core/Geometry/Distance/DistanceQueries.hpp>
 
 
 namespace Ra
@@ -39,6 +42,8 @@ namespace Ra
 
             void constructPriorityQueues();
             void updatePriorityQueue(Ra::Core::Index vsIndex, Ra::Core::Index vtIndex, int objIndex);
+            void constructPriorityQueues2();
+            void updatePriorityQueue2(Ra::Core::Index vsIndex, Ra::Core::Index vtIndex, int objIndex);
             bool edgeCollapse(int objIndex);
 
         private:
@@ -48,7 +53,8 @@ namespace Ra
             Scalar m_threshold; // distance used to define "contacts"
             Scalar m_lambda; // influence of the original quadric considering contacts
 
-            std::vector<Super4PCS::KdTree<Scalar>*> m_kdtrees;
+            std::vector<Super4PCS::KdTree<>*> m_kdtrees;
+            std::vector<Super4PCS::TriangleKdTree<>*> m_trianglekdtrees;
             std::vector<MeshContactElement*> m_meshContactElements;
 
 

@@ -8,6 +8,7 @@
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMeshLOD.hpp>
 
 #include <Core/TreeStructures/kdtree.hpp>
+#include <Core/TreeStructures/trianglekdtree.hpp>
 
 #include <Core/Mesh/ProgressiveMesh/PriorityQueue.hpp>
 #include <Core/Mesh/ProgressiveMesh/ProgressiveMesh.hpp>
@@ -32,8 +33,10 @@ namespace Ra
                     ComponentMessenger::CallbackTypes<TriangleArray>::ReadWrite trianglesWriter
                     );
 
-            Super4PCS::KdTree<Scalar>* computeKdTree();
+            Super4PCS::KdTree<>* computeKdTree();
+            Super4PCS::TriangleKdTree<>* computeTriangleKdTree();
             void computePrimitives(); //Computes initial vertices quadrics used to detect contacts
+            void computeFacePrimitives(); //Computes initial face quadrics used to detect contacts
             void computeProgressiveMesh();
             void updateTriangleMesh(Ra::Core::TriangleMesh newMesh);
             void setlodValueChanged(int value);
@@ -48,6 +51,7 @@ namespace Ra
             Ra::Core::PriorityQueue* getPriorityQueue();
             Ra::Core::ProgressiveMeshLOD* getProgressiveMeshLOD();
             Ra::Core::ProgressiveMesh<>::Primitive getPrimitive(int vertexIndex);
+            Ra::Core::ProgressiveMesh<>::Primitive getFacePrimitive(int faceIndex);
 
         private:
             ComponentMessenger::CallbackTypes<Ra::Core::Vector3Array>::ReadWrite m_verticesWriter;
@@ -59,6 +63,7 @@ namespace Ra
             Ra::Core::ProgressiveMeshLOD* m_pmlod;
             Ra::Core::PriorityQueue* m_pqueue;
             std::vector<Ra::Core::ProgressiveMesh<>::Primitive> m_primitives; // Initial vertex quadrics
+            std::vector<Ra::Core::ProgressiveMesh<>::Primitive> m_faceprimitives; // Initial face quadrics
         };
 
     } // namespace Engine
