@@ -50,14 +50,16 @@
 //#include "utils/disablewarnings.h"
 
 #include <limits>
+#include <Eigen/Core>
+
+#include <Core/CoreMacros.hpp>
 
 namespace Super4PCS{
 
-template <typename _Scalar, int _Dim>
+template <int _Dim>
 class AABB
 {
 public:
-    typedef _Scalar Scalar;
     enum { Dim = _Dim };
 
     typedef Eigen::Matrix<Scalar, Dim, 1> VectorType;
@@ -69,7 +71,7 @@ public:
     template <class InputIt>
     AABB(InputIt first, InputIt last) { extendTo(first, last); }
 
-    inline AABB<Scalar, Dim>& operator=(const AABB<Scalar, Dim>& bb)
+    inline AABB<Dim>& operator=(const AABB<Dim>& bb)
     { _min = bb._min; _max = bb._max; return (*this); }
 
     template <class VectorTypeDerived>
@@ -115,8 +117,10 @@ private:
 
 }; // class AABB
 
-template <typename _Scalar>
-using AABB3D = AABB< _Scalar, 3 >;
+//template <typename _Scalar>
+//using AABB3D = AABB< _Scalar, 3 >;
+
+using AABB3D = AABB< 3 >;
 
 } // namespace Super4PCS
 

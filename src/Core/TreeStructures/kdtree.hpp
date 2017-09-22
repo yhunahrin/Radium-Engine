@@ -125,7 +125,7 @@ namespace Super4PCS{
     \endcode
     \ingroup groupGeometry
   */
-template<typename _Scalar, typename _Index = int >
+template<typename _Index = int >
 class KdTree
 {
 public:
@@ -145,13 +145,12 @@ public:
         };
     };
 
-    typedef _Scalar Scalar;
     typedef _Index  Index;
 
     static constexpr Index invalidIndex() { return -1; }
 
     typedef Eigen::Matrix<Scalar,3,1> VectorType;
-    typedef AABB3D<Scalar> AxisAlignedBoxType;
+    typedef AABB3D AxisAlignedBoxType;
 
     typedef std::vector<KdNode>      NodeList;
     typedef std::vector<VectorType>  PointList;
@@ -293,8 +292,8 @@ protected:
 /*!
   \see KdTree(unsigned int size, unsigned int nofPointsPerCell, unsigned int maxDepth)
   */
-template<typename Scalar, typename Index>
-KdTree<Scalar, Index>::KdTree(const PointList& points,
+template<typename Index>
+KdTree<Index>::KdTree(const PointList& points,
                        unsigned int nofPointsPerCell,
                        unsigned int maxDepth)
     : mPoints(points),
@@ -312,8 +311,8 @@ KdTree<Scalar, Index>::KdTree(const PointList& points,
   before requesting for closest points.
   \see finalize()
   */
-template<typename Scalar, typename Index>
-KdTree<Scalar, Index>::KdTree(unsigned int size,
+template<typename Index>
+KdTree<Index>::KdTree(unsigned int size,
                        unsigned int nofPointsPerCell,
                        unsigned int maxDepth)
     : _nofPointsPerCell(nofPointsPerCell),
@@ -323,9 +322,9 @@ KdTree<Scalar, Index>::KdTree(unsigned int size,
     mIndices.reserve(size);
 }
 
-template<typename Scalar, typename Index>
+template<typename Index>
 void
-KdTree<Scalar, Index>::finalize()
+KdTree<Index>::finalize()
 {
     mNodes.clear();
     mNodes.reserve(4*mPoints.size()/_nofPointsPerCell);
@@ -336,8 +335,8 @@ KdTree<Scalar, Index>::finalize()
     std::cout << "create tree ... DONE (" << mPoints.size() << " points)" << std::endl;
 }
 
-template<typename Scalar, typename Index>
-KdTree<Scalar, Index>::~KdTree()
+template<typename Index>
+KdTree<Index>::~KdTree()
 {
 }
 
@@ -355,9 +354,9 @@ KdTree<Scalar, Index>::~KdTree()
   The optionnal parameter currentId is used when the query point is
   stored in the tree, and must thus be avoided during the query
 */
-template<typename Scalar, typename Index>
+template<typename Index>
 Index
-KdTree<Scalar, Index>::doQueryRestrictedClosestIndex(
+KdTree<Index>::doQueryRestrictedClosestIndex(
         const VectorType& queryPoint,
         Scalar sqdist,
         int currentId)
@@ -428,10 +427,10 @@ KdTree<Scalar, Index>::doQueryRestrictedClosestIndex(
   that allow to perform the query by requesting a maximum distance instead of
   neighborhood size.
  */
-template<typename Scalar, typename Index>
+template<typename Index>
 template<typename Functor >
 void
-KdTree<Scalar, Index>::_doQueryDistIndicesWithFunctor(
+KdTree<Index>::_doQueryDistIndicesWithFunctor(
         const VectorType& queryPoint,
         float sqdist,
         Functor f)
@@ -483,8 +482,8 @@ KdTree<Scalar, Index>::_doQueryDistIndicesWithFunctor(
     }
 }
 
-template<typename Scalar, typename Index>
-unsigned int KdTree<Scalar, Index>::split(int start, int end, unsigned int dim, Scalar splitValue)
+template<typename Index>
+unsigned int KdTree<Index>::split(int start, int end, unsigned int dim, Scalar splitValue)
 {
     int l(start), r(end-1);
     for ( ; l<r ; ++l, --r)
@@ -516,8 +515,8 @@ unsigned int KdTree<Scalar, Index>::split(int start, int end, unsigned int dim, 
    to prune only about 10% of the leaves, but the overhead of this pruning (ball/ABBB intersection)
    is more expensive than the gain it provides and the memory consumption is x4 higher !
 */
-template<typename Scalar, typename Index>
-void KdTree<Scalar, Index>::createTree(unsigned int nodeId, unsigned int start, unsigned int end, unsigned int level, unsigned int targetCellSize, unsigned int targetMaxDepth)
+template<typename Index>
+void KdTree<Index>::createTree(unsigned int nodeId, unsigned int start, unsigned int end, unsigned int level, unsigned int targetCellSize, unsigned int targetMaxDepth)
 {
 
     KdNode& node = mNodes[nodeId];
