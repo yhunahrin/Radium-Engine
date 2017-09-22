@@ -23,10 +23,10 @@ namespace Ra
     {
 
         MeshContactManager::MeshContactManager()
-            : m_nbfaces( 0 )
+            :m_nb_faces_max( 0 )
+            ,m_nbfaces( 0 )
             ,m_threshold( 0.01 )
             ,m_lambda( 0.5 )
-            ,m_nb_faces_max( 0 )
             ,m_curr_vsplit( 0 )
         {
         }
