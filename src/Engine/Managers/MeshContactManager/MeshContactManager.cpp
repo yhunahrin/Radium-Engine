@@ -49,7 +49,7 @@ namespace Ra
 
         void MeshContactManager::setThresholdChanged(const double threshold)
         {
-            m_threshold = threshold;
+            m_threshold = std::pow(threshold,2);
         }
 
         void MeshContactManager::setLambdaChanged(const double lambda)
