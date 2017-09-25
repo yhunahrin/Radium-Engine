@@ -1,10 +1,5 @@
 #include <Core/Math/PolyLine.hpp>
 
-bool g_show_anat;
-bool g_run_anat;
-bool g_is_trans;
-bool g_show_subdiv;
-
 namespace Ra {
 namespace Core {
 

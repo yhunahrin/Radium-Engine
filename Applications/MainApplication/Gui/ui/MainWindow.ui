@@ -137,13 +137,6 @@
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayout_4">
-              <item row="0" column="0">
-               <widget class="QPushButton" name="m_removeEntityButton">
-                <property name="text">
-                 <string>Remove</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="m_editRenderObjectButton">
                 <property name="enabled">
@@ -168,31 +161,45 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="m_clearSceneButton">
-                <property name="text">
-                 <string>Clear Scene</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
+              <item row="3" column="1">
                <widget class="QPushButton" name="m_fitCameraButton">
                 <property name="text">
                  <string>Fit Cam</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
+              <item row="3" column="2">
                <widget class="QPushButton" name="m_saveCameraButton">
                 <property name="text">
                  <string>Save Cam</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="3">
+              <item row="3" column="3">
                <widget class="QPushButton" name="m_loadCameraButton">
                 <property name="text">
                  <string>Load Cam</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="m_clearSceneButton">
+                <property name="text">
+                 <string>Clear Scene</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QPushButton" name="m_removeEntityButton">
+                <property name="text">
+                 <string>Remove Object</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="m_reloadSceneButton">
+                <property name="text">
+                 <string>Reload scene</string>
                 </property>
                </widget>
               </item>

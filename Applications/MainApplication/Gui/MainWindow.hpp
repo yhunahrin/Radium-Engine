@@ -164,7 +164,11 @@ namespace Ra
             void deleteCurrentItem();
 
             /// Clears all entities and resets the camera.
-            void resetScene();
+            void resetScene( bool resetCamera = true);
+
+            /// Delete all entities and reload scene from  the last file
+            void reloadScene();
+
 
             /// Change the Renderer
             void on_actionForward_triggered();

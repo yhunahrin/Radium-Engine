@@ -112,6 +112,7 @@ namespace Ra
         connect(m_exportMeshButton, &QPushButton::clicked, this, &MainWindow::exportCurrentMesh);
         connect(m_removeEntityButton, &QPushButton::clicked, this, &MainWindow::deleteCurrentItem);
         connect(m_clearSceneButton, &QPushButton::clicked, this, &MainWindow::resetScene);
+        connect(m_reloadSceneButton, &QPushButton::clicked, this, &MainWindow::reloadScene);
         connect(m_fitCameraButton, &QPushButton::clicked, this, &MainWindow::fitCamera);
         connect(m_saveCameraButton, &QPushButton::clicked, this, &MainWindow::saveCamera);
         connect(m_loadCameraButton, &QPushButton::clicked, this, &MainWindow::loadCamera);
@@ -530,12 +531,28 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::resetScene()
+    void Gui::MainWindow::resetScene(bool resetCamera)
     {
         // To see why this call is important, please see deleteCurrentItem().
         m_selectionManager->clearSelection();
         Engine::RadiumEngine::getInstance()->getEntityManager()->deleteEntities();
-        m_viewer->resetCamera();
+        if(resetCamera)
+        {
+            m_viewer->resetCamera();
+        }
+    }
+
+    void Gui::MainWindow::reloadScene()
+    {
+       resetScene(false);
+       QSettings settings;
+       QVariant path = settings.value("files/load");
+
+       if (!path.isNull())
+       {
+           emit fileLoading(path.toString(), false);
+       }
+
     }
 
     void Gui::MainWindow::on_actionForward_triggered()

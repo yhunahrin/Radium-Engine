@@ -10,6 +10,8 @@ RA_CORE_API extern bool g_show_anat;
 RA_CORE_API extern bool g_run_anat;
 RA_CORE_API extern bool g_is_trans;
 RA_CORE_API extern bool g_show_subdiv;
+RA_CORE_API extern bool g_anim_autoplay;
+
 
 #include <functional>
 #include <Eigen/Core>

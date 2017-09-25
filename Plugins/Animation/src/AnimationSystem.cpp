@@ -135,7 +135,10 @@ namespace AnimationPlugin
             component->setXray( m_xrayOn );
             registerComponent( entity, component );
         }
-        m_isPlaying = true;
+        if (g_anim_autoplay)
+        {
+            m_isPlaying = true;
+        }
     }
 
     Scalar AnimationSystem::getTime(const Ra::Engine::ItemEntry& entry) const

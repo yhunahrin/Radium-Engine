@@ -443,7 +443,7 @@ namespace Ra
             GL_CHECK_ERROR;
 
             resizeInternal();
-            
+
             glDrawBuffer( GL_BACK ) ;
             glReadBuffer( GL_BACK ) ;
 
@@ -500,6 +500,7 @@ namespace Ra
                 return;
             }
 
+            return;
             // Load lights
             for ( uint lightId = 0; lightId < scene->mNumLights; ++lightId )
             {

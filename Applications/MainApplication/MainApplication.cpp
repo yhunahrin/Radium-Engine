@@ -37,8 +37,32 @@
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
 
-// Const parameters : TODO : make config / command line options
 
+// global variables for config
+
+
+// IS display
+bool g_show_anat = false;
+bool g_run_anat = false ;
+bool g_is_trans = false ;
+bool g_show_subdiv = false ;
+bool g_anim_autoplay = false;
+
+
+// Physics parameters
+uint   g_num_particles = 60; // Number of particles per muscle
+Scalar g_tendon_proportion = 0.1;  // percentage of the muscle length which is considered tendon
+
+Scalar g_massFactor;
+
+Scalar g_stiffness = 0.2f;          // Stiffness of the spring constraints (0.2f);
+Scalar g_rest_length= 0.02f;        // Rest length fraction of the spring constraint ( 0.02f)
+Scalar g_tendon_stiffness = 1.f;   // Stiffness of spring for tendon sections (1.f)
+Scalar g_tendon_rest_length = -1.f; // Rest length of srping of tendon section (-1.f)
+
+Scalar g_collision_stiffness = 10.f; // Stiffness of the collision vs implicit constraint (10.f)
+Scalar g_keep_inside_stiffness = 10.5f; // Stiffness of the collision vs skin constraint (10.5f)
+Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
 
 namespace Ra
 {
@@ -52,7 +76,7 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
-        , m_recordFrames(  true )
+        , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
         , m_recordMeshes( false )
@@ -87,10 +111,13 @@ namespace Ra
         QCommandLineOption runAnatOpt(QStringList{"runanat"}, "run anatomy","","");
         QCommandLineOption transISOpt(QStringList{"trans"}, "transparent skin","","");
         QCommandLineOption subdivOpt(QStringList{"subdiv"}, "run subdivision","","");
+        QCommandLineOption autoplayOpt(QStringList{"autoplay"}, "autoplay animation","","");
+        QCommandLineOption saveMeshes(QStringList{"savemeshes"}, "save meshes","", "");
+        QCommandLineOption saveFrames(QStringList{"saveframes"}, "save frames","", "");
 
 
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
-        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt });
+        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames });
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
@@ -98,18 +125,19 @@ namespace Ra
         if (parser.isSet(numFramesOpt)) m_numFrames = parser.value(numFramesOpt).toUInt();
         if (parser.isSet(maxThreadsOpt)) m_maxThreads = parser.value(maxThreadsOpt).toUInt();
 
-        if (parser.isSet(showAnatOpt)) g_show_anat = true;
-        if (parser.isSet(runAnatOpt)) g_run_anat = true;
-        if (parser.isSet(transISOpt)) g_is_trans = true;
-        if (parser.isSet(subdivOpt)) g_show_subdiv = true;
-
-
+        if (parser.isSet(showAnatOpt))  g_show_anat     = true;
+        if (parser.isSet(runAnatOpt))   g_run_anat      = true;
+        if (parser.isSet(transISOpt))   g_is_trans      = true;
+        if (parser.isSet(subdivOpt))    g_show_subdiv   = true;
+        if (parser.isSet(autoplayOpt))  g_anim_autoplay = true;
+        if (parser.isSet(saveMeshes))   m_recordMeshes  = true;
+        if (parser.isSet(saveFrames))   m_recordFrames  = true;
 
         std::time_t startTime = std::time(nullptr);
         std::tm* startTm = std::localtime(&startTime);
         Ra::Core::StringUtils::stringPrintf(m_exportFolderName, "%4u%02u%02u-%02u%02u",
                                             1900 + startTm->tm_year,
-                                            startTm->tm_mon,
+                                            startTm->tm_mon+1,
                                             startTm->tm_mday,
                                             startTm->tm_hour,
                                             startTm->tm_min);
@@ -156,7 +184,7 @@ namespace Ra
 
         std::stringstream cline;
         cline << "Command line arguments :";
-        if (argc < 2) 
+        if (argc < 2)
         {
             cline << " (none)";
         }
@@ -281,6 +309,8 @@ namespace Ra
         {
             m_mainWindow->fitCamera();
         }
+        QSettings settings;
+        settings.setValue("files/load", path);
         emit loadComplete();
     }
 
