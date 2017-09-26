@@ -96,13 +96,25 @@ namespace Ra
             m->m_normals = normals;
             m->m_triangles = triangles;
 
+            m_initTriangleMesh = *m;
+
             Ra::Core::ProgressiveMeshBase<>* pm = new Ra::Core::ProgressiveMesh<>(m);
             m_pmlod = new Ra::Core::ProgressiveMeshLOD(pm);
+        }
+
+        Ra::Core::TriangleMesh MeshContactElement::getInitTriangleMesh()
+        {
+            return m_initTriangleMesh;
         }
 
         Ra::Core::ProgressiveMeshLOD* MeshContactElement::getProgressiveMeshLOD()
         {
             return m_pmlod;
+        }
+
+        void MeshContactElement::setProgressiveMeshLOD(Ra::Core::ProgressiveMeshBase<>* pm)
+        {
+            m_pmlod = new Ra::Core::ProgressiveMeshLOD(pm);
         }
 
         bool MeshContactElement::isConstructM0()

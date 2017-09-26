@@ -38,6 +38,9 @@ namespace Ra
             void computePrimitives(); //Computes initial vertices quadrics used to detect contacts
             void computeFacePrimitives(); //Computes initial face quadrics used to detect contacts
             void computeProgressiveMesh();
+
+            Ra::Core::TriangleMesh getInitTriangleMesh();
+
             void updateTriangleMesh(Ra::Core::TriangleMesh newMesh);
             void setlodValueChanged(int value);
             bool isConstructM0();
@@ -50,6 +53,7 @@ namespace Ra
 
             Ra::Core::PriorityQueue* getPriorityQueue();
             Ra::Core::ProgressiveMeshLOD* getProgressiveMeshLOD();
+            void setProgressiveMeshLOD(Ra::Core::ProgressiveMeshBase<>* pm);
             Ra::Core::ProgressiveMesh<>::Primitive getPrimitive(int vertexIndex);
             Ra::Core::ProgressiveMesh<>::Primitive getFacePrimitive(int faceIndex);
 
@@ -64,6 +68,7 @@ namespace Ra
             Ra::Core::PriorityQueue* m_pqueue;
             std::vector<Ra::Core::ProgressiveMesh<>::Primitive> m_primitives; // Initial vertex quadrics
             std::vector<Ra::Core::ProgressiveMesh<>::Primitive> m_faceprimitives; // Initial face quadrics
+            Ra::Core::TriangleMesh m_initTriangleMesh;
         };
 
     } // namespace Engine

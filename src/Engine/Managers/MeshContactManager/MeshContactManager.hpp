@@ -37,6 +37,7 @@ namespace Ra
 
             int getNbFacesMax();
             void computeNbFacesMax();
+            void computeNbFacesMax2();
 
             void addMesh(MeshContactElement* mesh);
 
@@ -57,6 +58,7 @@ namespace Ra
             std::vector<Super4PCS::TriangleKdTree<>*> m_trianglekdtrees;
             std::vector<MeshContactElement*> m_meshContactElements;
 
+            std::vector<Ra::Core::TriangleMesh> m_initTriangleMeshes;
 
             struct comparePriorityQueueDataByErrorContact
             {

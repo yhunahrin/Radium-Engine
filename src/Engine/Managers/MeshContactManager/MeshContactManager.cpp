@@ -47,6 +47,16 @@ namespace Ra
             }
         }
 
+        void MeshContactManager::computeNbFacesMax2()
+        {
+            m_nb_faces_max = 0;
+
+            for (uint i = 0; i < m_initTriangleMeshes.size(); i++)
+            {
+                m_nb_faces_max += m_initTriangleMeshes[i].m_triangles.size();
+            }
+        }
+
         void MeshContactManager::setThresholdChanged(const double threshold)
         {
             m_threshold = std::pow(threshold,2);
@@ -73,6 +83,7 @@ namespace Ra
             LOG(logINFO) << "m_trianglekdtrees size : " << m_trianglekdtrees.size();
 
             mesh->computeProgressiveMesh();
+            m_initTriangleMeshes.push_back(mesh->getInitTriangleMesh());
 
             //Test of the closest triangle to an edge for a single object (cactus_256.obj)
 //            bool b32 = false;
@@ -175,10 +186,10 @@ namespace Ra
 //            }
 //            int indFace = mesh->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContact(ind46,ind116,m_trianglekdtrees, m_trianglekdtrees.size()-1,m_threshold);
 
-            mesh->getProgressiveMeshLOD()->getProgressiveMesh()->computeFacesQuadrics();
+//            mesh->getProgressiveMeshLOD()->getProgressiveMesh()->computeFacesQuadrics();
             //mesh->computePrimitives();
-            mesh->computeFacePrimitives();
-            computeNbFacesMax();
+//            mesh->computeFacePrimitives();
+            //computeNbFacesMax();
         }
 
         void MeshContactManager::setLodValueChanged(int value)
@@ -237,8 +248,8 @@ namespace Ra
 
         //simplification of the first loaded object only, the second one is there only to take into account contacts
         void MeshContactManager::setConstructM0()
-        {
-                     //constructPriorityQueues();
+        {      
+                    //constructPriorityQueues();
                     constructPriorityQueues2();
 
     //                  for (const auto& comp : m_components)
@@ -247,6 +258,8 @@ namespace Ra
     //                        m_mainqueue.insert(obj->getPriorityQueue()->firstData());
     //                        LOG(logINFO) << "main queue size : " << m_mainqueue.size();
     //                  }
+
+                    m_mainqueue.clear();
 
                      MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[0]);
                      m_mainqueue.insert(obj->getPriorityQueue()->firstData());
@@ -550,6 +563,18 @@ namespace Ra
 
         void MeshContactManager::constructPriorityQueues2()
         {
+
+            for (uint objIndex=0; objIndex < m_meshContactElements.size(); objIndex++)
+            {
+                Ra::Core::ProgressiveMeshBase<>* pm = new Ra::Core::ProgressiveMesh<>(&m_initTriangleMeshes[objIndex]);
+                m_meshContactElements[objIndex]->setProgressiveMeshLOD(pm);
+                m_meshContactElements[objIndex]->getProgressiveMeshLOD()->getProgressiveMesh()->computeFacesQuadrics();
+                m_meshContactElements[objIndex]->computeFacePrimitives();
+                //computeNbFacesMax();
+            }
+            computeNbFacesMax2();;
+            m_index_pmdata.clear();
+
             for (uint objIndex=0; objIndex < /*m_components.size()*/1; objIndex++)
             {
             MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[objIndex]);
@@ -626,6 +651,7 @@ namespace Ra
                                     const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndexes[l]];
                                     Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
                                     sqdist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).sqrDistance;
+                                    CORE_ASSERT(sqdist/m_threshold >= 0 && sqdist/m_threshold <= 1, "Contact found out of threshold limit.");
                                     weight = std::pow((sqdist/m_threshold) - 1.0 ,2);
                                     nbContacts++;
                                     //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]]
@@ -740,6 +766,7 @@ namespace Ra
                                 const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndexes[l]];
                                 Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
                                 sqdist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).sqrDistance;
+                                CORE_ASSERT(sqdist/m_threshold >= 0 && sqdist/m_threshold <= 1, "Contact found out of threshold limit.");
                                 weight = std::pow((sqdist/m_threshold) - 1.0 ,2);
                                 nbContacts++;
                                 //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]];
