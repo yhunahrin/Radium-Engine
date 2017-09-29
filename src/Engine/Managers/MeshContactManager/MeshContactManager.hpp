@@ -34,6 +34,7 @@ namespace Ra
             void setLambdaChanged(const double lambda);
             void setLodValueChanged(int value);
             void setConstructM0();
+            void setSliderPressed();
 
             int getNbFacesMax();
             void computeNbFacesMax();
@@ -58,7 +59,7 @@ namespace Ra
             std::vector<Super4PCS::TriangleKdTree<>*> m_trianglekdtrees;
             std::vector<MeshContactElement*> m_meshContactElements;
 
-            std::vector<Ra::Core::TriangleMesh> m_initTriangleMeshes;
+            std::vector<Ra::Core::TriangleMesh> m_initTriangleMeshes; // used for contact computation
 
             struct comparePriorityQueueDataByErrorContact
             {

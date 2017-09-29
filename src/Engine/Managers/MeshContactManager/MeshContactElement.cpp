@@ -68,10 +68,12 @@ namespace Ra
             return (new Super4PCS::KdTree<>(points));
         }
 
-        Super4PCS::TriangleKdTree<>* MeshContactElement::computeTriangleKdTree()
+        Super4PCS::TriangleKdTree<>* MeshContactElement::computeTriangleKdTree(Ra::Core::TriangleMesh& tm)
         {
-            const Super4PCS::TriangleKdTree<>::TriangleList& triangles = reinterpret_cast<const Super4PCS::TriangleKdTree<>::TriangleList&>(*(m_trianglesWriter()));
-            const Super4PCS::TriangleKdTree<>::PointList& points = reinterpret_cast<const Super4PCS::TriangleKdTree<>::PointList&>(*(m_verticesWriter()));
+            //const Super4PCS::TriangleKdTree<>::TriangleList& triangles = reinterpret_cast<const Super4PCS::TriangleKdTree<>::TriangleList&>(*(m_trianglesWriter()));
+            const Super4PCS::TriangleKdTree<>::TriangleList& triangles = reinterpret_cast<const Super4PCS::TriangleKdTree<>::TriangleList&>(tm.m_triangles);
+            //const Super4PCS::TriangleKdTree<>::PointList& points = reinterpret_cast<const Super4PCS::TriangleKdTree<>::PointList&>(*(m_verticesWriter()));
+            const Super4PCS::TriangleKdTree<>::PointList& points = reinterpret_cast<const Super4PCS::TriangleKdTree<>::PointList&>(tm.m_vertices);
             return (new Super4PCS::TriangleKdTree<>(triangles, points));
         }
 
