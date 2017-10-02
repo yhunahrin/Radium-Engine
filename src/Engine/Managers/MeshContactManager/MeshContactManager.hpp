@@ -32,6 +32,7 @@ namespace Ra
             void setNbFacesChanged(const int nb);
             void setThresholdChanged(const double threshold);
             void setLambdaChanged(const double lambda);
+            void setNChanged(const double n);
             void setLodValueChanged(int value);
             void setConstructM0();
             void setSliderPressed();
@@ -54,6 +55,7 @@ namespace Ra
             int m_nbfaces;
             Scalar m_threshold; // distance used to define "contacts"
             Scalar m_lambda; // influence of the original quadric considering contacts
+            Scalar m_n; //slope of the weight function for contacts
 
             std::vector<Super4PCS::KdTree<>*> m_kdtrees;
             std::vector<Super4PCS::TriangleKdTree<>*> m_trianglekdtrees;
