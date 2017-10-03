@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+extern float g_animation_speed;
+
 AnimationUI::AnimationUI(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::AnimationUI)
@@ -17,6 +19,7 @@ AnimationUI::AnimationUI(QWidget *parent) :
     connect( ui->actionPlay, &QAction::toggled, this, &AnimationUI::on_m_play_clicked );
     connect( ui->actionStep, &QAction::triggered, this, &AnimationUI::on_m_step_clicked );
     connect( ui->actionStop, &QAction::triggered, this, &AnimationUI::on_m_reset_clicked );
+    ui->m_speed->setValue(g_animation_speed);
 }
 
 AnimationUI::~AnimationUI()

@@ -11,6 +11,7 @@
 #include <Engine/Component/Component.hpp>
 #include <Engine/Assets/HandleData.hpp>
 #include <Engine/Assets/AnimationData.hpp>
+extern Scalar g_animation_speed;
 
 namespace AnimationPlugin
 {
@@ -26,7 +27,7 @@ namespace AnimationPlugin
             m_animationTimeStep( true ),
             m_animationTime( 0.0 ),
             m_dt(),
-            m_speed( 1.0 ),
+            m_speed( g_animation_speed ),
             m_slowMo( false ),
             m_selectedBone(-1),
             m_wasReset(false),

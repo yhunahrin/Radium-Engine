@@ -49,19 +49,21 @@ bool g_show_subdiv = false ;
 bool g_anim_autoplay = false;
 
 
+Scalar g_animation_speed = 1.f;
+
 // Physics parameters
 uint   g_num_particles = 60; // Number of particles per muscle
 Scalar g_tendon_proportion = 0.1;  // percentage of the muscle length which is considered tendon
 
-Scalar g_massFactor;
+Scalar g_massFactor = 0.5f; // multiplicator of all masses.
 
 Scalar g_stiffness = 0.2f;          // Stiffness of the spring constraints (0.2f);
 Scalar g_rest_length= 0.02f;        // Rest length fraction of the spring constraint ( 0.02f)
 Scalar g_tendon_stiffness = 1.f;   // Stiffness of spring for tendon sections (1.f)
 Scalar g_tendon_rest_length = -1.f; // Rest length of srping of tendon section (-1.f)
 
-Scalar g_collision_stiffness = 10.f; // Stiffness of the collision vs implicit constraint (10.f)
-Scalar g_keep_inside_stiffness = 10.5f; // Stiffness of the collision vs skin constraint (10.5f)
+Scalar g_collision_stiffness = 1.f; // Stiffness of the collision vs implicit constraint (10.f)
+Scalar g_keep_inside_stiffness = 1.5f; // Stiffness of the collision vs skin constraint (10.5f)
 Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
 
 namespace Ra
@@ -112,12 +114,13 @@ namespace Ra
         QCommandLineOption transISOpt(QStringList{"trans"}, "transparent skin","","");
         QCommandLineOption subdivOpt(QStringList{"subdiv"}, "run subdivision","","");
         QCommandLineOption autoplayOpt(QStringList{"autoplay"}, "autoplay animation","","");
+        QCommandLineOption animSpeedOpt(QStringList{"animspeed"}, "autoplay animation","scalar","1.0");
         QCommandLineOption saveMeshes(QStringList{"savemeshes"}, "save meshes","", "");
         QCommandLineOption saveFrames(QStringList{"saveframes"}, "save frames","", "");
 
 
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
-        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames });
+        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt });
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
@@ -130,6 +133,7 @@ namespace Ra
         if (parser.isSet(transISOpt))   g_is_trans      = true;
         if (parser.isSet(subdivOpt))    g_show_subdiv   = true;
         if (parser.isSet(autoplayOpt))  g_anim_autoplay = true;
+        if (parser.isSet(animSpeedOpt))  g_animation_speed = parser.value(animSpeedOpt).toDouble();
         if (parser.isSet(saveMeshes))   m_recordMeshes  = true;
         if (parser.isSet(saveFrames))   m_recordFrames  = true;
 
