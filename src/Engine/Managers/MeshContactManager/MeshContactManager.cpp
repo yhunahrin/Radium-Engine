@@ -669,12 +669,12 @@ namespace Ra
                                         if (m_threshold == 0.0)
                                         {
                                             CORE_ASSERT(sqdist == 0.0, "Contact found out of threshold limit");
-                                            weight = std::pow(1 - m_n, 2);
+                                            weight = 1;
                                         }
                                         else
                                         {
                                             CORE_ASSERT(sqdist/m_threshold >= 0 && sqdist/m_threshold <= 1, "Contact found out of threshold limit.");
-                                            weight = std::pow((sqdist/m_threshold) - m_n , 2);
+                                            weight = std::pow((sqdist/m_threshold) - 1, m_n);
                                         }
                                         nbContacts++;
                                         //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]]
@@ -797,12 +797,12 @@ namespace Ra
                                     if (m_threshold == 0.0)
                                     {
                                         CORE_ASSERT(sqdist == 0.0, "Contact found out of threshold limit");
-                                        weight = std::pow(1 - m_n, 2);
+                                        weight = 1;
                                     }
                                     else
                                     {
                                         CORE_ASSERT(sqdist/m_threshold >= 0 && sqdist/m_threshold <= 1, "Contact found out of threshold limit.");
-                                        weight = std::pow((sqdist/m_threshold) - m_n , 2);
+                                        weight = std::pow((sqdist/m_threshold) - 1, m_n);
                                     }
                                     nbContacts++;
                                     //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]];
