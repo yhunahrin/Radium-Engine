@@ -35,7 +35,6 @@ namespace Ra
             void setNChanged(const double n);
             void setLodValueChanged(int value);
             void setConstructM0();
-            void setSliderPressed();
 
             int getNbFacesMax();
             void computeNbFacesMax();

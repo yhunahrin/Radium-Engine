@@ -73,11 +73,6 @@ namespace Ra
             m_n = n;
         }
 
-        void MeshContactManager::setSliderPressed()
-        {
-            LOG(logINFO) << "Slider pressed";
-        }
-
         void MeshContactManager::addMesh(MeshContactElement* mesh)
         {
             m_meshContactElements.push_back(mesh);
