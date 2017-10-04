@@ -152,8 +152,7 @@ TriangleKdTree<Index>::TriangleKdTree(unsigned int size,
 template<typename Index>
 void TriangleKdTree<Index>::finalize()
 {
-    mNodes.clear();
-    mNodes.reserve(4*mTriangles.size()/_nofTrianglesPerCell);
+    mNodes.reserve(16 * mTriangles.size() / _nofTrianglesPerCell);
     mNodes.push_back(KdNode());
     mNodes.back().leaf = 0;
     mNodes.back().triangleIndices = mIndices;
