@@ -62,6 +62,7 @@ namespace Ra
     void Gui::MainWindow::cleanup()
     {
         m_viewer->getGizmoManager()->cleanup();
+        m_entitiesTreeView->hide();
     }
 
     void Gui::MainWindow::createConnections()
