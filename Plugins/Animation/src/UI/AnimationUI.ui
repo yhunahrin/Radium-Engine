@@ -418,7 +418,7 @@ border-image: url(:/Assets/Images/stop_on.png);
     <string>Play / Pause</string>
    </property>
    <property name="shortcut">
-    <string>Space</string>
+    <string>Ctrl+Space</string>
    </property>
   </action>
   <action name="actionStop">
@@ -456,7 +456,7 @@ border-image: url(:/Assets/Images/stop_on.png);
     <string>Step</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Space</string>
+    <string>Space</string>
    </property>
   </action>
  </widget>
