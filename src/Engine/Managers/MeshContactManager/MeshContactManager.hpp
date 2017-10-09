@@ -51,6 +51,7 @@ namespace Ra
         private:
 
             int m_nb_faces_max;
+            int m_nbfacesinit;
             int m_nbfaces;
             Scalar m_threshold; // distance used to define "contacts"
             Scalar m_lambda; // influence of the original quadric considering contacts

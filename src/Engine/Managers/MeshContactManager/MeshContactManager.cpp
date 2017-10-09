@@ -24,6 +24,7 @@ namespace Ra
 
         MeshContactManager::MeshContactManager()
             :m_nb_faces_max( 0 )
+            ,m_nbfacesinit( 0 )
             ,m_nbfaces( 0 )
             ,m_threshold( 0.0 )
             ,m_lambda( 0.0 )
@@ -34,7 +35,7 @@ namespace Ra
 
         void MeshContactManager::setNbFacesChanged(const int nb)
         {
-            m_nbfaces = nb;
+            m_nbfacesinit = nb;
             //computeNbFacesMax2();
         }
 
@@ -268,6 +269,8 @@ namespace Ra
                     m_mainqueue.clear();
                     m_index_pmdata.clear();
                     m_curr_vsplit = 0;
+
+                    m_nbfaces = m_nbfacesinit;
 
                      MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[0]);
                      m_mainqueue.insert(obj->getPriorityQueue()->firstData());
