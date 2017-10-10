@@ -84,6 +84,8 @@ public:
 
     inline void doQueryRestrictedClosestIndexes(const VectorType &s1, const VectorType &s2, Scalar sqdist, std::vector<Index>& cl_dist);
 
+    inline Index doQueryRestrictedClosestIndexTriangle(const VectorType &a, const VectorType &b, const VectorType &c);
+
 protected:
 
     //! element of the stack
@@ -402,6 +404,121 @@ void TriangleKdTree<Index>::doQueryRestrictedClosestIndexes(const VectorType &s1
             --count;
         }
     }
+}
+
+template<typename Index>
+Index TriangleKdTree<Index>::doQueryRestrictedClosestIndexTriangle(const VectorType &a, const VectorType &b, const VectorType &c)
+{
+    Index cl_id = invalidIndex();
+    Scalar cl_dist = std::numeric_limits<Scalar>::max();
+
+    mNodeStack[0].nodeId = 0;
+    mNodeStack[0].sq = 0.f;
+    unsigned int count = 1;
+
+    while (count)
+    {
+        QueryNode& qnode = mNodeStack[count-1];
+        KdNode   & node  = mNodes[qnode.nodeId];
+
+        if (qnode.sq < cl_dist)
+        {
+            if (node.leaf)
+            {
+                --count; // pop
+                const int nbTriangles = node.triangleIndices.size();
+                for (int i = 0; i < nbTriangles; i++)
+                {
+                    const VectorType v[3] = {a,b,c};
+                    const VectorType triangle[3] = { mPoints[mTriangles[node.triangleIndices[i]][0]],
+                                                     mPoints[mTriangles[node.triangleIndices[i]][1]],
+                                                     mPoints[mTriangles[node.triangleIndices[i]][2]] };
+                    const Scalar sqdist = Ra::Core::DistanceQueries::triangleToTriSq(v, triangle).sqrDistance;
+                    if (sqdist < cl_dist)
+                    {
+                        cl_dist = sqdist;
+                        cl_id = node.triangleIndices[i];
+                    }
+                }
+            }
+
+            else
+            {
+                Scalar new_off;
+                const Scalar d1 = a[node.dim] - node.splitValue;
+                const Scalar d2 = b[node.dim] - node.splitValue;
+                const Scalar d3 = c[node.dim] - node.splitValue;
+                // the triangle is on the left side of the split plane
+                if (d1 < 0. && d2 < 0. && d3 < 0.)
+                {
+                    if (d1 >= d2 && d1 >= d3)
+                    {
+                        new_off = d1;
+                    }
+                    else
+                    {
+                        if (d2 >= d3)
+                        {
+                            new_off = d2;
+                        }
+                        else
+                        {
+                            new_off = d3;
+                        }
+                    }
+                    mNodeStack[count].nodeId  = node.firstChildId;
+                    qnode.nodeId = node.firstChildId+1;
+                }
+                // the triangle is on the right side of the split plane
+                else if (d1 >= 0. && d2 >= 0. && d3 >= 0.)
+                {
+                    if (d1 <= d2 && d1 <= d3)
+                    {
+                        new_off = d1;
+                    }
+                    else
+                    {
+                        if (d2 <= d3)
+                        {
+                            new_off = d2;
+                        }
+                        else
+                        {
+                            new_off = d3;
+                        }
+                    }
+                    mNodeStack[count].nodeId  = node.firstChildId+1;
+                    qnode.nodeId = node.firstChildId;
+                }
+                // the segment is intersecting the split plane
+                else
+                {
+                    new_off = 0;
+                    const VectorType &v = Ra::Core::Geometry::triangleBarycenter(a,b,c);
+                    const Scalar d = v[node.dim] - node.splitValue;
+                    if (d < 0.)
+                    {
+                        mNodeStack[count].nodeId  = node.firstChildId; // stack top the farthest
+                        qnode.nodeId = node.firstChildId+1;            // push the closest
+                    }
+                    else
+                    {
+                        mNodeStack[count].nodeId  = node.firstChildId+1;
+                        qnode.nodeId = node.firstChildId;
+                    }
+                }
+                mNodeStack[count].sq = qnode.sq;
+                qnode.sq = new_off*new_off;
+                ++count;
+            }
+        }
+        else
+        {
+            // pop
+            --count;
+        }
+    }
+    return cl_id;
 }
 
 template<typename Index>
