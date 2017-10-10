@@ -18,6 +18,8 @@
 
 #include <Core/Geometry/Distance/DistanceQueries.hpp>
 
+#define NBMAX_ELEMENTS 10
+
 
 namespace Ra
 {
@@ -42,6 +44,9 @@ namespace Ra
 
             void addMesh(MeshContactElement* mesh);
 
+            void computeThreshold();
+            void computeThresholdTest();
+
             void constructPriorityQueues();
             void updatePriorityQueue(Ra::Core::Index vsIndex, Ra::Core::Index vtIndex, int objIndex);
             void constructPriorityQueues2();
@@ -54,8 +59,11 @@ namespace Ra
             int m_nbfacesinit;
             int m_nbfaces;
             Scalar m_threshold; // distance used to define "contacts"
+            Scalar m_broader_threshold; // amplified threshold
             Scalar m_lambda; // influence of the original quadric considering contacts
-            Scalar m_n; //slope of the weight function for contacts
+            Scalar m_n; // slope of the weight function for contacts
+
+            Eigen::Matrix<Scalar, NBMAX_ELEMENTS, NBMAX_ELEMENTS> m_thresholds; // thresholds for each pair of objects
 
             std::vector<Super4PCS::KdTree<>*> m_kdtrees;
             std::vector<Super4PCS::TriangleKdTree<>*> m_trianglekdtrees;
