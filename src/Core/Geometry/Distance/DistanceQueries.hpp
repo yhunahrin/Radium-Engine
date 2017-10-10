@@ -56,7 +56,7 @@ namespace Ra
                 uint getHitIndex() const { return (flags & 0xcu)>>2;}
             };
 
-            /// Returns the squared distance from a query point Q to the triangle ABC.
+            /// Computes the squared distance from a query point Q to the triangle ABC.
             inline RA_CORE_API PointToTriangleOutput
             pointToTriSq(const Vector3& q, const Vector3& a, const Vector3& b, const Vector3& c);
 
@@ -73,7 +73,7 @@ namespace Ra
                 Vector3 closestPoint[2];
             };
 
-            /// Returns the squared distance from a query line to a segment.
+            /// Computes the squared distance from a query line to a segment.
             inline RA_CORE_API LineToSegmentOutput
             lineToSegSq(const Vector3& lineOrigin, Vector3 lineDirection, const Vector3& segCenter, Vector3 segDirection, const Scalar segExtent);
 
@@ -91,7 +91,7 @@ namespace Ra
                 Vector3 closestPoint[2];
             };
 
-            /// Returns the squared distance from a query line to the triangle v.
+            /// Computes the squared distance from a query line to the triangle v.
             inline RA_CORE_API LineToTriangleOutput
             lineToTriSq(const Vector3& lineOrigin, Vector3 lineDirection, const Vector3 v[3]);
 
@@ -109,9 +109,26 @@ namespace Ra
                 Vector3 closestPoint[2];
             };
 
-            /// Returns the squared distance from a query segment to the triangle v.
+            /// Computes the squared distance from a query segment to the triangle v.
             inline RA_CORE_API SegmentToTriangleOutput
             segmentToTriSq(const Vector3& segCenter, Vector3 segDirection, const Scalar segExtent, const Vector3 v[3]);
+
+            //
+            // Triangle-to-triangle distance
+
+            /// Structure holding the result of a triangle-to-triangle distance query.
+            struct TriangleToTriangleOutput
+            {
+                Scalar distance;
+                Scalar sqrDistance;
+                Scalar triangleParameter1[3];
+                Scalar triangleParameter2[3];
+                Vector3 closestPoint[2];
+            };
+
+            /// Computes the squared distance from a query triangle v1 to the triangle v2.
+            inline RA_CORE_API TriangleToTriangleOutput
+            triangleToTriSq(const Vector3 v1[3], const Vector3 v2[3]);
 
         } // ns Distance queries
     }// ns Core

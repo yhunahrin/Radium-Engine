@@ -347,12 +347,10 @@ namespace Ra
                 if (ltOutput.lineParameter >= -segExtent)
                 {
                     // The closest point on the line is on the segment or at its right
-
                     if (ltOutput.lineParameter <= segExtent)
                     {
                         // The closest point on the line is on the segment
                         // The segment intersects the triangle
-
                         output.distance = ltOutput.distance;
                         output.sqrDistance = ltOutput.sqrDistance;
                         output.segmentParameter = ltOutput.lineParameter;
@@ -366,7 +364,6 @@ namespace Ra
                     {
                         // The closest point on the line is at the segment's right
                         // We compute the distance between the right endpoint of the segment and the triangle
-
                         Vector3 point = segCenter + segExtent * segDirection;
                         PointToTriangleOutput ptOutput = pointToTriSq(point, v[0], v[1], v[2]);
                         output.sqrDistance = ptOutput.distanceSquared;
@@ -380,7 +377,6 @@ namespace Ra
                 {
                     // The closest point on the line is at the segment's left
                     // We compute the distance between the left endpoint of the segment and the triangle
-
                     Vector3 point = segCenter - segExtent * segDirection;
                     PointToTriangleOutput ptOutput = pointToTriSq(point, v[0], v[1], v[2]);
                     output.sqrDistance = ptOutput.distanceSquared;
@@ -388,6 +384,61 @@ namespace Ra
                     output.segmentParameter = segExtent;
                     output.closestPoint[0] = point;
                     output.closestPoint[1] = ptOutput.meshPoint;
+                }
+                return output;
+            }
+
+            inline RA_CORE_API TriangleToTriangleOutput triangleToTriSq(const Vector3 v1[3], const Vector3 v2[3])
+            {
+                TriangleToTriangleOutput output;
+
+                SegmentToTriangleOutput stOutput;
+                output.sqrDistance = std::numeric_limits<Scalar>::max();
+
+                // We compute the closest distance between v1's edges and v2.
+                for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++)
+                {
+                    Vector3 segCenter = ((Scalar)0.5) * (v1[i0] + v1[i1]);
+                    Vector3 segDirection = v1[i1] - v1[i0];
+                    Scalar segExtent = ((Scalar)0.5) * std::sqrt(segDirection.dot(segDirection));
+
+                    stOutput = segmentToTriSq(segCenter, segDirection, segExtent, v2);
+                    if (stOutput.sqrDistance < output.sqrDistance)
+                    {
+                        output.sqrDistance = stOutput.sqrDistance;
+                        output.distance = stOutput.distance;
+                        output.triangleParameter1[i0] = ((Scalar)0.5) * ((Scalar)1 - stOutput.segmentParameter / segExtent);
+                        output.triangleParameter1[i1] = (Scalar)1 - output.triangleParameter1[i0];
+                        output.triangleParameter1[3 - i0 - i1] = (Scalar)0;
+                        output.triangleParameter2[0] = stOutput.triangleParameter[0];
+                        output.triangleParameter2[1] = stOutput.triangleParameter[1];
+                        output.triangleParameter2[2] = stOutput.triangleParameter[2];
+                        output.closestPoint[0] = stOutput.closestPoint[0];
+                        output.closestPoint[1] = stOutput.closestPoint[1];
+                    }
+                }
+
+                // We compute the closest distance between v2's edges and v1.
+                for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++)
+                {
+                    Vector3 segCenter = ((Scalar)0.5) * (v2[i0] + v2[i1]);
+                    Vector3 segDirection = v2[i1] - v2[i0];
+                    Scalar segExtent = ((Scalar)0.5) * std::sqrt(segDirection.dot(segDirection));
+
+                    stOutput = segmentToTriSq(segCenter, segDirection, segExtent, v1);
+                    if (stOutput.sqrDistance < output.sqrDistance)
+                    {
+                        output.sqrDistance = stOutput.sqrDistance;
+                        output.distance = stOutput.distance;
+                        output.triangleParameter1[0] = stOutput.triangleParameter[0];
+                        output.triangleParameter1[1] = stOutput.triangleParameter[1];
+                        output.triangleParameter1[2] = stOutput.triangleParameter[2];
+                        output.triangleParameter2[i0] = ((Scalar)0.5) * ((Scalar)1 - stOutput.segmentParameter / segExtent);
+                        output.triangleParameter2[i1] = (Scalar)1 - output.triangleParameter2[i0];
+                        output.triangleParameter2[3 - i0 - i1] = (Scalar)0;
+                        output.closestPoint[0] = stOutput.closestPoint[0];
+                        output.closestPoint[1] = stOutput.closestPoint[1];
+                    }
                 }
                 return output;
             }

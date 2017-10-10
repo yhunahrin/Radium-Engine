@@ -15,6 +15,7 @@ namespace RaTests
             Vector3 c(0.f, 3.f, 0.f);
             Vector3 d(0.f, -3.f, 0.f);
             Vector3 e(-4.f, -3.f, 0.f);
+            Vector3 f(4.f, 3.f, 0.f);
 
             // Test point to triangle query
             Scalar distPointToTri = std::sqrt(Ra::Core::DistanceQueries::pointToTriSq(c, a, b, d).distanceSquared);
@@ -37,6 +38,11 @@ namespace RaTests
             // Test segment to triangle distance query
             Scalar distSegToTri = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, v).sqrDistance;
             RA_UNIT_TEST( distSegToTri == Ra::Core::DistanceQueries::pointToSegmentSq(a, c, b-c), "Distance segment to triangle not ok.");
+
+            // Test triangle to triangle distance query
+            Vector3 v2[3] = {c, f, b};
+            Scalar distTriToTri = Ra::Core::DistanceQueries::triangleToTriSq(v,v2).sqrDistance;
+            RA_UNIT_TEST( distTriToTri == Ra::Core::DistanceQueries::pointToSegmentSq(a, c, b-c), "Distance triangle to triangle not ok.");
         }
     };
 
