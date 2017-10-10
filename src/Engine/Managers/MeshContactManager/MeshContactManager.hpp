@@ -34,6 +34,7 @@ namespace Ra
             void setNbFacesChanged(const int nb);
             void setThresholdChanged(const double threshold);
             void setLambdaChanged(const double lambda);
+            void setMChanged(const double m);
             void setNChanged(const double n);
             void setLodValueChanged(int value);
             void setConstructM0();
@@ -61,6 +62,7 @@ namespace Ra
             Scalar m_threshold; // distance used to define "contacts"
             Scalar m_broader_threshold; // amplified threshold
             Scalar m_lambda; // influence of the original quadric considering contacts
+            Scalar m_m;
             Scalar m_n; // slope of the weight function for contacts
 
             Eigen::Matrix<Scalar, NBMAX_ELEMENTS, NBMAX_ELEMENTS> m_thresholds; // thresholds for each pair of objects
