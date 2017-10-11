@@ -32,6 +32,7 @@ namespace Ra
 
             MeshContactManager();
             void setNbFacesChanged(const int nb);
+            void setNbObjectsChanged(const int nb);
             void setThresholdChanged(const double threshold);
             void setLambdaChanged(const double lambda);
             void setMChanged(const double m);
@@ -59,6 +60,7 @@ namespace Ra
             int m_nb_faces_max;
             int m_nbfacesinit;
             int m_nbfaces;
+            int m_nbobjects; // number of objects to be simplify (the first ones to be loaded into the scene)
             Scalar m_threshold; // distance used to define "contacts"
             Scalar m_broader_threshold; // amplified threshold
             Scalar m_lambda; // influence of the original quadric considering contacts

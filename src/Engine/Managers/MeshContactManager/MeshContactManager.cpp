@@ -1,4 +1,4 @@
-#include <Engine/Managers/MeshContactManager/MeshContactManager.hpp>
+﻿#include <Engine/Managers/MeshContactManager/MeshContactManager.hpp>
 
 #include <string>
 #include <iostream>
@@ -26,6 +26,7 @@ namespace Ra
             :m_nb_faces_max( 0 )
             ,m_nbfacesinit( 0 )
             ,m_nbfaces( 0 )
+            ,m_nbobjects( 0 )
             ,m_threshold( 0.0 )
             ,m_broader_threshold ( 0.0 )
             ,m_lambda( 0.0 )
@@ -39,6 +40,11 @@ namespace Ra
         {
             m_nbfacesinit = nb;
             //computeNbFacesMax2();
+        }
+
+        void MeshContactManager::setNbObjectsChanged(const int nb)
+        {
+            m_nbobjects = nb;
         }
 
         void MeshContactManager::computeNbFacesMax()
@@ -86,7 +92,7 @@ namespace Ra
         {
             m_meshContactElements.push_back(mesh);
 
-            mesh->computeProgressiveMesh();
+            mesh->computeTriangleMesh();
             m_initTriangleMeshes.push_back(mesh->getInitTriangleMesh());
 
 //            Super4PCS::KdTree<>* kdtree = new Super4PCS::KdTree<>();
@@ -98,6 +104,8 @@ namespace Ra
             m_trianglekdtrees.push_back(trianglekdtree);
             m_trianglekdtrees[m_trianglekdtrees.size()-1] = mesh->computeTriangleKdTree(m_initTriangleMeshes[m_initTriangleMeshes.size()-1]);
             LOG(logINFO) << "m_trianglekdtrees size : " << m_trianglekdtrees.size();
+
+            m_nbobjects++;
 
             //Test of the closest triangle to an edge for a single object (cactus_256.obj)
 //            bool b32 = false;
@@ -364,8 +372,19 @@ namespace Ra
 
                     m_nbfaces = m_nbfacesinit;
 
-                     MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[0]);
-                     m_mainqueue.insert(obj->getPriorityQueue()->firstData());
+//                     MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[0]);
+//                     m_mainqueue.insert(obj->getPriorityQueue()->firstData());
+
+//                    for (const auto& elem : m_meshContactElements)
+//                    {
+//                        m_mainqueue.insert(elem->getPriorityQueue()->firstData());
+//                    }
+
+                    for (uint e = 0; e < m_nbobjects; e++)
+                    {
+                        MeshContactElement* obj = m_meshContactElements[e];
+                        m_mainqueue.insert(obj->getPriorityQueue()->firstData());
+                    }
 
 
                 // End criterion : number of faces set in the UI
@@ -681,7 +700,7 @@ namespace Ra
                 m_meshContactElements[objIndex]->computeFacePrimitives();
             }
 
-            for (uint objIndex=0; objIndex < /*m_components.size()*/1; objIndex++)
+            for (uint objIndex=0; objIndex < m_nbobjects/*m_meshContactElements.size()*/; objIndex++)
             {
             MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[objIndex]);
             Ra::Core::PriorityQueue pQueue = Ra::Core::PriorityQueue();
