@@ -37,6 +37,7 @@ namespace Ra
             Super4PCS::TriangleKdTree<>* computeTriangleKdTree(Ra::Core::TriangleMesh& tm);
             void computePrimitives(); //Computes initial vertices quadrics used to detect contacts
             void computeFacePrimitives(); //Computes initial face quadrics used to detect contacts
+            void computeTriangleMesh();
             void computeProgressiveMesh();
 
             Ra::Core::TriangleMesh getInitTriangleMesh();

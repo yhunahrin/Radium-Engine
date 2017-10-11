@@ -87,6 +87,20 @@ namespace Ra
             m_pqueue = new Ra::Core::PriorityQueue(pQueue);
         }
 
+        void MeshContactElement::computeTriangleMesh()
+        {
+            Ra::Core::Vector3Array& vertices = *(m_verticesWriter());
+            Ra::Core::Vector3Array& normals = *(m_normalsWriter());
+            TriangleArray& triangles = *(m_trianglesWriter());
+
+            Ra::Core::TriangleMesh* m = new Ra::Core::TriangleMesh();
+            m->m_vertices = vertices;
+            m->m_normals = normals;
+            m->m_triangles = triangles;
+
+            m_initTriangleMesh = *m;
+        }
+
         void MeshContactElement::computeProgressiveMesh()
         {
             Ra::Core::Vector3Array& vertices = *(m_verticesWriter());
