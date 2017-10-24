@@ -20,6 +20,8 @@
 
 #define NBMAX_ELEMENTS 10
 
+#define NBMAX_STEP 256
+
 
 namespace Ra
 {
@@ -46,8 +48,10 @@ namespace Ra
 
             void addMesh(MeshContactElement* mesh);
 
-            void computeThreshold();
-            void computeThresholdTest();
+//            void computeThreshold();
+//            void computeThresholdTest();
+            void computeThresholdDistribution();
+            void compareThresholdDistribution();
 
             void constructPriorityQueues();
             void updatePriorityQueue(Ra::Core::Index vsIndex, Ra::Core::Index vtIndex, int objIndex);
@@ -62,7 +66,7 @@ namespace Ra
             int m_nbfaces;
             int m_nbobjects; // number of objects to be simplify (the first ones to be loaded into the scene)
             Scalar m_threshold; // distance used to define "contacts"
-            Scalar m_broader_threshold; // amplified threshold
+            //Scalar m_broader_threshold; // amplified threshold
             Scalar m_lambda; // influence of the original quadric considering contacts
             Scalar m_m;
             Scalar m_n; // slope of the weight function for contacts

@@ -17,6 +17,9 @@
 
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 
+#include <iostream>
+#include <fstream>
+
 namespace Ra
 {
     namespace Engine
@@ -28,7 +31,7 @@ namespace Ra
             ,m_nbfaces( 0 )
             ,m_nbobjects( 0 )
             ,m_threshold( 0.0 )
-            ,m_broader_threshold ( 0.0 )
+            //,m_broader_threshold ( 0.0 )
             ,m_lambda( 0.0 )
             ,m_m( 2.0 )
             ,m_n ( 2.0 )
@@ -214,50 +217,85 @@ namespace Ra
             //computeNbFacesMax();
         }
 
-        void MeshContactManager::computeThreshold()
-        {
-            m_thresholds.setZero();
-            Scalar min_th = std::numeric_limits<Scalar>::max();
-            Scalar min_th_obj;
-            Scalar th;
-            Ra::Core::Index id;
-            for (uint i = 0; i < m_meshContactElements.size(); i++)
-            {
-                MeshContactElement* obj1 = m_meshContactElements[i];
-                Ra::Core::VectorArray<Ra::Core::Triangle> tm1 = obj1->getInitTriangleMesh().m_triangles;
-                Ra::Core::VectorArray<Ra::Core::Vector3> v1 = obj1->getInitTriangleMesh().m_vertices;
-                for (uint j = i + 1; j < m_meshContactElements.size(); j++)
-                {
-                    MeshContactElement* obj2 = m_meshContactElements[j];
-                    Ra::Core::VectorArray<Ra::Core::Triangle> tm2 = obj2->getInitTriangleMesh().m_triangles;
-                    Ra::Core::VectorArray<Ra::Core::Vector3> v2 = obj2->getInitTriangleMesh().m_vertices;
-                    min_th_obj = std::numeric_limits<Scalar>::max();
-                    // for each face of an object, we find the closest face in the other object
-                    for (uint k = 0; k < tm1.size(); k++)
-                    {
-                        id = m_trianglekdtrees[j]->doQueryRestrictedClosestIndexTriangle(v1[tm1[k][0]],v1[tm1[k][1]],v1[tm1[k][2]]);
-                        CORE_ASSERT(id > -1, "Invalid triangle index.");
-                        const Ra::Core::Vector3 triangle1[3] = {v1[tm1[k][0]], v1[tm1[k][1]], v1[tm1[k][2]]};
-                        const Ra::Core::Vector3 triangle2[3] = {v2[tm2[id][0]], v2[tm2[id][1]], v2[tm2[id][2]]};
-                        th = Ra::Core::DistanceQueries::triangleToTriSq(triangle1,triangle2).sqrDistance;
-                        if (th < min_th_obj)
-                        {
-                            min_th_obj = th;
-                        }
-                    }
-                    m_thresholds(i,j) = min_th_obj;
-                    if (min_th_obj < min_th)
-                    {
-                        min_th = min_th_obj;
-                    }
-                }
-            }
-            m_broader_threshold = min_th;
-        }
+//        void MeshContactManager::computeThreshold()
+//        {
+//            m_thresholds.setZero();
+//            Scalar min_th = std::numeric_limits<Scalar>::max();
+//            Scalar min_th_obj;
+//            Scalar th;
+//            Ra::Core::Index id;
+//            for (uint i = 0; i < m_meshContactElements.size(); i++)
+//            {
+//                MeshContactElement* obj1 = m_meshContactElements[i];
+//                Ra::Core::VectorArray<Ra::Core::Triangle> tm1 = obj1->getInitTriangleMesh().m_triangles;
+//                Ra::Core::VectorArray<Ra::Core::Vector3> v1 = obj1->getInitTriangleMesh().m_vertices;
+//                for (uint j = i + 1; j < m_meshContactElements.size(); j++)
+//                {
+//                    MeshContactElement* obj2 = m_meshContactElements[j];
+//                    Ra::Core::VectorArray<Ra::Core::Triangle> tm2 = obj2->getInitTriangleMesh().m_triangles;
+//                    Ra::Core::VectorArray<Ra::Core::Vector3> v2 = obj2->getInitTriangleMesh().m_vertices;
+//                    min_th_obj = std::numeric_limits<Scalar>::max();
+//                    // for each face of an object, we find the closest face in the other object
+//                    for (uint k = 0; k < tm1.size(); k++)
+//                    {
+//                        id = m_trianglekdtrees[j]->doQueryRestrictedClosestIndexTriangle(v1[tm1[k][0]],v1[tm1[k][1]],v1[tm1[k][2]]);
+//                        CORE_ASSERT(id > -1, "Invalid triangle index.");
+//                        const Ra::Core::Vector3 triangle1[3] = {v1[tm1[k][0]], v1[tm1[k][1]], v1[tm1[k][2]]};
+//                        const Ra::Core::Vector3 triangle2[3] = {v2[tm2[id][0]], v2[tm2[id][1]], v2[tm2[id][2]]};
+//                        th = Ra::Core::DistanceQueries::triangleToTriSq(triangle1,triangle2).distance;
+//                        if (th < min_th_obj)
+//                        {
+//                            min_th_obj = th;
+//                        }
+//                    }
+//                    m_thresholds(i,j) = min_th_obj;
+//                    if (min_th_obj < min_th)
+//                    {
+//                        min_th = min_th_obj;
+//                    }
+//                }
+//            }
+//            m_broader_threshold = min_th;
+//        }
 
-        void MeshContactManager::computeThresholdTest()
+//        void MeshContactManager::computeThresholdTest()
+//        {
+//            Scalar min_th = std::numeric_limits<Scalar>::max();
+//            Scalar th;
+//            Ra::Core::Index id;
+//            for (uint i = 0; i < m_meshContactElements.size(); i++)
+//            {
+//                MeshContactElement* obj1 = m_meshContactElements[i];
+//                Ra::Core::VectorArray<Ra::Core::Triangle> tm1 = obj1->getInitTriangleMesh().m_triangles;
+//                Ra::Core::VectorArray<Ra::Core::Vector3> v1 = obj1->getInitTriangleMesh().m_vertices;
+//                for (uint j = i + 1; j < m_meshContactElements.size(); j++)
+//                {
+//                    MeshContactElement* obj2 = m_meshContactElements[j];
+//                    Ra::Core::VectorArray<Ra::Core::Triangle> tm2 = obj2->getInitTriangleMesh().m_triangles;
+//                    Ra::Core::VectorArray<Ra::Core::Vector3> v2 = obj2->getInitTriangleMesh().m_vertices;
+//                    // for each face of an object, we find the closest face in the other object
+//                    for (uint k = 0; k < tm1.size(); k++)
+//                    {
+//                        for (uint l = 0; l < tm2.size(); l++)
+//                        {
+//                            const Ra::Core::Vector3 triangle1[3] = {v1[tm1[k][0]], v1[tm1[k][1]], v1[tm1[k][2]]};
+//                            const Ra::Core::Vector3 triangle2[3] = {v2[tm2[l][0]], v2[tm2[l][1]], v2[tm2[l][2]]};
+//                            th = Ra::Core::DistanceQueries::triangleToTriSq(triangle1,triangle2).distance;
+//                            if (th < min_th)
+//                            {
+//                                min_th = th;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            LOG(logINFO) << "Test threshold computed value : " << min_th;
+//        }
+
+        void MeshContactManager::computeThresholdDistribution()
         {
-            Scalar min_th = std::numeric_limits<Scalar>::max();
+            Scalar dist;
+            Scalar step;
             Scalar th;
             Ra::Core::Index id;
             for (uint i = 0; i < m_meshContactElements.size(); i++)
@@ -265,28 +303,104 @@ namespace Ra
                 MeshContactElement* obj1 = m_meshContactElements[i];
                 Ra::Core::VectorArray<Ra::Core::Triangle> tm1 = obj1->getInitTriangleMesh().m_triangles;
                 Ra::Core::VectorArray<Ra::Core::Vector3> v1 = obj1->getInitTriangleMesh().m_vertices;
-                for (uint j = i + 1; j < m_meshContactElements.size(); j++)
+                //Super4PCS::AABB3D aabb1 = Super4PCS::AABB3D(v1.cbegin(),v1.cend());
+                Super4PCS::AABB3D aabb1 = Super4PCS::AABB3D();
+                for (uint a = 0; a < v1.size(); a++)
                 {
-                    MeshContactElement* obj2 = m_meshContactElements[j];
-                    Ra::Core::VectorArray<Ra::Core::Triangle> tm2 = obj2->getInitTriangleMesh().m_triangles;
-                    Ra::Core::VectorArray<Ra::Core::Vector3> v2 = obj2->getInitTriangleMesh().m_vertices;
-                    // for each face of an object, we find the closest face in the other object
-                    for (uint k = 0; k < tm1.size(); k++)
+                    aabb1.extendTo(v1[a]);
+                }
+                for (uint j = 0; j < m_meshContactElements.size(); j++)
+                {
+                    if (j != i)
                     {
-                        for (uint l = 0; l < tm2.size(); l++)
+                        MeshContactElement* obj2 = m_meshContactElements[j];
+                        Ra::Core::VectorArray<Ra::Core::Triangle> tm2 = obj2->getInitTriangleMesh().m_triangles;
+                        Ra::Core::VectorArray<Ra::Core::Vector3> v2 = obj2->getInitTriangleMesh().m_vertices;
+                        //Super4PCS::AABB3D aabb2 = Super4PCS::AABB3D(v2.cbegin(),v2.cend());
+                        Super4PCS::AABB3D aabb2 = Super4PCS::AABB3D();
+                        for (uint b = 0; b < v2.size(); b++)
                         {
+                            aabb2.extendTo(v2[b]);
+                        }
+                        dist = (aabb1.center() - aabb2.center()).norm() / 2;
+                        step = dist / NBMAX_STEP;
+                        uint distArray[NBMAX_STEP] = {0};
+                        uint first, last, mid;
+
+                        // for each face of an object, we find the closest face in the other object
+                        for (uint k = 0; k < tm1.size(); k++)
+                        {
+                            id = m_trianglekdtrees[j]->doQueryRestrictedClosestIndexTriangle(v1[tm1[k][0]],v1[tm1[k][1]],v1[tm1[k][2]]);
+                            CORE_ASSERT(id > -1, "Invalid triangle index.");
                             const Ra::Core::Vector3 triangle1[3] = {v1[tm1[k][0]], v1[tm1[k][1]], v1[tm1[k][2]]};
-                            const Ra::Core::Vector3 triangle2[3] = {v2[tm2[l][0]], v2[tm2[l][1]], v2[tm2[l][2]]};
-                            th = Ra::Core::DistanceQueries::triangleToTriSq(triangle1,triangle2).sqrDistance;
-                            if (th < min_th)
+                            const Ra::Core::Vector3 triangle2[3] = {v2[tm2[id][0]], v2[tm2[id][1]], v2[tm2[id][2]]};
+                            th = Ra::Core::DistanceQueries::triangleToTriSq(triangle1,triangle2).distance;
+
+                            first = 0;
+                            last = NBMAX_STEP;
+                            mid = NBMAX_STEP / 2;
+                            while ((first + 1) < last)
                             {
-                                min_th = th;
+                                if (th <= mid * step)
+                                {
+                                    last = mid;
+                                    mid = (first + last) / 2;
+                                }
+                                else
+                                {
+                                    first = mid;
+                                    mid = (first + last) / 2;
+                                }
+                            }
+                            if (last == NBMAX_STEP)
+                            {
+                                if (th <= NBMAX_STEP * step)
+                                    distArray[first]++;
+                            }
+                            else
+                            {
+                                distArray[first]++;
                             }
                         }
+
+                        std::ofstream file("Dist_" + std::to_string(i) + "_" + std::to_string(j) + ".txt", std::ios::out | std::ios::trunc);
+                        CORE_ASSERT(file, "Error while opening distance distribution file.");
+                        for (uint k = 0; k < NBMAX_STEP; k++)
+                        {
+                           file << /*(step * k + */step * (k + 1)/*) / 2 */<< " " << distArray[k] << std::endl;
+                        }
+                        file.close();
                     }
                 }
             }
-            LOG(logINFO) << "Test threshold computed value : " << min_th;
+        }
+
+        void MeshContactManager::compareThresholdDistribution()
+        {
+            Scalar step;
+            int nb1, nb2;
+
+            for (uint i = 0; i < m_meshContactElements.size(); i++)
+            {
+                for (uint j = i+1; j < m_meshContactElements.size(); j++)
+                {
+                        std::ifstream file1("Dist_" + std::to_string(i) + "_" + std::to_string(j) + ".txt", std::ios::in);
+                        std::ifstream file2("Dist_" + std::to_string(j) + "_" + std::to_string(i) + ".txt", std::ios::in);
+                        CORE_ASSERT(file1 && file2, "Error while opening distance distribution files.");
+
+                        std::ofstream file3("Diff_" + std::to_string(i) + "_" + std::to_string(j) + ".txt", std::ios::out | std::ios::trunc);
+                        CORE_ASSERT(file3, "Error while opening comparaison distance distribution file.");
+                        while (!file1.eof())
+                        {
+                            file1 >> step >> nb1;
+                            file2 >> step >> nb2;
+                            file3 << step << " " << abs(nb2-nb1) << std::endl;
+                        }
+                        file1.close();
+                        file2.close();
+                        file3.close();
+                }
+            }
         }
 
         void MeshContactManager::setLodValueChanged(int value)
@@ -345,14 +459,17 @@ namespace Ra
 
         //simplification of the first loaded object only, the second one is there only to take into account contacts
         void MeshContactManager::setConstructM0()
-        {
+        {     
             if (m_lambda != 0.0)
             {
-                computeThreshold();
-                LOG(logINFO) << "Threshold computed value : " << m_broader_threshold;
-                //computeThresholdTest();
-                m_broader_threshold *= m_threshold;
-                LOG(logINFO) << "Broader threshold : " << m_broader_threshold;
+                computeThresholdDistribution();
+                compareThresholdDistribution();
+//                computeThreshold();
+//                LOG(logINFO) << "Threshold computed value : " << m_broader_threshold;
+//                computeThresholdTest();
+//                m_broader_threshold *= m_threshold;
+
+//                LOG(logINFO) << "Broader threshold : " << m_broader_threshold;
             }
 
                     //constructPriorityQueues();
@@ -402,10 +519,10 @@ namespace Ra
                           int vt = d.m_vt_id;
 
                           //DEBUG for spinning top
-                          if (vs == 190 || vt == 190)
-                          {
-                              LOG(logINFO) << "contact";
-                          }
+//                          if (vs == 190 || vt == 190)
+//                          {
+//                              LOG(logINFO) << "contact";
+//                          }
 
                           if (nbfaces > 2)
                           {
@@ -692,7 +809,7 @@ namespace Ra
         void MeshContactManager::constructPriorityQueues2()
         {
 
-            for (uint objIndex=0; objIndex < m_meshContactElements.size(); objIndex++)
+            for (uint objIndex=0; objIndex < m_meshContactElements.size(); objIndex++) // test with m_nbobjects
             {
                 Ra::Core::ProgressiveMeshBase<>* pm = new Ra::Core::ProgressiveMesh<>(&m_initTriangleMeshes[objIndex]);
                 m_meshContactElements[objIndex]->setProgressiveMeshLOD(pm);
@@ -700,14 +817,14 @@ namespace Ra
                 m_meshContactElements[objIndex]->computeFacePrimitives();
             }
 
-            for (uint objIndex=0; objIndex < m_nbobjects/*m_meshContactElements.size()*/; objIndex++)
+            for (uint objIndex=0; objIndex < m_nbobjects; objIndex++)
             {
             MeshContactElement* obj = static_cast<MeshContactElement*>(m_meshContactElements[objIndex]);
             Ra::Core::PriorityQueue pQueue = Ra::Core::PriorityQueue();
             const uint numTriangles = obj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face.size();
 
             //browse edges
-            Scalar  edgeError;
+            Scalar  edgeErrorContact;
             Ra::Core::Vector3 p = Ra::Core::Vector3::Zero();
             int j;
             for (unsigned int i = 0; i < numTriangles; i++)
@@ -727,12 +844,12 @@ namespace Ra
                     }
 
                     // test if the edge can be collapsed or if it has contact
-                    //int faceIndex = -1;
                     bool contact = false;
                     Ra::Core::ProgressiveMesh<>::Primitive qk;
                     Scalar dist;
                     Scalar weight;
                     int nbContacts = 0;
+                    Scalar sumWeight = 0;
 
                     // for each edge, we look for all contacts with other objects and add the contact quadrics to the quadric of the edge
                     Ra::Core::ProgressiveMesh<>::Primitive qc = Ra::Core::ProgressiveMesh<>::Primitive();
@@ -745,28 +862,8 @@ namespace Ra
                                 MeshContactElement* otherObj = static_cast<MeshContactElement*>(m_meshContactElements[k]);
                                 std::vector<int> faceIndexes;
 
-                                // Closest face
-//                                faceIndex = obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContact(vs->idx, vt->idx, m_trianglekdtrees, k, m_threshold);
-//                                if ( faceIndex != -1)
-//                                {
-//                                    contact = true;
-//                                    const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndex];
-//                                    /*Eigen::Matrix<Scalar, 3, 1>*/ Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
-//                                    //dist = (c->P() - vs->P()).norm(); //in kdtree.hpp, the distance is a squared distance
-//                                    const Ra::Core::Vector3& segCenter = (Scalar)0.5 * (vs->P() + vt->P());
-//                                    const Ra::Core::Vector3& segDirection = vt->P() - vs->P();
-//                                    Scalar segExtent = (Scalar)0.5 * std::sqrt((vt->P() - vs->P()).dot(vt->P() - vs->P()));
-//                                    sqdist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).sqrDistance;
-//                                    weight = std::pow(std::pow(sqdist/m_threshold,2)-1,2);
-//                                    //weight = 1;
-//                                    sumWeight += weight;
-//                                    qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndex];
-//                                    qk *= weight;
-//                                    qc += qk;
-//                                }
-
                                 // All close faces
-                                obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContacts(vs->idx, vt->idx, m_trianglekdtrees, k, std::pow(m_broader_threshold,2), faceIndexes);
+                                obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContacts(vs->idx, vt->idx, m_trianglekdtrees, k, std::pow(m_threshold,2), faceIndexes);
                                 if ( faceIndexes.size() != 0)
                                 {
                                     contact = true;
@@ -775,23 +872,21 @@ namespace Ra
                                     Scalar segExtent = (Scalar)0.5 * std::sqrt((vt->P() - vs->P()).dot(vt->P() - vs->P()));
                                     for (uint l = 0; l < faceIndexes.size(); l++)
                                     {
-                                        //                                    const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndexes[l]];
-                                        //                                    Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
                                         const Ra::Core::Triangle& f = m_initTriangleMeshes[k].m_triangles[faceIndexes[l]];
                                         Ra::Core::Vector3 triangle[3] = {m_initTriangleMeshes[k].m_vertices[f[0]], m_initTriangleMeshes[k].m_vertices[f[1]], m_initTriangleMeshes[k].m_vertices[f[2]]};
                                         dist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).distance;
-                                        if (m_broader_threshold == 0.0)
+                                        if (m_threshold == 0.0)
                                         {
                                             CORE_ASSERT(dist == 0.0, "Contact found out of threshold limit");
                                             weight = 1;
                                         }
                                         else
                                         {
-                                            CORE_ASSERT(dist/m_broader_threshold >= 0 && dist/m_broader_threshold <= 1, "Contact found out of threshold limit.");
-                                            weight = std::pow(std::pow(dist/m_broader_threshold, m_m) - 1, m_n);
+                                            CORE_ASSERT(dist/m_threshold >= 0 && dist/m_threshold <= 1, "Contact found out of threshold limit.");
+                                            weight = std::pow(std::pow(dist/m_threshold, m_m) - 1, m_n);
                                         }
                                         nbContacts++;
-                                        //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]]
+                                        sumWeight += weight;
                                         qk = otherObj->getFacePrimitive(faceIndexes[l]);
                                         qk *= weight;
                                         qc += qk;
@@ -801,31 +896,28 @@ namespace Ra
                         }
                     }
 
-                    Ra::Core::ProgressiveMesh<>::Primitive qe = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeQuadric(h->idx);
-                    Ra::Core::ProgressiveMesh<>::Primitive q = Ra::Core::ProgressiveMesh<>::Primitive(qe);
+                    //Ra::Core::ProgressiveMesh<>::Primitive qe = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeQuadric(h->idx);
+                    //Ra::Core::ProgressiveMesh<>::Primitive q = Ra::Core::ProgressiveMesh<>::Primitive(qe);
                     if (contact)
                     {
                         qc *= 1.0 / nbContacts;
+                        //qc *= 1.0 / sumWeight;
                         qc *= m_lambda;
-                        q += qc;
+                        //q += qc;
                     }
 
                     // computing the optimal placement for the resulting vertex
                     Scalar edgeErrorQEM = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeError(h->idx, p);
-                    edgeError = abs(obj->getProgressiveMeshLOD()->getProgressiveMesh()->getEM().computeGeometricError(q,p));
+                    edgeErrorContact = abs(obj->getProgressiveMeshLOD()->getProgressiveMesh()->getEM().computeGeometricError(qc,p));
+                    Scalar error = edgeErrorQEM * (1 + edgeErrorContact);
 
-                    // test to compare contact error below with classic error
-                    Scalar epsilon = Ra::Core::Math::dummyEps;
-                    if (edgeError + epsilon < edgeErrorQEM)
-                    {
-                        LOG(logINFO) << "Contacts lower the error at halfedge " << h->idx;
-                    }
+                    CORE_ASSERT(error >= edgeErrorQEM, "Contacts lower the error");
 
                     //insert into the priority queue with the real resulting point
                     //obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeErrorContact(h->idx, p, qe);
-                    pQueue.insert(Ra::Core::PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, edgeError, p, objIndex));
+                    pQueue.insert(Ra::Core::PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, i, error, p, objIndex));
 
-                    LOG(logINFO) << vs->idx << "   " << vt->idx << "   " << "error : " << edgeError;
+                    LOG(logINFO) << vs->idx << "   " << vt->idx << "   " << "error : " << error;
                     h = h->Next();
                 }
             }
@@ -839,7 +931,7 @@ namespace Ra
             obj->getPriorityQueue()->removeEdges(vsIndex);
             obj->getPriorityQueue()->removeEdges(vtIndex);
 
-            Scalar edgeError;
+            Scalar edgeErrorContact;
             Ra::Core::Vector3 p = Ra::Core::Vector3::Zero();
 
             //Listing of all the new edges formed with vs
@@ -855,12 +947,12 @@ namespace Ra
                 const Ra::Core::Vertex_ptr& vt = h->Next()->V();
 
                 // test if the edge can be collapsed or if it has contact
-                //int faceIndex = -1;
                 bool contact = false;
                 Ra::Core::ProgressiveMesh<>::Primitive qk;
                 Scalar dist;
                 Scalar weight;
                 int nbContacts = 0;
+                Scalar sumWeight = 0;
 
                 // for each edge, we look for all contacts with other objects and add the contact quadrics to the quadric of the edge
                 Ra::Core::ProgressiveMesh<>::Primitive qc = Ra::Core::ProgressiveMesh<>::Primitive();
@@ -873,28 +965,8 @@ namespace Ra
                             MeshContactElement* otherObj = static_cast<MeshContactElement*>(m_meshContactElements[k]);
                             std::vector<int> faceIndexes;
 
-                            // Closest face
-//                            faceIndex = obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContact(vs->idx, vt->idx, m_trianglekdtrees, k, m_threshold);
-//                            if ( faceIndex != -1)
-//                            {
-//                                contact = true;
-//                                const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndex];
-//                                /*Eigen::Matrix<Scalar, 3, 1>*/ Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
-//                                //dist = (c->P() - vs->P()).norm(); //in kdtree.hpp, the distance is a squared distance
-//                                const Ra::Core::Vector3& segCenter = (Scalar)0.5 * (vs->P() + vt->P());
-//                                const Ra::Core::Vector3& segDirection = vt->P() - vs->P();
-//                                Scalar segExtent = (Scalar)0.5 * std::sqrt((vt->P() - vs->P()).dot(vt->P() - vs->P()));
-//                                sqdist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).sqrDistance;
-//                                weight = std::pow(std::pow(sqdist/m_threshold,2)-1,2);
-//                                //weight = 1;
-//                                sumWeight += weight;
-//                                qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndex];
-//                                qk *= weight;
-//                                qc += qk;
-//                            }
-
                             // All close faces
-                            obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContacts(vs->idx, vt->idx, m_trianglekdtrees, k, std::pow(m_broader_threshold,2), faceIndexes);
+                            obj->getProgressiveMeshLOD()->getProgressiveMesh()->edgeContacts(vs->idx, vt->idx, m_trianglekdtrees, k, std::pow(m_threshold,2), faceIndexes);
                             if ( faceIndexes.size() != 0)
                             {
                                 contact = true;
@@ -903,23 +975,21 @@ namespace Ra
                                 Scalar segExtent = (Scalar)0.5 * std::sqrt((vt->P() - vs->P()).dot(vt->P() - vs->P()));
                                 for (uint l = 0; l < faceIndexes.size(); l++)
                                 {
-                                    //const Ra::Core::Face_ptr& f = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getDcel()->m_face[faceIndexes[l]];
-                                    //Ra::Core::Vector3 triangle[3] = {f->HE()->V()->P(), f->HE()->Next()->V()->P(), f->HE()->Prev()->V()->P()};
                                     const Ra::Core::Triangle& f = m_initTriangleMeshes[k].m_triangles[faceIndexes[l]];
                                     Ra::Core::Vector3 triangle[3] = {m_initTriangleMeshes[k].m_vertices[f[0]], m_initTriangleMeshes[k].m_vertices[f[1]], m_initTriangleMeshes[k].m_vertices[f[2]]};
                                     dist = Ra::Core::DistanceQueries::segmentToTriSq(segCenter, segDirection, segExtent, triangle).distance;
-                                    if (m_broader_threshold == 0.0)
+                                    if (m_threshold == 0.0)
                                     {
                                         CORE_ASSERT(dist == 0.0, "Contact found out of threshold limit");
                                         weight = 1;
                                     }
                                     else
                                     {
-                                        CORE_ASSERT(dist/m_broader_threshold >= 0 && dist/m_broader_threshold <= 1, "Contact found out of threshold limit.");
-                                        weight = std::pow(std::pow(dist/m_broader_threshold,m_m) - 1, m_n);
+                                        CORE_ASSERT(dist/m_threshold >= 0 && dist/m_threshold <= 1, "Contact found out of threshold limit.");
+                                        weight = std::pow(std::pow(dist/m_threshold,m_m) - 1, m_n);
                                     }
                                     nbContacts++;
-                                    //qk = otherObj->getProgressiveMeshLOD()->getProgressiveMesh()->getFacesQuadrics()[faceIndexes[l]];
+                                    sumWeight += weight;
                                     qk = otherObj->getFacePrimitive(faceIndexes[l]);
                                     qk *= weight;
                                     qc += qk;
@@ -929,25 +999,22 @@ namespace Ra
                     }
                 }
 
-                Ra::Core::ProgressiveMesh<>::Primitive qe = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeQuadric(h->idx);
-                Ra::Core::ProgressiveMesh<>::Primitive q = Ra::Core::ProgressiveMesh<>::Primitive(qe);
+                //Ra::Core::ProgressiveMesh<>::Primitive qe = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeQuadric(h->idx);
+                //Ra::Core::ProgressiveMesh<>::Primitive q = Ra::Core::ProgressiveMesh<>::Primitive(qe);
                 if (contact)
                 {
                     qc *= 1.0 / nbContacts;
+                    //qc *= 1.0 / sumWeight;
                     qc *= m_lambda;
-                    q += qc;
+                    //q += qc
                 }
 
                 // computing the optimal placement for the resulting vertex
                 Scalar edgeErrorQEM = obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeError(h->idx, p);
-                edgeError = abs(obj->getProgressiveMeshLOD()->getProgressiveMesh()->getEM().computeGeometricError(q,p));
+                edgeErrorContact = abs(obj->getProgressiveMeshLOD()->getProgressiveMesh()->getEM().computeGeometricError(qc,p));
+                Scalar error = edgeErrorQEM * (1 + edgeErrorContact);
 
-                // test to compare contact error below with classic error
-                Scalar epsilon = Ra::Core::Math::dummyEps;
-                if (edgeError + epsilon < edgeErrorQEM)
-                {
-                    LOG(logINFO) << "Contacts lower the error at halfedge " << h->idx;
-                }
+                CORE_ASSERT(error >= edgeErrorQEM, "Contacts lower the error");
 
                 // insert into the priority queue with the real resulting point
                 //obj->getProgressiveMeshLOD()->getProgressiveMesh()->computeEdgeErrorContact(h->idx, p, qe);
@@ -955,11 +1022,11 @@ namespace Ra
                 // check that the index of the starting point of the edge is smaller than the index of its ending point
                 if (vs->idx < vt->idx)
                 {
-                    obj->getPriorityQueue()->insert(Ra::Core::PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, h->F()->idx, edgeError, p, objIndex));
+                    obj->getPriorityQueue()->insert(Ra::Core::PriorityQueue::PriorityQueueData(vs->idx, vt->idx, h->idx, h->F()->idx, error, p, objIndex));
                 }
                 else
                 {
-                    obj->getPriorityQueue()->insert(Ra::Core::PriorityQueue::PriorityQueueData(vt->idx, vs->idx, h->Twin()->idx, h->Twin()->F()->idx, edgeError, p, objIndex));
+                    obj->getPriorityQueue()->insert(Ra::Core::PriorityQueue::PriorityQueueData(vt->idx, vs->idx, h->Twin()->idx, h->Twin()->F()->idx, error, p, objIndex));
                 }
             }
         }
