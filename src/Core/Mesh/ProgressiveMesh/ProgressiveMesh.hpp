@@ -30,7 +30,7 @@ namespace Ra
     //class ProgressiveMeshLOD;
 
       template<class ErrorMetric = QuadricErrorMetric>
-//        template<class ErrorMetric = SimpleAPSSErrorMetric>
+
         class ProgressiveMeshBase
         {
         public:
@@ -74,7 +74,7 @@ namespace Ra
         };
 
       template<class ErrorMetric = QuadricErrorMetric>
-//        template<class ErrorMetric = SimpleAPSSErrorMetric>
+
         class ProgressiveMesh : public ProgressiveMeshBase<ErrorMetric>
         {
 
