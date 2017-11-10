@@ -42,7 +42,7 @@ namespace AnimationPlugin
 
         m_oneStep = false;
         if (!anim_init) {
-            m_isPlaying = true;
+//            m_isPlaying = true;
             anim_init = true;
         }
     }

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>269</width>
+    <width>270</width>
     <height>343</height>
    </rect>
   </property>
@@ -26,7 +26,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="tabsClosable">
       <bool>false</bool>
@@ -395,6 +395,9 @@ border-image: url(:/Assets/Images/stop_on.png);
    </property>
    <property name="toolTip">
     <string>Show / hide skeleton</string>
+   </property>
+   <property name="shortcut">
+    <string>S</string>
    </property>
   </action>
   <action name="actionPlay">
