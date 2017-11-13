@@ -51,14 +51,17 @@ namespace Ra
                 // just register triangle as is
                 if (face.size() == 3)
                 {
+std::cout << "Triangle" << std::endl;
                     m_triangles.push_back( face.head<3>() );
                     continue;
                 }
                 // don't deal with n-gons (n>4) for now
                 if (face.size() > 4)
                 {
+std::cout << "Polygon" << std::endl;
                     continue;
                 }
+std::cout << "Quad" << std::endl;
                 // split quad in 2 triangles
                 Triangle t1;
                 Triangle t2;

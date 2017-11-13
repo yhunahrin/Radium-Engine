@@ -34,6 +34,9 @@ namespace Ra
             VectorArray<Triangle> m_triangles;
 
             VectorArray<VectorNui>  m_faces;
+
+        public:
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         };
     }
 }

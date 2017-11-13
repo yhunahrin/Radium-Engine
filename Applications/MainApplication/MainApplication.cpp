@@ -36,6 +36,9 @@
 
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
+#ifdef IO_USE_TINYPLY
+    #include <IO/TinyPlyLoader/TinyPlyFileLoader.hpp>
+#endif
 #ifdef IO_USE_ASSIMP
     #include <IO/AssimpLoader/AssimpFileLoader.hpp>
 #endif
@@ -59,17 +62,9 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
-#if 0
-        , m_recordFrames( false )
-        , m_recordTimings( true )
-        , m_recordGraph( true )
-        , m_recordMeshes( false )
-#else
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
-        , m_recordMeshes( false )
-#endif
         , m_isAboutToQuit( false )
     {
         // Set application and organization names in order to ensure uniform
@@ -170,6 +165,11 @@ namespace Ra
         m_engine.reset(Engine::RadiumEngine::createInstance());
         m_engine->initialize();
         addBasicShaders();
+#ifdef IO_USE_TINYPLY
+        // Register before AssimpFileLoader, in order to ease override of such
+        // custom loader (first loader able to load is taking the file)
+        m_engine->registerFileLoader( new IO::TinyPlyFileLoader() );
+#endif
 #ifdef IO_USE_ASSIMP
         m_engine->registerFileLoader( new IO::AssimpFileLoader() );
 #endif
@@ -203,7 +203,6 @@ namespace Ra
             numThreads = m_maxThreads;
         }
         m_taskQueue.reset( new Core::TaskQueue(numThreads) );
-        std::cout << "Using " << numThreads << " threads." << std::endl;
 
         // Create the instance of the keymapping manager (should it be done here ?)
         Gui::KeyMappingManager::createInstance();
@@ -261,7 +260,7 @@ namespace Ra
 
         if ( !res )
         {
-           LOG ( logERROR ) << "Aborting file loading !";
+            LOG ( logERROR ) << "Aborting file loading !";
 
             return;
         }
@@ -520,6 +519,18 @@ namespace Ra
                         ++pluginCpt;
                         loadedPlugin->registerPlugin( context );
                         m_mainWindow->updateUi( loadedPlugin );
+
+                        if(loadedPlugin->doAddRenderer())
+                        {
+                            std::vector<std::shared_ptr<Engine::Renderer>> tmpR;
+                            loadedPlugin->addRenderers(&tmpR);
+                            CORE_ASSERT(! tmpR.empty(), "This plugin is expected to add a renderer");
+                            for(auto ptr : tmpR){
+                                std::string name = ptr->getRendererName()
+                                        + "(" + filename.toStdString() +  ")";
+                                m_mainWindow->addRenderer(name, ptr);
+                            }
+                        }
                     }
                     else
                     {

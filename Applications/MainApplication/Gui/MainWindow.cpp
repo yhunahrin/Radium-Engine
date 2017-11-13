@@ -1,8 +1,11 @@
+#include <Engine/Renderer/Renderers/ForwardRenderer.hpp>
+
 #include <Gui/MainWindow.hpp>
 
 #include <QSettings>
 #include <QFileDialog>
 #include <QToolButton>
+#include <QComboBox>
 
 #include <assimp/Importer.hpp>
 
@@ -124,11 +127,12 @@ namespace Ra
         connect(m_loadCameraButton, &QPushButton::clicked, this, &MainWindow::loadCamera);
 
         // Renderer stuff
+        connect(m_currentRendererCombo,
+                static_cast<void (QComboBox::*)(const QString&)>( &QComboBox::currentIndexChanged ),
+                [=]( const QString& ) { this->onCurrentRenderChangedInUI(); } );
 
-        //connect(m_currentRendererCombo,
-        //        static_cast<void (QComboBox::*)(const QString&)>( &QComboBox::currentIndexChanged ),
-        //        this, &MainWindow::changeRenderer);
-
+        connect(m_viewer, &Viewer::glInitialized, this, &MainWindow::onGLInitialized);
+        connect(m_viewer, SIGNAL(glInitialized()), this, SIGNAL(glInitialized()));
         connect(m_viewer, &Viewer::rendererReady, this, &MainWindow::onRendererReady);
 
         connect(m_displayedTextureCombo,
@@ -356,9 +360,14 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::changeRenderer(const QString& rendererName)
+    void Gui::MainWindow::onCurrentRenderChangedInUI()
     {
-        // m_viewer->changeRenderer(m_currentRendererCombo->currentIndex());
+        // always restore displaytexture to 0 before switch to keep coherent renderer state
+        m_displayedTextureCombo->setCurrentIndex(0);
+        m_viewer->changeRenderer(m_currentRendererCombo->currentIndex());
+        // in case the newly used renderer has not been set before and set another texture as its default,
+        // set displayTexture to 0 again ;)
+        m_displayedTextureCombo->setCurrentIndex(0);
     }
 
     void Gui::MainWindow::changeRenderObjectShader(const QString& shaderName)
@@ -470,6 +479,15 @@ namespace Ra
         updateTrackedFeatureInfo();
     }
 
+    void Gui::MainWindow::addRenderer(std::string name,
+                                      std::shared_ptr<Engine::Renderer> e)
+    {
+        int id = m_viewer->addRenderer(e);
+        CORE_UNUSED( id );
+        CORE_ASSERT (id == m_currentRendererCombo->count(), "Inconsistent renderer state");
+        m_currentRendererCombo->addItem(QString::fromStdString(name));
+    }
+
     void Gui::MainWindow::onItemAdded(const Engine::ItemEntry& ent)
     {
         m_itemModel->addItem(ent);
@@ -563,30 +581,6 @@ namespace Ra
         m_viewer->resetCamera();
     }
 
-    void Gui::MainWindow::on_actionForward_triggered()
-    {
-        changeRenderer("Forward");
-        actionForward->setChecked( true );
-        actionDeferred->setChecked( false );
-        actionExperimental->setChecked( false );
-    }
-
-    void Gui::MainWindow::on_actionDeferred_triggered()
-    {
-        changeRenderer("Deferred");
-        actionForward->setChecked( false );
-        actionDeferred->setChecked( true );
-        actionExperimental->setChecked( false );
-    }
-
-    void Ra::Gui::MainWindow::on_actionExperimental_triggered()
-    {
-        changeRenderer("Experimental");
-        actionForward->setChecked( false );
-        actionDeferred->setChecked( false );
-        actionDeferred->setChecked( true );
-    }
-
     void Gui::MainWindow::fitCamera()
     {
         m_viewer->fitCameraToScene(Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getSceneAabb());
@@ -634,6 +628,13 @@ namespace Ra
         m_viewer->getFeaturePickingManager()->setTriangleIndex(arg1);
         m_selectionManager->setCurrentEntry( m_selectionManager->currentItem(),
                                              QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+    }
+
+    void Gui::MainWindow::onGLInitialized()
+    {
+        // set renderers once OpenGL is configured
+        std::shared_ptr<Engine::Renderer> e (new Engine::ForwardRenderer());
+        addRenderer("Forward Renderer", e);
     }
 
     void Gui::MainWindow::updateTrackedFeatureInfo()

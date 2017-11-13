@@ -103,34 +103,63 @@ public:
     /// DATA
     inline uint getVerticesSize() const;
 
+    inline Vector3Array& getVertices();
     inline const Vector3Array& getVertices() const;
-    inline void setVertices( const Vector3Array& vertexList );
+    // Copy data from vertexList. In-place setting with getVertices is preferred.
+    template< typename Container >
+    inline void setVertices( const Container &vertexList );
 
+    inline Vector2uArray& getEdges();
     inline const Vector2uArray& getEdges() const;
-    inline void setEdges( const Vector2uArray& edgeList );
+    // Copy data from edgeList. In-place setting with getEdges is preferred.
+    template< typename Container >
+    inline void setEdges(const Container &edgeList );
 
+    inline VectorNuArray& getFaces();
     inline const VectorNuArray& getFaces() const;
-    inline void setFaces( const VectorNuArray& faceList );
+    // Copy data from edgeList. In-place setting with getEdges is preferred.
+    template< typename Container >
+    inline void setFaces( const Container& faceList );
 
+    inline VectorNuArray& getPolyhedra();
     inline const VectorNuArray& getPolyhedra() const;
-    inline void setPolyhedra( const VectorNuArray& polyList );
+    // Copy data from polyList. In-place setting with getPolyhedra is preferred.
+    template< typename Container >
+    inline void setPolyhedra( const Container& polyList );
 
+    inline Vector3Array& getNormals();
     inline const Vector3Array& getNormals() const;
-    inline void setNormals( const Vector3Array& normalList );
+    // Copy data from normalList. In-place setting with getNormals is preferred.
+    template< typename Container >
+    inline void setNormals( const Container& normalList );
 
+    inline Vector3Array& getTangents();
     inline const Vector3Array& getTangents() const;
-    inline void setTangents( const Vector3Array& tangentList );
+    // Copy data from tangentList. In-place setting with getTangents is preferred.
+    template< typename Container >
+    inline void setTangents( const Container& tangentList );
 
+    inline Vector3Array& getBiTangents();
     inline const Vector3Array& getBiTangents() const;
-    inline void setBitangents( const Vector3Array& bitangentList );
+    // Copy data from bitangentList. In-place setting with getBiTangents is preferred.
+    template< typename Container >
+    inline void setBitangents( const Container& bitangentList );
 
+    inline Vector3Array& getTexCoords();
     inline const Vector3Array& getTexCoords() const;
-    inline void setTexCoords( const Vector3Array& texCoordList );
+    // Copy data from texCoordList. In-place setting with getTexCoords is preferred.
+    template< typename Container >
+    inline void setTexCoords( const Container& texCoordList );
 
+    inline ColorArray& getColors();
     inline const ColorArray& getColors() const;
-    inline void setColors( const ColorArray& colorList );
+    // Copy data from colorList. In-place setting with getColors is preferred.
+    template< typename Container >
+    inline void setColors( const Container& colorList );
 
+    inline WeightArray& getWeights();
     inline const WeightArray& getWeights() const;
+    // Copy data from weightList. In-place setting with getWeights is preferred.
     inline void setWeights(const WeightArray& weightList);
 
     inline const MaterialData& getMaterial() const;
@@ -138,8 +167,9 @@ public:
 
 
     /// DUPLICATES
-    inline const std::map< uint, uint >& getDuplicateTable() const;
-    inline void setDuplicateTable( const std::map< uint, uint >& table );
+    inline std::vector<uint>& getDuplicateTable();
+    inline const std::vector<uint>& getDuplicateTable() const;
+    inline void setDuplicateTable( const std::vector<uint>& table );
     inline void setLoadDuplicates( const bool status );
 
     /// QUERY
@@ -174,7 +204,7 @@ protected:
     Vector3Array  m_vertex;
     Vector2uArray m_edge;
     VectorNuArray m_faces;
-    VectorNuArray m_polyhedron;
+    VectorNuArray m_polyhedra;
     Vector3Array  m_normal;
     Vector3Array  m_tangent;
     Vector3Array  m_bitangent;
@@ -185,7 +215,10 @@ protected:
     MaterialData m_material;
     bool         m_hasMaterial;
 
-    std::map< uint, uint > m_duplicateTable;
+    // the duplicate table for vertices, according to all loaded File Data.
+    // this table is used, when not loading duplicates, to fix vertices indices in edges and faces.
+    // Note: if loading duplicates this table is a 1-1 correspondance, i.e. m_duplicateTable[i] == i .
+    std::vector<uint> m_duplicateTable;
     bool                   m_loadDuplicates;
 };
 

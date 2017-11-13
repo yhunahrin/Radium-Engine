@@ -7,6 +7,7 @@
 #include <Core/Animation/Handle/SkeletonUtils.hpp>
 #include <Core/Animation/Pose/Pose.hpp>
 #include <Core/Containers/AlignedStdVector.hpp>
+#include <Core/File/HandleToSkeleton.hpp>
 #include <Core/File/KeyFrame/KeyPose.hpp>
 #include <Core/File/KeyFrame/KeyTransform.hpp>
 #include <Core/Mesh/TriangleMesh.hpp>
@@ -30,6 +31,7 @@ namespace AnimationPlugin
     {
         m_skel = skel;
         m_refPose = skel.getPose( Ra::Core::Animation::Handle::SpaceType::MODEL);
+        setupSkeletonDisplay();
     }
 
     void AnimationComponent::update(Scalar dt)
@@ -71,7 +73,7 @@ namespace AnimationPlugin
         }
 
         // update the render objects
-        for (SkeletonBoneRenderObject* bone : m_boneDrawables)
+        for (auto & bone : m_boneDrawables)
         {
             bone->update();
         }
@@ -79,15 +81,15 @@ namespace AnimationPlugin
 
     void AnimationComponent::setupSkeletonDisplay()
     {
-
+        m_renderObjects.clear();
+        m_boneDrawables.clear();
         for( uint i = 0; i < m_skel.size(); ++i ) {
             if( !m_skel.m_graph.isLeaf( i ) )
             {
                 std::string name = m_skel.getLabel(i);
                 Ra::Core::StringUtils::appendPrintf( name, " (%d)", i);
-                SkeletonBoneRenderObject* boneRenderObject = new SkeletonBoneRenderObject( name, this, i, getRoMgr());
-                m_boneDrawables.push_back(boneRenderObject);
-                m_renderObjects.push_back( boneRenderObject->getRenderObjectIndex());
+                m_boneDrawables.push_back(std::make_unique<SkeletonBoneRenderObject>( name, this, i, getRoMgr()));
+                m_renderObjects.push_back(m_boneDrawables.back()->getRenderObjectIndex() );
             } else {
                 LOG( logDEBUG ) << "Bone " << m_skel.getLabel( i ) << " not displayed.";
             }
@@ -125,7 +127,7 @@ namespace AnimationPlugin
     {
         m_animationTime = 0;
         m_skel.setPose(m_refPose, Ra::Core::Animation::Handle::SpaceType::MODEL);
-        for (SkeletonBoneRenderObject* bone : m_boneDrawables)
+        for (auto & bone : m_boneDrawables)
         {
             bone->update();
         }
@@ -148,7 +150,7 @@ namespace AnimationPlugin
     }
 
 
-    void AnimationComponent::handleSkeletonLoading( const Ra::Asset::HandleData* data, const std::map< uint, uint >& duplicateTable ) {
+    void AnimationComponent::handleSkeletonLoading( const Ra::Asset::HandleData* data, const std::vector<uint>& duplicateTable, uint nbMeshVertices ) {
         std::string name( m_name );
         name.append( "_" + data->getName() );
 
@@ -160,9 +162,9 @@ namespace AnimationPlugin
         m_contentName = data->getName();
 
         std::map< uint, uint > indexTable;
-        createSkeleton( data, indexTable );
+        Ra::Asset::createSkeleton( *data, m_skel, indexTable );
 
-        createWeightMatrix( data, indexTable, duplicateTable );
+        createWeightMatrix( data, indexTable, duplicateTable, nbMeshVertices );
         m_refPose = m_skel.getPose( Ra::Core::Animation::Handle::SpaceType::MODEL);
 
         setupSkeletonDisplay();
@@ -209,61 +211,10 @@ namespace AnimationPlugin
         m_animationTime = 0.0;
     }
 
-    void AnimationComponent::createSkeleton( const Ra::Asset::HandleData* data, std::map< uint, uint >& indexTable )
-    {
-        const uint size = data->getComponentDataSize();
-        auto component = data->getComponentData();
+    void AnimationComponent::createWeightMatrix( const Ra::Asset::HandleData* data, const std::map< uint, uint >& indexTable,
+                                                 const std::vector<uint>& duplicateTable, uint nbMeshVertices ) {
+        m_weights.resize( nbMeshVertices, data->getComponentDataSize() );
 
-        std::set< uint > root;
-        for( uint i = 0; i < size; ++i ) {
-            root.insert( i );
-        }
-
-        auto edgeList = data->getEdgeData();
-        for( const auto& edge : edgeList ) {
-            root.erase( edge[1] );
-        }
-
-        std::vector< bool > processed( size, false );
-        for( const auto& r : root ) {
-            addBone( -1, r, component, edgeList, processed, indexTable );
-        }
-    }
-
-
-    void AnimationComponent::addBone( const int parent,
-                                      const uint dataID,
-                                      const Ra::Core::AlignedStdVector< Ra::Asset::HandleComponentData >& data,
-                                      const Ra::Core::AlignedStdVector< Ra::Core::Vector2i >& edgeList,
-                                      std::vector< bool >& processed,
-                                      std::map< uint, uint >& indexTable )
-    {
-        if( !processed[dataID] ) {
-            processed[dataID] = true;
-            uint index = m_skel.addBone( parent, data.at( dataID ).m_frame, Ra::Core::Animation::Handle::SpaceType::MODEL, data.at( dataID ).m_name );
-            indexTable[dataID] = index;
-            for( const auto& edge : edgeList ) {
-                if( edge[0] == dataID ) {
-                    addBone( index, edge[1], data, edgeList, processed, indexTable );
-                }
-            }
-        }
-    }
-
-    void AnimationComponent::createWeightMatrix( const Ra::Asset::HandleData* data, const std::map< uint, uint >& indexTable, const std::map< uint, uint >& duplicateTable ) {
-        // Bad bad bad hack
-        // Fails eventually with a 1 vertex mesh
-        uint vertexSize = 0;
-        for( const auto& item : duplicateTable ) {
-            if( item.second > vertexSize ) {
-                vertexSize = ( item.second > vertexSize ) ? item.second : vertexSize;
-            }
-        }
-        vertexSize++;
-        m_weights.resize( vertexSize, data->getComponentDataSize() );
-
-        //m_weights.resize( data->getVertexSize(), data->getComponentDataSize() );
-        //m_weights.setZero();
         for( const auto& it : indexTable ) {
             const uint idx = it.first;
             const uint col = it.second;
@@ -274,15 +225,12 @@ namespace AnimationPlugin
                 m_weights.coeffRef( row, col ) = w;
             }
         }
+        Ra::Core::Animation::checkWeightMatrix( m_weights, false, true );
 
-        // renormalize weights just in case
-        #pragma omp parallel for
-        for (int k = 0; k < m_weights.innerSize(); ++k)
+        if (Ra::Core::Animation::normalizeWeights ( m_weights, true ))
         {
-            m_weights.row( k ) /= m_weights.row( k ).sum();
+            LOG(logINFO) << "Skinning weights have been normalized";
         }
-
-        Ra::Core::Animation::checkWeightMatrix( m_weights, false );
     }
 
     void AnimationComponent::setContentName (const std::string name)
@@ -428,4 +376,5 @@ namespace AnimationPlugin
     {
         return m_animationTime;
     }
+
 }

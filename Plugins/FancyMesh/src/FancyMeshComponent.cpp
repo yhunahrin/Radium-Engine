@@ -1,6 +1,7 @@
 #include <FancyMeshComponent.hpp>
 
 #include <iostream>
+#include <numeric>
 
 #include <Core/String/StringUtils.hpp>
 #include <Core/Mesh/MeshUtils.hpp>
@@ -73,51 +74,87 @@ namespace FancyMeshPlugin
 
         m_contentName = data->getName();
 
-        auto displayMesh = Ra::Core::make_shared<Ra::Engine::Mesh>(meshName);
+        m_duplicateTable = data->getDuplicateTable();
+
+        auto displayMesh = Ra::Core::make_shared<Ra::Engine::Mesh>(meshName/*, Ra::Engine::Mesh::RM_POINTS*/);
 
         Ra::Core::TriangleMesh mesh;
         Ra::Core::Transform T = data->getFrame();
         Ra::Core::Transform N;
         N.matrix() = (T.matrix()).inverse().transpose();
 
-        for (size_t i = 0; i < data->getVerticesSize(); ++i)
+        mesh.m_vertices.resize( data->getVerticesSize(), Ra::Core::Vector3::Zero() );
+        #pragma omp parallel for
+        for (uint i = 0; i < data->getVerticesSize(); ++i)
         {
-            mesh.m_vertices.push_back(T * data->getVertices()[i]);
-            mesh.m_normals.push_back((N * data->getNormals()[i]).normalized());
+            mesh.m_vertices[i] = T * data->getVertices()[i];
         }
 
+        if (data->hasNormals())
+        {
+            mesh.m_normals.resize( data->getVerticesSize(), Ra::Core::Vector3::Zero() );
+            #pragma omp parallel for
+            for (uint i = 0; i < data->getVerticesSize(); ++i)
+            {
+                mesh.m_normals[i] = (N * data->getNormals()[i]).normalized();
+            }
+        }
+
+        /*
+        mesh.m_triangles.resize( data->getFaces().size(), Ra::Core::Triangle::Zero() );
+        #pragma omp parallel for
+        for (uint i = 0; i < data->getFaces().size(); ++i)
+        {
+            mesh.m_triangles[i] = data->getFaces()[i].head<3>();
+        }
+        */
         mesh.m_faces = data->getFaces();
         mesh.triangulate();
 
         displayMesh->loadGeometry(mesh);
 
-        Ra::Core::Vector3Array tangents;
-        Ra::Core::Vector3Array bitangents;
-        Ra::Core::Vector3Array texcoords;
+        // get the actual duplicate table according to the mesh, not to the file data.
+        if (!data->isLoadingDuplicates())
+        {
+            m_duplicateTable.resize( data->getVerticesSize() );
+            std::iota( m_duplicateTable.begin(), m_duplicateTable.end(), 0 );
+        }
+        else
+        {
+            Ra::Core::MeshUtils::findDuplicates( mesh, m_duplicateTable );
+        }
 
-        Ra::Core::Vector4Array colors;
+        if (data->hasTangents())
+        {
+            displayMesh->addData( Ra::Engine::Mesh::VERTEX_TANGENT, data->getTangents() );
+        }
 
-        for ( const auto& v : data->getTangents() )     tangents.push_back( v );
-        for ( const auto& v : data->getBiTangents() )   bitangents.push_back( v );
-        for ( const auto& v : data->getTexCoords() )    texcoords.push_back( v );
-        for ( const auto& v : data->getColors() )       colors.push_back( v );
+        if (data->hasBiTangents())
+        {
+            displayMesh->addData( Ra::Engine::Mesh::VERTEX_BITANGENT, data->getBiTangents() );
+        }
 
-        displayMesh->addData( Ra::Engine::Mesh::VERTEX_TANGENT, tangents );
-        displayMesh->addData( Ra::Engine::Mesh::VERTEX_BITANGENT, bitangents );
-        displayMesh->addData( Ra::Engine::Mesh::VERTEX_TEXCOORD, texcoords );
-        displayMesh->addData( Ra::Engine::Mesh::VERTEX_COLOR, colors );
+        if (data->hasTextureCoordinates())
+        {
+            displayMesh->addData( Ra::Engine::Mesh::VERTEX_TEXCOORD, data->getTexCoords() );
+        }
+
+        if (data->hasColors())
+        {
+            displayMesh->addData( Ra::Engine::Mesh::VERTEX_COLOR, data->getColors() );
+        }
 
         // FIXME(Charly): Should not weights be part of the geometry ?
         //        mesh->addData( Ra::Engine::Mesh::VERTEX_WEIGHTS, meshData.weights );
 
-        std::shared_ptr<Ra::Engine::Material> mat (new Ra::Engine::Material( matName ));
+        std::shared_ptr<Ra::Engine::Material> mat(new Ra::Engine::Material( matName ));
         auto m = data->getMaterial();
         if ( m.hasDiffuse() )   mat->m_kd    = m.m_diffuse;
         if ( m.hasSpecular() )  mat->m_ks    = m.m_specular;
         if ( m.hasShininess() ) mat->m_ns    = m.m_shininess;
         if ( m.hasOpacity() )   mat->m_alpha = m.m_opacity;
 
-#ifdef LOAD_TEXTURES
+#ifdef RADIUM_WITH_TEXTURES
         if ( m.hasDiffuseTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_DIFFUSE, m.m_texDiffuse );
         if ( m.hasSpecularTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_SPECULAR, m.m_texSpecular );
         if ( m.hasShininessTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_SHININESS, m.m_texShininess );
@@ -127,9 +164,9 @@ namespace FancyMeshPlugin
 
         auto config = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong");
 
-        auto ro = Ra::Engine::RenderObject::createRenderObject(roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, config, mat);
-        if ( mat->m_alpha < 1.0 ) ro->setTransparent(true);
-        ro->setVisible( false );
+        auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, config, mat );
+        ro->setTransparent( mat->m_alpha < 1.0 );
+	// ro->setVisible( false );
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
@@ -157,30 +194,31 @@ namespace FancyMeshPlugin
 
     void FancyMeshComponent::setupIO(const std::string& id)
     {
-        auto msg = ComponentMessenger::getInstance();
-
         ComponentMessenger::CallbackTypes<TriangleMesh>::Getter cbOut = std::bind( &FancyMeshComponent::getMeshOutput, this );
-        msg->registerOutput<TriangleMesh>( getEntity(), this, id, cbOut);
+        ComponentMessenger::getInstance()->registerOutput<TriangleMesh>( getEntity(), this, id, cbOut);
+
+        ComponentMessenger::CallbackTypes<std::vector<uint>>::Getter dtOut = std::bind( &FancyMeshComponent::getDuplicateTableOutput, this );
+        ComponentMessenger::getInstance()->registerOutput<std::vector<uint>>( getEntity(), this, id, dtOut);
 
         ComponentMessenger::CallbackTypes<TriangleMesh>::ReadWrite cbRw = std::bind( &FancyMeshComponent::getMeshRw, this );
-        msg->registerReadWrite<TriangleMesh>( getEntity(), this, id, cbRw);
+        ComponentMessenger::getInstance()->registerReadWrite<TriangleMesh>( getEntity(), this, id, cbRw);
 
         ComponentMessenger::CallbackTypes<Ra::Core::Index>::Getter roOut = std::bind(&FancyMeshComponent::roIndexRead, this);
-        msg->registerOutput<Ra::Core::Index>(getEntity(), this, id, roOut);
+        ComponentMessenger::getInstance()->registerOutput<Ra::Core::Index>(getEntity(), this, id, roOut);
 
         if( m_deformable)
         {
             ComponentMessenger::CallbackTypes<TriangleMesh>::Setter cbIn = std::bind( &FancyMeshComponent::setMeshInput, this, std::placeholders::_1 );
-            msg->registerInput<TriangleMesh>( getEntity(), this, id, cbIn);
+            ComponentMessenger::getInstance()->registerInput<TriangleMesh>( getEntity(), this, id, cbIn);
 
             ComponentMessenger::CallbackTypes<Ra::Core::Vector3Array>::ReadWrite vRW = std::bind( &FancyMeshComponent::getVerticesRw, this);
-            msg->registerReadWrite<Ra::Core::Vector3Array>( getEntity(), this, id+"v", vRW);
+            ComponentMessenger::getInstance()->registerReadWrite<Ra::Core::Vector3Array>( getEntity(), this, id+"v", vRW);
 
             ComponentMessenger::CallbackTypes<Ra::Core::Vector3Array>::ReadWrite nRW = std::bind( &FancyMeshComponent::getNormalsRw, this);
-            msg->registerReadWrite<Ra::Core::Vector3Array>( getEntity(), this, id+"n", nRW);
+            ComponentMessenger::getInstance()->registerReadWrite<Ra::Core::Vector3Array>( getEntity(), this, id+"n", nRW);
 
             ComponentMessenger::CallbackTypes<TriangleArray>::ReadWrite tRW = std::bind( &FancyMeshComponent::getTrianglesRw, this);
-            msg->registerReadWrite<TriangleArray>( getEntity(), this, id+"t", tRW);
+            ComponentMessenger::getInstance()->registerReadWrite<TriangleArray>( getEntity(), this, id+"t", tRW);
         }
     }
 
@@ -197,6 +235,11 @@ namespace FancyMeshPlugin
     const Ra::Core::TriangleMesh* FancyMeshComponent::getMeshOutput() const
     {
         return &(getMesh());
+    }
+
+    const std::vector<uint>* FancyMeshComponent::getDuplicateTableOutput() const
+    {
+        return &m_duplicateTable;
     }
 
     Ra::Core::TriangleMesh *FancyMeshComponent::getMeshRw()

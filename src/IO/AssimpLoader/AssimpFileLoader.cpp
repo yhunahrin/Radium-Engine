@@ -72,6 +72,27 @@ namespace Ra {
             AssimpGeometryDataLoader geometryLoader( Core::StringUtils::getDirName( filename ), fileData->isVerbose() );
             geometryLoader.loadData( scene, fileData->m_geometryData );
 
+            // check if that the scene contains at least one mesh
+            // Note that currently, Assimp is ALWAYS creating faces, even when
+            // loading point clouds
+            // (see 3rdPartyLibraries/Assimp/code/PlyLoader.cpp:260)
+            bool ok = false;
+            for ( const auto& geom : fileData->m_geometryData )
+            {
+                if ( geom->hasFaces() ){
+                    ok = true;
+                    break;
+                }
+            }
+            if(! ok) {
+                if ( fileData->isVerbose() )
+                {
+                    LOG( logINFO ) << "Point-cloud found. Aborting";
+                    delete fileData;
+                    return nullptr;
+                }
+            }
+
             AssimpHandleDataLoader handleLoader( fileData->isVerbose() );
             handleLoader.loadData( scene, fileData->m_handleData );
 

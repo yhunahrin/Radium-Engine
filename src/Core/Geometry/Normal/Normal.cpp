@@ -17,10 +17,8 @@ void uniformNormal( const VectorArray< Vector3 >& p, const VectorArray< Triangle
     const uint N = p.size();
     normal.clear();
     normal.resize( N, Vector3::Zero() );
-//#pragma omp parallel for
-    for( uint n = 0; n < T.size(); ++n ) {
-    //for( const auto& t : T ) {
-        const auto& t = T[n];
+
+    for( const auto& t : T ) {
         const uint i = t( 0 );
         const uint j = t( 1 );
         const uint k = t( 2 );
@@ -28,18 +26,49 @@ void uniformNormal( const VectorArray< Vector3 >& p, const VectorArray< Triangle
         if( !triN.allFinite() ) {
             continue;
         }
-//#pragma omp critical
-//{
         normal[i] += triN;
         normal[j] += triN;
         normal[k] += triN;
-//}
     }
-//#pragma omp parallel for
+
+    #pragma omp parallel for
     for( uint i = 0; i < N; ++i ) {
         if( !normal[i].isApprox( Vector3::Zero() ) ) {
             normal[i].normalize();
         }
+    }
+}
+
+
+void uniformNormal( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T,
+                    const std::vector<uint>& duplicateTable, VectorArray< Vector3 >& normal ) {
+    const uint N = p.size();
+    normal.clear();
+    normal.resize( N, Vector3::Zero() );
+
+    for( const auto& t : T ) {
+        const uint i = duplicateTable.at( t( 0 ) );
+        const uint j = duplicateTable.at( t( 1 ) );
+        const uint k = duplicateTable.at( t( 2 ) );
+        const Vector3 triN = triangleNormal( p[i], p[j], p[k] );
+        if( !triN.allFinite() ) {
+            continue;
+        }
+        normal[i] += triN;
+        normal[j] += triN;
+        normal[k] += triN;
+    }
+
+    #pragma omp parallel for
+    for( uint i = 0; i < N; ++i ) {
+        if( !normal[i].isApprox( Vector3::Zero() ) ) {
+            normal[i].normalize();
+        }
+    }
+
+    #pragma omp parallel for
+    for( uint i = 0; i < N; ++i ) {
+        normal[i] = normal[ duplicateTable[i] ];
     }
 }
 

@@ -112,9 +112,9 @@ namespace Ra
                 std::vector<std::vector<uint>> old_bmap(nb_b+1); // old_bmap[bone index] = old vertices indices
                 std::set<uint> dupli;
                 uint d = 0;
-                for( uint i = 0 ; i < nb_v ; ++i, ++d )
+                for (uint i = 0; i < nb_v; ++i, ++d)
                 {
-                    if( d != duplicates.at(i) )
+                    if( i != duplicates.at(i) )
                     {
                         // register as duplicates, not in old_bmap
                         dupli.insert( i );
@@ -159,15 +159,15 @@ namespace Ra
 
                 // compute another reordering for all-vertices data
                 std::vector<uint> vmap_d(nb_v, -1); // vmap[old vertex index] = new vertex index
-                for( const auto d : duplicates )
+                for (uint d = 0; d < nb_v; ++d)
                 {
-                    if( dupli.find( d.first )==dupli.end() )
+                    if( dupli.find(d) == dupli.end() )
                     {
-                        vmap_d[ d.first ] = vmap[ d.second ];
+                        vmap_d[ d ] = vmap[ duplicates[d] ];
                     }
                     else // put duplicates data at the very end
                     {
-                        vmap_d[ d.first ] = last++;
+                        vmap_d[ d ] = last++;
                     }
                 }
 
@@ -234,16 +234,16 @@ namespace Ra
                 apply_reorder( colors, vmap_d );
                 geom->setColors( colors );
 
-                std::map< uint, uint > table;
-                for( const auto &d : duplicates )
+                std::vector< uint > table;
+                for (uint d = 0; d < nb_v; ++d)
                 {
-                    if (dupli.find( d.first ) != dupli.end())
+                    if (dupli.find( d ) != dupli.end())
                     {
-                        table[ vmap_d[ d.first ] ] = vmap[ d.second ];
+                        table[ vmap_d[ d ] ] = vmap[ duplicates[d] ];
                     }
                     else
                     {
-                        table[ vmap[ d.second ] ] = vmap[ d.second ];
+                        table[ vmap[ duplicates[d] ] ] = vmap[ duplicates[d] ];
                     }
                 }
                 geom->setDuplicateTable( table );

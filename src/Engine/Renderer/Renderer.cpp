@@ -45,9 +45,9 @@ namespace Ra
             };
         }
 
-        Renderer::Renderer( uint width, uint height )
-            : m_width( width )
-            , m_height( height )
+        Renderer::Renderer( )
+            : m_width( 0 )
+            , m_height( 0 )
             , m_shaderMgr( nullptr )
             , m_displayedTexture( nullptr )
             , m_renderQueuesUpToDate( false )
@@ -64,8 +64,11 @@ namespace Ra
             ShaderProgramManager::destroyInstance();
         }
 
-        void Renderer::initialize()
+        void Renderer::initialize(uint width, uint height)
         {
+            m_width  = width;
+            m_height = height;
+
             // Initialize managers
             m_shaderMgr = ShaderProgramManager::getInstance();
             m_roMgr = RadiumEngine::getInstance()->getRenderObjectManager();
@@ -477,9 +480,20 @@ namespace Ra
                 return;
 
             std::vector<  Asset::LightData * > data = filedata.getLightData();
-            LOG (logINFO) << "Adding " <<data.size() << " lights in the renderer";
+            uint i = 0;
             for (auto light : data )
+            {
+                if (light->getLight())
+                {
                 addLight( light->getLight() );
+                    ++i;
+                }
+            }
+            LOG(logINFO) << "Added " << i << " lights in the renderer";
+            if (data.size() > i)
+            {
+                LOG(logWARNING) << data.size()-i << " lights where of unknown or unsupported type.";
+            }
         }
 
         uchar* Renderer::grabFrame(uint &w, uint &h) const {

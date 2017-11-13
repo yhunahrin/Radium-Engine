@@ -41,15 +41,15 @@
 #include <GuiBase/Utils/Keyboard.hpp>
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
-#include <Engine/Renderer/RenderTechnique/ShaderProgramManager.hpp>
-
 namespace Ra
 {
     Gui::Viewer::Viewer( QWidget* parent )
         : QOpenGLWidget( parent )
-//        , m_renderers(3)
+        , m_currentRenderer( nullptr )
+        , m_featurePickingManager( nullptr )
         , m_gizmoManager(new GizmoManager(this))
         , m_renderThread( nullptr )
+        , m_glInitStatus( false )
     {
         // Allow Viewer to receive events
         setFocusPolicy( Qt::StrongFocus );
@@ -64,8 +64,15 @@ namespace Ra
     Gui::Viewer::~Viewer(){}
 
 
-    int Gui::Viewer::addRenderer(std::unique_ptr<Engine::Renderer> e){
-        m_renderers.push_back(std::move(e));
+    int Gui::Viewer::addRenderer(std::shared_ptr<Engine::Renderer> e){
+        CORE_ASSERT(m_glInitStatus.load(),
+                    "OpenGL needs to be initialized to add renderers.");
+
+        // initial state and lighting
+        intializeRenderer(e.get());
+
+        m_renderers.push_back(e);
+
         return m_renderers.size()-1;
     }
 
@@ -83,29 +90,31 @@ namespace Ra
         Engine::ShaderProgramManager::createInstance("Shaders/Default.vert.glsl",
                                                      "Shaders/Default.frag.glsl");
 
-        m_renderers.push_back(std::unique_ptr<Engine::Renderer>(new Engine::ForwardRenderer( width(), height())));
+        auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
+        m_camera->attachLight( light );
             
-        for ( auto& renderer : m_renderers )
-        {
-            if (renderer)
-            {
-                renderer->initialize();
-            }
+        m_glInitStatus = true;
+        emit glInitialized();
+
+        if(m_renderers.empty()) {
+            LOG(logWARNING)
+                    << "Renderers fallback: no renderer added, enabling default (Forward Renderer)";
+            std::shared_ptr<Ra::Engine::Renderer> e (new Ra::Engine::ForwardRenderer());
+            addRenderer(e);
         }
 
         m_currentRenderer = m_renderers[0].get();
 
-        auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
-
-        for ( auto& renderer : m_renderers )
+/* FROM MERGE 2017-11
+-       for ( auto& renderer : m_renderers )
         {
             if (renderer)
             {
                 renderer->addLight( light );
             }
         }
+*/
 
-        m_camera->attachLight( light );
 /*
   glbinding::setCallbackMask(glbinding::CallbackMask::After | glbinding::CallbackMask::ParametersAndReturnValue);
   glbinding::setAfterCallback([](const glbinding::FunctionCall & call)
@@ -179,6 +188,13 @@ namespace Ra
     void Gui::Viewer::onResized()
     {
         m_currentRenderer->unlockRendering();
+    }
+
+    void Gui::Viewer::intializeRenderer(Engine::Renderer *renderer)
+    {
+        renderer->initialize(width(), height());
+        if( m_camera->hasLightAttached() )
+            renderer->addLight( m_camera->getLight() );
     }
 
     void Gui::Viewer::resizeGL( int width, int height )
@@ -305,11 +321,8 @@ namespace Ra
     void Gui::Viewer::changeRenderer( int index )
     {
         if (m_renderers[index]) {
-            // NOTE(Charly): This is probably buggy since it has not been tested.
-            LOG( logWARNING ) << "Changing renderers might be buggy since it has not been tested.";
-            m_currentRenderer->lockRendering();
+            if(m_currentRenderer != nullptr) m_currentRenderer->lockRendering();
             m_currentRenderer = m_renderers[index].get();
-            m_currentRenderer->initialize();
             m_currentRenderer->resize( width(), height() );
             m_currentRenderer->unlockRendering();
         }

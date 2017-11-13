@@ -12,6 +12,8 @@
 
 #include <Engine/Component/Component.hpp>
 
+#include <memory>
+
 namespace AnimationPlugin
 {
 
@@ -28,7 +30,7 @@ namespace AnimationPlugin
             m_dt(),
             m_speed( 1.0 ),
             m_slowMo( false ),
-            m_selectedBone(-1),
+//            m_selectedBone(-1),
             m_wasReset(false),
             m_resetDone(false)
         {}
@@ -58,7 +60,7 @@ namespace AnimationPlugin
         Scalar getTime() const;
 
 
-        void handleSkeletonLoading( const Ra::Asset::HandleData* data, const std::map< uint, uint >& duplicateTable );
+        void handleSkeletonLoading( const Ra::Asset::HandleData* data, const std::vector<uint>& duplicateTable, uint nbMeshVertices );
         void handleAnimationLoading( const std::vector< Ra::Asset::AnimationData* > data );
 
         //
@@ -80,24 +82,8 @@ namespace AnimationPlugin
         // Loading data functions
         //
 
-        // Create a skeleton from a file data.
-        void createSkeleton( const Ra::Asset::HandleData* data, std::map< uint, uint >& indexTable );
-
-        // Internal recursive method to create bones
-        void addBone( const int parent,
-                      const uint dataID,
-                      const Ra::Core::AlignedStdVector< Ra::Asset::HandleComponentData >& data,
-                      const Ra::Core::AlignedStdVector< Ra::Core::Vector2i >& edgeList,
-                      std::vector< bool >& processed,
-                      std::map< uint, uint >& indexTable );
-
         void setWeights (Ra::Core::Animation::WeightMatrix m);
 
-        // Internal function to create the skinning weights.
-        void createWeightMatrix( const Ra::Asset::HandleData* data, const std::map< uint, uint >& indexTable, const std::map< uint, uint >& duplicateTable );
-
-        // Internal function to create the bone display objects.
-        void setupSkeletonDisplay();
 
         // Component communication
         void setContentName (const std::string name);
@@ -111,14 +97,22 @@ namespace AnimationPlugin
         const Scalar* getTimeOutput() const;
 
     private:
+        // Internal function to create the skinning weights.
+        void createWeightMatrix( const Ra::Asset::HandleData* data, const std::map< uint, uint >& indexTable,
+                                 const std::vector<uint>& duplicateTable, uint nbMeshVertices );
+
+        // Internal function to create the bone display objects.
+        void setupSkeletonDisplay();
+
+
+    private:
         std::string m_contentName;
 
         Ra::Core::Animation::Skeleton m_skel; // Skeleton
         Ra::Core::Animation::RefPose m_refPose; // Ref pose in model space.
         std::vector<Ra::Core::Animation::Animation> m_animations;
         Ra::Core::Animation::WeightMatrix m_weights; // Skinning weights ( should go in skinning )
-
-        std::vector<SkeletonBoneRenderObject*> m_boneDrawables ; // Vector of bone display objects
+        std::vector< std::unique_ptr<SkeletonBoneRenderObject> > m_boneDrawables ; // Vector of bone display objects
         uint   m_animationID;
         bool   m_animationTimeStep;
         Scalar m_animationTime;
@@ -126,7 +120,7 @@ namespace AnimationPlugin
         Scalar m_speed;
         bool   m_slowMo;
 
-        int m_selectedBone;
+//        int m_selectedBone;
         bool m_wasReset;
         bool m_resetDone;
     };

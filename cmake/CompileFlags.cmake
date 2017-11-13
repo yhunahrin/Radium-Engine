@@ -6,22 +6,13 @@ if (APPLE)
 #    message(STATUS "${PROJECT_NAME} : Compiling on Apple with compiler " ${CMAKE_CXX_COMPILER_ID})
 
     if ( (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") )
-        set(OMP_FLAG "-fopenmp -ftree-vectorize")
         set(MATH_FLAG "-mfpmath=sse -ffast-math")
     else()
         set(MATH_FLAG "-mfpmath=sse")
-        set(OMP_FLAG "")
-    endif()
-
-    if (NOT ${RADIUM_WITH_OMP})
-        set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
-    else()
-        set(RADIUM_WITH_OMP ON)
     endif()
 
     set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG          "-D_DEBUG -DCORE_DEBUG -g3 -ggdb ${CMAKE_CXX_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3 ${MATH_FLAG}")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -29,16 +20,9 @@ if (APPLE)
     add_definitions( -Wno-deprecated-declarations ) # Do not warn for eigen bind being deprecated
 elseif (UNIX OR MINGW)
     if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
-        set(OMP_FLAG "-fopenmp=libiomp5")
         set(MATH_FLAG "-mfpmath=sse")
     else()
-        set(OMP_FLAG "-fopenmp -ftree-vectorize")
         set(MATH_FLAG "-mfpmath=sse -ffast-math")
-    endif()
-
-    if (NOT ${RADIUM_WITH_OMP})
-        set (OMP_FLAG "")
-        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
     endif()
 
     if( MINGW )
@@ -48,7 +32,7 @@ elseif (UNIX OR MINGW)
     endif()
 
     set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${OMP_FLAG} ${EIGEN_ALIGNMENT_FLAG} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC ${EIGEN_ALIGNMENT_FLAG} ${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG          "-D_DEBUG -DCORE_DEBUG -g3 -ggdb ${CMAKE_CXX_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3 ${MATH_FLAG}")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 -ggdb ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -59,9 +43,9 @@ elseif (UNIX OR MINGW)
         add_definitions(-Wno-ignored-attributes -Wno-misleading-indentation)
     endif()
 
-  if (MINGW)
-      add_definitions( -static-libgcc -static-libstdc++) # Compile with static libs
-  endif()
+    if (MINGW)
+        add_definitions( -static-libgcc -static-libstdc++) # Compile with static libs
+    endif()
 elseif (MSVC)
     # Visual studio flags breakdown
     # /GR- : no rtti ; /Ehs-c- : no exceptions
@@ -83,17 +67,11 @@ elseif (MSVC)
     string( REGEX REPLACE "/M(T|D)(d)*" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
     string( REGEX REPLACE "/M(T|D)(d)*" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
-    if ("${RADIUM_WITH_OMP}" STREQUAL "True")
-        set (OMP_FLAG "/openmp")
-    else()
-        set (OMP_FLAG "")
-    endif()
-
-    set(CMAKE_CXX_FLAGS                "/arch:AVX2 /EHs-c- /MP ${OMP_FLAG} ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS                "/arch:AVX2 /EHs-c- /MP ${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG          "/D_DEBUG /DCORE_DEBUG /Od /Zi ${CMAKE_CXX_FLAGS_DEBUG} /MDd")
     set(CMAKE_CXX_FLAGS_RELEASE        "/DNDEBUG /Ox /fp:fast ${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi ${CMAKE_CXX_FLAGS_RELEASE}")
-	set(CMAKE_SHARED_LINKER_FLAGS      "/LTCG ${CMAKE_SHARED_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS      "/LTCG ${CMAKE_SHARED_LINKER_FLAGS}")
 
     # Problem with Qt linking
     # FIXME(Charly): Not sure if this should be done on Linux
@@ -103,27 +81,36 @@ endif()
 
 # Additional flags depending on build options =================================
 
+if (${RADIUM_WITH_OMP})
+    find_package(OpenMP QUIET)
+
+    if(OPENMP_FOUND)
+        message(STATUS "${PROJECT_NAME} : Using OpenMP")
+        add_definitions(-DCORE_USE_OMP)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    endif(OPENMP_FOUND)
+else (${RADIUM_WITH_OMP})
+    message(STATUS "${PROJECT_NAME} : OpenMP disabled")
+    if ( (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") )
+        add_definitions( -Wno-unknown-pragmas )  # gcc/mingw prints a lot of warnings due to open mp pragmas
+    endif()
+endif()
+
 if ("${CMAKE_BUILD_TYPE}"  STREQUAL "Release" )
     add_definitions(-DNO_DEBUG_INFO)
 endif()
 
 if (${RADIUM_WITH_DOUBLE_PRECISION})
-  add_definitions(-DCORE_USE_DOUBLE)
-  message(STATUS "${PROJECT_NAME} : Using double precision.")
+    add_definitions(-DCORE_USE_DOUBLE)
+    message(STATUS "${PROJECT_NAME} : Using double precision.")
 else()
-  message(STATUS "${PROJECT_NAME} : Using single precision.")
+    message(STATUS "${PROJECT_NAME} : Using single precision.")
 endif()
 
 if (NOT ${RADIUM_WITH_FANCY_GL})
-  add_definitions(-DNO_TRANSPARENCY)
-  message(STATUS "${PROJECT_NAME} : Fancy OpenGL Effects are disabled")
-endif()
-
-if (${RADIUM_WITH_OMP})
-    add_definitions(-DCORE_USE_OMP)
-    message(STATUS "${PROJECT_NAME} : Using OpenMP")
-else()
-    message(STATUS "${PROJECT_NAME} : OpenMP disabled")
+    add_definitions(-DNO_TRANSPARENCY)
+    message(STATUS "${PROJECT_NAME} : Fancy OpenGL Effects are disabled")
 endif()
 
 if (${RADIUM_WITH_TEXTURES})
@@ -158,6 +145,15 @@ if (${RADIUM_ASSIMP_SUPPORT})
 else()
     message(STATUS "${PROJECT_NAME} : Assimp loader disabled")
 endif()
+
+
+if (${RADIUM_TINYPLY_SUPPORT})
+    add_definitions(-DIO_USE_TINYPLY)
+    message(STATUS "${PROJECT_NAME} : Using TinyPly loader")
+else()
+    message(STATUS "${PROJECT_NAME} : TinyPly loader disabled")
+endif()
+
 
 if (${RADIUM_PBRT_SUPPORT})
     add_definitions(-DIO_USE_PBRT)

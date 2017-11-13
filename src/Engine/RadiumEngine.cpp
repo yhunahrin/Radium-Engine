@@ -32,15 +32,15 @@ namespace Ra
 {
     namespace Engine
     {
-        
+
         RadiumEngine::RadiumEngine()
         {
         }
-        
+
         RadiumEngine::~RadiumEngine()
         {
         }
-        
+
         void RadiumEngine::initialize()
         {
             LOG(logINFO) << "*** Radium Engine ***";
@@ -115,8 +115,11 @@ namespace Ra
             {
                 if ( l->handleFileExtension( extension ) )
                 {
-                    m_loadedFile.reset( l->loadFile( filename ) );
-                    break;
+                    Asset::FileData *data = l->loadFile( filename );
+                    if (data != nullptr) {
+                        m_loadedFile.reset( data );
+                        break;
+                    }
                 }
             }
 

@@ -69,6 +69,9 @@ namespace Ra
             /// Update the UI ( most importantly gizmos ) to the modifications of the engine/
             void onFrameComplete();
 
+            // Add render in the application: UI, viewer.
+            void addRenderer(std::string name, std::shared_ptr<Engine::Renderer> e);
+
         public slots:
             /// Callback to rebuild the item model when the engine objects change.
             void onItemAdded( const Engine::ItemEntry& ent );
@@ -83,9 +86,6 @@ namespace Ra
 
             /// Exports a given mesh
             void exportMesh( const std::string& folder,  uint roIdx );
-
-            /// Exports the mesh of the currently selected object to a file.
-            void exportCurrentMesh();
 
             /// Exports all visible meshes.
             void exportAllMeshes( const std::string& folder );
@@ -131,6 +131,9 @@ namespace Ra
             /// Emitted when a new item is selected. An invalid entry is sent when no item is selected.
             void selectedItem( const Engine::ItemEntry& entry );
 
+            /// Emitted when GL is correclty initialized (forwarded from Viewer)
+            void glInitialized();
+
         private:
             /// Connect qt signals and slots. Called once by the constructor.
             void createConnections();
@@ -154,7 +157,7 @@ namespace Ra
             void changeRenderObjectShader(const QString& shaderName);
 
             /// Slot for the user changing the current renderer
-            void changeRenderer(const QString& rendererName);
+            void onCurrentRenderChangedInUI();
 
             /// Slot for the picking results from the viewer.
             void handlePicking(int pickingResult);
@@ -163,20 +166,20 @@ namespace Ra
             void on_m_vertexIdx_valueChanged(int arg1);
             void on_m_triangleIdx_valueChanged(int arg1);
 
+            // Slot to init renderers once gl is ready
+            void onGLInitialized();
+
             /// Slot to accept a new renderer
             void onRendererReady();
 
+            /// Exports the mesh of the currently selected object to a file.
+            void exportCurrentMesh();
 
             /// Remove the currently selected item (entity, component or ro)
             void deleteCurrentItem();
 
             /// Clears all entities and resets the camera.
             void resetScene();
-
-            /// Change the Renderer
-            void on_actionForward_triggered();
-            void on_actionDeferred_triggered();
-            void on_actionExperimental_triggered();
 
         private:
             /// Stores the internal model of engine objects for selection.
