@@ -58,6 +58,18 @@ bool areEqual( const Pose &p0, const Pose &p1 ) {
     return true;
 }
 
+Scalar maxAngle( const Pose &p0, const Pose &p1 ) {
+    CORE_ASSERT( compatible( p0, p1 ), " Poses with different size " );
+    Scalar angle = 0;
+    Pose p = relativePose( p0, p1 );
+    const uint n = p.size();
+    for( uint i = 0; i < n; ++i ) {
+        const Ra::Core::AngleAxis angleAxis = Ra::Core::AngleAxis( p[i].rotation() );
+        angle = std::max( std::abs(angleAxis.angle()), angle );
+    }
+    return angle;
+}
+
 Pose interpolatePoses(const Pose& a, const Pose& b, const Scalar t ) {
     CORE_ASSERT( ( a.size() == b.size() ), "Poses are wrong");
     CORE_ASSERT( ( ( t >= 0.0 ) && ( t <= 1.0 ) ), "T is wrong");

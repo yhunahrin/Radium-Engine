@@ -34,8 +34,8 @@ namespace Ra
                     TRACKBALLCAMERA_ROTATE_AROUND,
 
                     VIEWER_TOGGLE_WIREFRAME,
-                    VIEWER_LEFT_BUTTON_PICKING_QUERY,
-                    VIEWER_RIGHT_BUTTON_PICKING_QUERY,
+                    VIEWER_BUTTON_MANIP_PICKING_QUERY,
+                    VIEWER_BUTTON_SELECT_PICKING_QUERY,
                     VIEWER_RAYCAST_QUERY,
 
                     GIZMOMANAGER_MANIPULATION,

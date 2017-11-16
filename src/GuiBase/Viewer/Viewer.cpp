@@ -16,23 +16,22 @@
 #include <QMouseEvent>
 #include <QPainter>
 
-#include <Core/String/StringUtils.hpp>
+#include <Core/Containers/MakeShared.hpp>
+#include <Core/Image/stb_image_write.h>
 #include <Core/Log/Log.hpp>
 #include <Core/Math/ColorPresets.hpp>
 #include <Core/Math/Math.hpp>
-#include <Core/Containers/MakeShared.hpp>
-#include <Core/Image/stb_image_write.h>
+#include <Core/String/StringUtils.hpp>
 
 #include <Engine/Component/Component.hpp>
-#include <Engine/Renderer/Renderer.hpp>
-#include <Engine/Renderer/Light/DirLight.hpp>
-#include <Engine/Renderer/Camera/Camera.hpp>
 
 #include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 #include <Engine/Managers/EntityManager/EntityManager.hpp>
 
+#include <Engine/Renderer/Camera/Camera.hpp>
+#include <Engine/Renderer/Light/DirLight.hpp>
+#include <Engine/Renderer/Renderer.hpp>
 #include <Engine/Renderer/Renderers/ForwardRenderer.hpp>
-#include <Engine/Renderer/Renderers/ExperimentalRenderer.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderProgramManager.hpp>
 
 #include <GuiBase/Viewer/TrackballCamera.hpp>
@@ -108,37 +107,6 @@ namespace Ra
 
         m_currentRenderer = m_renderers[0].get();
 
-/* FROM MERGE 2017-11
--       for ( auto& renderer : m_renderers )
-        {
-            if (renderer)
-            {
-                renderer->addLight( light );
-            }
-        }
-*/
-
-/*
-  glbinding::setCallbackMask(glbinding::CallbackMask::After | glbinding::CallbackMask::ParametersAndReturnValue);
-  glbinding::setAfterCallback([](const glbinding::FunctionCall & call)
-  {
-  std::cerr << call.function->name() << "(";
-  for (unsigned i = 0; i < call.parameters.size(); ++i)
-  {
-  std::cerr << call.parameters[i]->asString();
-  if (i < call.parameters.size() - 1)
-  std::cerr << ", ";
-  }
-  std::cerr << ")";
-
-  if (call.returnValue)
-  std::cerr << " -> " << call.returnValue->asString();
-
-  std::cerr << std::endl;
-
-  });
-*/
-
         emit rendererReady();
     }
 
@@ -209,6 +177,16 @@ namespace Ra
         m_currentRenderer->resize( width*m_hdpiScale, height*m_hdpiScale );
     }
 
+    void Gui::Viewer::mouseDoubleClickEvent( QMouseEvent* event )
+    {
+        if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
+        {
+            // Check picking
+            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale), Core::MouseButton::RA_MOUSE_RIGHT_BUTTON };
+            m_currentRenderer->addPickingRequest(query);
+        }
+    }
+
     Engine::Renderer::PickingMode getPickingMode()
     {
         auto keyMap = Gui::KeyMappingManager::getInstance();
@@ -230,7 +208,7 @@ namespace Ra
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
     {
         auto keyMap = Gui::KeyMappingManager::getInstance();
-        if( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_LEFT_BUTTON_PICKING_QUERY ) )
+        if( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_MANIP_PICKING_QUERY ) )
         {
             if ( isKeyPressed( keyMap->getKeyFromAction(Gui::KeyMappingManager::VIEWER_RAYCAST_QUERY ) ) )
             {
@@ -246,7 +224,7 @@ namespace Ra
             }
             else
             {
-                m_currentRenderer->addPickingRequest({ Core::Vector2(event->x()*m_hdpiScale, height()*m_hdpiScale - event->y()*m_hdpiScale),
+                m_currentRenderer->addPickingRequest({ Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
                                                        Core::MouseButton::RA_MOUSE_LEFT_BUTTON,
                                                        Engine::Renderer::RO });
                 m_gizmoManager->handleMousePressEvent(event);
@@ -256,10 +234,10 @@ namespace Ra
         {
             m_camera->handleMousePressEvent(event);
         }
-        else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_RIGHT_BUTTON_PICKING_QUERY ) )
+        else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
         {
             // Check picking
-            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, height()*m_hdpiScale - event->y()*m_hdpiScale),
+            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
                                                       Core::MouseButton::RA_MOUSE_RIGHT_BUTTON,
                                                       getPickingMode() };
             m_currentRenderer->addPickingRequest(query);

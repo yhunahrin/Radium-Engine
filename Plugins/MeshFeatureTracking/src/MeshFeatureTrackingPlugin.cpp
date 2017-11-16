@@ -98,6 +98,7 @@ namespace MeshFeatureTrackingPlugin
         if (data.m_featureType != Ra::Engine::Renderer::RO)
         {
             cmp->setData( data );
+            std::cout << data.m_data[0] << std::endl;
         }
         else
         {

@@ -48,6 +48,7 @@ RA_CORE_API Pose applyTransformation( const Pose& pose, const Transform& transfo
 
 RA_CORE_API bool areEqual( const Pose& p0, const Pose& p1 );
 
+RA_CORE_API Scalar maxAngle( const Pose& p0, const Pose& p1 );
 
 RA_CORE_API Pose interpolatePoses(const Pose& a, const Pose& b, const Scalar t );
 

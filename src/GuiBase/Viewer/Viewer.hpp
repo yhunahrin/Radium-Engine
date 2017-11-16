@@ -201,6 +201,7 @@ namespace Ra
 
             /// We intercept the mouse events in this widget to get the coordinates of the mouse
             /// in screen space.
+            virtual void mouseDoubleClickEvent( QMouseEvent* event ) override;
             virtual void mousePressEvent( QMouseEvent* event ) override;
             virtual void mouseReleaseEvent( QMouseEvent* event ) override;
             virtual void mouseMoveEvent( QMouseEvent* event ) override;
