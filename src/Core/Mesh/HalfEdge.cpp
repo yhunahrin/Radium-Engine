@@ -103,7 +103,7 @@ namespace Ra
                 // This arrays contains the indices of all three half edges of the current face
                 // in halfEdgeList.
                 VectorNui faceHalfEdges( fs );
-                #pragma parallel for
+                #pragma omp parallel for
                 for (uint i=0; i<fs; ++i)
                 {
                     faceHalfEdges[i] = InvalidIdx;
