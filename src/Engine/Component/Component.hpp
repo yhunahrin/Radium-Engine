@@ -71,6 +71,9 @@ namespace Ra
             /// Remove the render object from the component.
             virtual void removeRenderObject( Core::Index roIdx ) final;
 
+            /// Remove all render objects from the component.
+            virtual void clearRenderObjects() final;
+
             /// Perform a ray cast query.
             virtual void rayCastQuery(const Core::Ray& ray) const;
 

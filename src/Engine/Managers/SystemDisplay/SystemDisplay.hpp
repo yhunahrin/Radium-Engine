@@ -148,6 +148,9 @@ namespace Ra
 #define RA_DISPLAY_LINE_ONCE(a, b, color)                           \
     Ra::Engine::DebugRender::getInstance()->drawLine(a, b, color)
 
+#define RA_CLEAR_DEBUG_DISPLAY() \
+    Ra::Engine::SystemEntity::dbgCmp()->clearRenderObjects();
+
 #else // if debug display is disabled
 
 #define RA_DISPLAY_POINT( p, color, scale )     // Nothing
