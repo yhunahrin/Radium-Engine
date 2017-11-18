@@ -23,10 +23,10 @@ namespace AnimationPlugin
         void handleAssetLoading( Ra::Engine::Entity* entity, const Ra::Asset::FileData* fileData) override;
 
         /// Toggle on/off playing of animations.
-        void setPlaying( bool isPlaying );
+        void play( bool isPlaying ) override;
 
         /// Advance the animation next frame, then pauses.
-        void step();
+        void step() override;
 
         /// Resets the skeleton to its rest pose.
         void reset();

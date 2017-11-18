@@ -24,6 +24,11 @@ namespace Ra
         Scalar PolyLine::getLineParameter(uint segment, Scalar tSegment) const
         {
             CORE_ASSERT(segment < m_ptsDiff.size(), "invalid segment index");
+            if ( segment >= m_ptsDiff.size())
+            {
+                std::cout<<"thebug"<<segment<<" "<<m_ptsDiff.size()<<std::endl;
+                return 0;
+            }
             const Scalar lprev = segment > 0 ? m_lengths[segment - 1] : 0;
             const Scalar lSegment = m_lengths[segment] - lprev;
             return ((lSegment * tSegment) + lprev) / length();

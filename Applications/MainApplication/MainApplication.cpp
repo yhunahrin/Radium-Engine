@@ -53,20 +53,24 @@ bool g_force_IS = false;
 Scalar g_animation_speed = 1.f;
 
 // Physics parameters
-uint   g_num_particles = 60; // Number of particles per muscle
+
+uint   g_num_particles = 30; // Number of particles per muscle
 Scalar g_tendon_proportion = 0.1;  // percentage of the muscle length which is considered tendon
 
 Scalar g_massFactor = 0.5f; // multiplicator of all masses.
 
-Scalar g_stiffness = 0.2f;          // Stiffness of the spring constraints (0.2f);
+Scalar g_stiffness = 0.15f;          // Stiffness of the spring constraints (0.2f);
 Scalar g_rest_length= 0.02f;        // Rest length fraction of the spring constraint ( 0.02f)
 Scalar g_tendon_stiffness = 1.f;   // Stiffness of spring for tendon sections (1.f)
 Scalar g_tendon_rest_length = -1.f; // Rest length of srping of tendon section (-1.f)
 
-Scalar g_collision_stiffness = 1.f; // Stiffness of the collision vs implicit constraint (10.f)
+Scalar g_collision_stiffness = 0.2f; // Stiffness of the collision vs implicit constraint (10.f)
 Scalar g_keep_inside_stiffness = 1.5f; // Stiffness of the collision vs skin constraint (10.5f)
 Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
 
+const uint * g_frame_num_ptr;
+
+bool g_debug_physics;
 namespace Ra
 {
     BaseApplication::BaseApplication( int argc, char** argv, QString applicationName, QString organizationName)
@@ -85,6 +89,8 @@ namespace Ra
         , m_recordMeshes( false )
         , m_isAboutToQuit( false )
     {
+
+        g_frame_num_ptr = & m_frameCounter;
         // Set application and organization names in order to ensure uniform
         // QSettings configurations.
         // \see http://doc.qt.io/qt-5/qsettings.html#QSettings-4
@@ -201,6 +207,8 @@ namespace Ra
         LOG( logINFO ) << cline.str();
 
         LOG( logINFO ) << "Qt Version: " << qVersion();
+
+        LOG( logINFO ) << "Running at "<<m_targetFPS<< "fps as target";
 
         // Create default format for Qt.
         QSurfaceFormat format;

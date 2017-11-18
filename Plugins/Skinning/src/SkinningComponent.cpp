@@ -65,13 +65,15 @@ void SkinningComponent::setupSkinning()
     }
 }
 
-void SkinningComponent::skin()
+void SkinningComponent::skin(Scalar dt)
 {
     CORE_ASSERT( m_isReady, "Skinning is not setup");
 
     const Skeleton* skel = m_skeletonGetter();
 
     bool reset = ComponentMessenger::getInstance()->get<bool>(getEntity(), m_contentsName);
+
+    m_frameData.m_dt = dt;
 
     // Reset the skin if it wasn't done before
     if (reset && !m_frameData.m_doReset )

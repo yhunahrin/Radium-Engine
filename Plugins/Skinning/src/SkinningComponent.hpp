@@ -34,7 +34,7 @@ namespace SkinningPlugin
 
         virtual void initialize() override { setupSkinning();}
 
-        void skin();
+        void skin(Scalar dt);
         void endSkinning();
         void setupSkinning();
 

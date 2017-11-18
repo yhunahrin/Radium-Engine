@@ -81,6 +81,10 @@ namespace Ra
              */
             virtual void handleAssetLoading( Entity* entity, const Asset::FileData* data) {}
 
+
+            virtual void play(bool on) {}
+            virtual void step() {}
+
         protected:
             /// List of active components.
             std::vector< std::pair<const Entity*, Component*> > m_components;

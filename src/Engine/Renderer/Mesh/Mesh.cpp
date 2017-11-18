@@ -124,7 +124,7 @@ namespace Ra {
                                                   sizeof( typename VecArray::Vector ), (GLvoid*)ptr ) );
 
                 GL_ASSERT( glEnableVertexAttribArray( vboIdx - 1 ) );
-                // Set dirty as true to send data, see below 
+                // Set dirty as true to send data, see below
                 m_dataDirty[vboIdx] = true;
             }
 

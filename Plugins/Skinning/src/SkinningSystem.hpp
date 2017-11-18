@@ -11,6 +11,8 @@
 #include <Engine/Assets/FileData.hpp>
 #include <Engine/Assets/HandleData.hpp>
 #include <Engine/Entity/Entity.hpp>
+#include <Engine/FrameInfo.hpp>
+
 #include <SkinningComponent.hpp>
 
 #include <Display/SkinningDisplayComponent.hpp>
@@ -29,7 +31,7 @@ namespace SkinningPlugin
             {
                 SkinningComponent* comp = static_cast<SkinningComponent*>(compEntry.second);
                 Ra::Core::FunctionTask* skinTask = new Ra::Core::FunctionTask(
-                        std::bind(&SkinningComponent::skin, comp),
+                        std::bind(&SkinningComponent::skin, comp, frameInfo.m_dt),
                         "SkinnerTask"
                 );
 

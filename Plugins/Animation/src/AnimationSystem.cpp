@@ -9,10 +9,13 @@
 #include <Engine/RadiumEngine.hpp>
 #include <Engine/FrameInfo.hpp>
 #include <Engine/Assets/FileData.hpp>
+#include <Engine/Managers/SystemDisplay/SystemDisplay.hpp>
 
 #include <AnimationComponent.hpp>
 #include <Drawing/SkeletonBoneDrawable.hpp>
 
+
+extern bool g_debug_physics;
 
 namespace AnimationPlugin
 {
@@ -68,12 +71,22 @@ namespace AnimationPlugin
 
     void AnimationSystem::step()
     {
+        RA_CLEAR_DEBUG_DISPLAY();
         m_oneStep = true;
+        g_debug_physics = true;
+
+
+        auto pbdSys = Ra::Engine::RadiumEngine::getInstance()->getSystem("PbdSystem");
+        pbdSys->step();
     }
 
-    void AnimationSystem::setPlaying( bool isPlaying )
+    void AnimationSystem::play( bool isPlaying )
     {
+        RA_CLEAR_DEBUG_DISPLAY();
         m_isPlaying = isPlaying;
+
+        auto pbdSys = Ra::Engine::RadiumEngine::getInstance()->getSystem("PbdSystem");
+        pbdSys->play(isPlaying);
     }
 
 

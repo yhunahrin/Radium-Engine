@@ -96,13 +96,13 @@ namespace AnimationPlugin
     void AnimationPluginC::play()
     {
         CORE_ASSERT(m_system, "System should be there ");
-        m_system->setPlaying( true );
+        m_system->play( true );
     }
 
     void AnimationPluginC::pause()
     {
         CORE_ASSERT(m_system, "System should be there ");
-        m_system->setPlaying(false);
+        m_system->play(false);
     }
 
     void AnimationPluginC::step()
