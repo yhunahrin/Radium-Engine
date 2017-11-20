@@ -23,9 +23,9 @@ void main()
 
 #if 1
     const float threshold = 0.75;
-    float u = in_texcoord.x;
-    float udx = dFdx( in_texcoord.x );
-    float udy = dFdy( in_texcoord.x );
+    float u = in_texcoord.s;
+    float udx = dFdx( in_texcoord.s );
+    float udy = dFdy( in_texcoord.s );
 
 #if 0
     float[9] values = float[]( u-udx-udy, u-udy, u+udx-udy,

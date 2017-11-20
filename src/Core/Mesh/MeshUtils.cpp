@@ -74,24 +74,32 @@ namespace Ra
                     if (duplicatesMap[i] == i)
                     {
                         newIndices[i] = uniqueVertices.size();
-                        uniqueVertices.push_back(mesh.m_vertices[i]);
+                        uniqueVertices.push_back( mesh.m_vertices[i] );
 
                     }
                 }
 
                 for (uint i = 0; i < mesh.m_triangles.size(); i++)
                 {
+                    auto &t = mesh.m_triangles[i];
                     for (uint j = 0; j < 3; j++)
                     {
-                        int oldIdx = mesh.m_triangles[i](j);
-                        int newIdx = newIndices[duplicatesMap[oldIdx]];
-                        mesh.m_triangles[i](j) = newIdx;
+                        t(j) = newIndices[ duplicatesMap[ t(j) ] ];
+                    }
+                }
+
+                for (uint i = 0; i < mesh.m_faces.size(); i++)
+                {
+                    auto &f = mesh.m_faces[i];
+                    for (uint j = 0; j < f.size(); j++)
+                    {
+                        f(j) = newIndices[ duplicatesMap[ f(j) ] ];
                     }
                 }
 
                 vertexMap.resize(mesh.m_vertices.size());
                 for (uint i = 0; i < mesh.m_vertices.size(); i++)
-                    vertexMap[i] = newIndices[duplicatesMap[i]];
+                    vertexMap[i] = newIndices[ duplicatesMap[i] ];
 
                 mesh.m_vertices = uniqueVertices;
             }
