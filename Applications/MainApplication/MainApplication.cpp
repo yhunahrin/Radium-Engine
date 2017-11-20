@@ -70,6 +70,10 @@ Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
 
 const uint * g_frame_num_ptr;
 
+std::string g_anat_file = "";
+std::string g_phys_file = "";
+std::string g_kf_file = "";
+
 bool g_debug_physics;
 namespace Ra
 {
@@ -126,8 +130,15 @@ namespace Ra
         QCommandLineOption saveFrames(QStringList{"saveframes"}, "save frames","", "");
 
 
+        QCommandLineOption anatFile(QStringList{"anatfile"}, "anatomical data file","file name", "foo.txt");
+        QCommandLineOption kfFile(QStringList{"kffile"}, "keyframe data file","file name", "foo.txt");
+        QCommandLineOption physFile(QStringList{"phyfile"}, "physics data file","file name", "foo.txt");
+
+
+
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
         parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt });
+        parser.addOptions({anatFile, kfFile, physFile});
         parser.process(*this);
 
         if (parser.isSet(fpsOpt))       m_targetFPS = parser.value(fpsOpt).toUInt();
@@ -143,6 +154,11 @@ namespace Ra
         if (parser.isSet(animSpeedOpt))  g_animation_speed = parser.value(animSpeedOpt).toDouble();
         if (parser.isSet(saveMeshes))   m_recordMeshes  = true;
         if (parser.isSet(saveFrames))   m_recordFrames  = true;
+
+        if (parser.isSet(anatFile)) g_anat_file = parser.value(anatFile).toStdString();
+        if (parser.isSet(kfFile)) g_kf_file = parser.value(kfFile).toStdString();
+        if (parser.isSet(physFile)) g_phys_file = parser.value(physFile).toStdString();
+
 
         std::time_t startTime = std::time(nullptr);
         std::tm* startTm = std::localtime(&startTime);
