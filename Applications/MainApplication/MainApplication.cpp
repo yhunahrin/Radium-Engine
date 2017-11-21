@@ -87,6 +87,7 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
+        , m_exportFolderName("")  
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
@@ -116,7 +117,8 @@ namespace Ra
         QCommandLineOption pluginLoadOpt(QStringList{"l", "load", "loadPlugin"}, "Only load plugin with the given name (filename without the extension). If this option is not used, all plugins in the plugins folder will be loaded. ", "name");
         QCommandLineOption pluginIgnoreOpt(QStringList{"i", "ignore", "ignorePlugin"}, "Ignore plugins with the given name. If the name appears within both load and ignore options, it will be ignored.", "name");
         QCommandLineOption fileOpt(QStringList{"f", "file", "scene"}, "Open a scene file at startup.", "file name", "foo.bar");
-        QCommandLineOption camOpt(QStringList{"c", "camera", "can"}, "Open a camera file at startup", "file name", "foo.bar");
+        QCommandLineOption camOpt(QStringList{"c", "camera", "cam"}, "Open a camera file at startup", "file name", "foo.bar");
+        QCommandLineOption exportOpt(QStringList{"e", "export", "exportFolder"}, "Name of the output folder of the application.", "folder name", "Numerical date and time");
 
 
 
@@ -136,7 +138,7 @@ namespace Ra
 
 
 
-        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt });
+        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt, exportOpt });
         parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt });
         parser.addOptions({anatFile, kfFile, physFile});
         parser.process(*this);
@@ -160,16 +162,25 @@ namespace Ra
         if (parser.isSet(physFile)) g_phys_file = parser.value(physFile).toStdString();
 
 
-        std::time_t startTime = std::time(nullptr);
-        std::tm* startTm = std::localtime(&startTime);
-        Ra::Core::StringUtils::stringPrintf(m_exportFolderName, "%4u%02u%02u-%02u%02u",
+        if (parser.isSet(exportOpt))
+        {
+            m_exportFolderName = parser.value(exportOpt).toStdString();
+        }   
+        // If the option was not set or if it was set to an empty string
+        // use default date folder
+
+        if (m_exportFolderName.empty())
+        {
+            std::time_t startTime = std::time(nullptr);
+            std::tm* startTm = std::localtime(&startTime);
+            Ra::Core::StringUtils::stringPrintf(m_exportFolderName, "%4u%02u%02u-%02u%02u",
                                             1900 + startTm->tm_year,
                                             startTm->tm_mon+1,
                                             startTm->tm_mday,
                                             startTm->tm_hour,
                                             startTm->tm_min);
 
-
+        }
         QDir().mkdir(m_exportFolderName.c_str());
 
         // Boilerplate print.
