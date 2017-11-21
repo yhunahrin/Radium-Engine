@@ -23,9 +23,9 @@ void main()
 
 #if 1
     const float threshold = 0.75;
-    float u = in_texcoord.s;
-    float udx = dFdx( in_texcoord.s );
-    float udy = dFdy( in_texcoord.s );
+    float u = in_texcoord.z;
+    float udx = dFdx( in_texcoord.z );
+    float udy = dFdy( in_texcoord.z );
 
 #if 0
     float[9] values = float[]( u-udx-udy, u-udy, u+udx-udy,
@@ -66,7 +66,7 @@ void main()
     }
 
 #else
-    if (in_texcoord.x > 0.9)
+    if (in_texcoord.z > 0.9)
     {
         fragColor = vec4(0.0, 0.0, 0.0, 1.0);
     }

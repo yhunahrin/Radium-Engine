@@ -162,11 +162,10 @@ namespace FancyMeshPlugin
         if ( m.hasNormalTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_NORMAL, m.m_texNormal );
 #endif
 
-        auto config = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong");
+        auto config = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong_wire");
 
         auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, config, mat );
         ro->setTransparent( mat->m_alpha < 1.0 );
-	    ro->setVisible( false );
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
