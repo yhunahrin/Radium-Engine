@@ -1,12 +1,16 @@
 #ifndef FANCYMESHPLUGIN_FANCYMESHCOMPONENT_HPP
 #define FANCYMESHPLUGIN_FANCYMESHCOMPONENT_HPP
 
+#include <memory>
+
 #include <FancyMeshPluginMacros.hpp>
 
 #include <Core/Mesh/MeshTypes.hpp>
 #include <Core/Mesh/TriangleMesh.hpp>
 
 #include <Engine/Component/Component.hpp>
+#include <Engine/Renderer/RenderTechnique/Material.hpp>
+#include <Engine/Renderer/RenderTechnique/ShaderConfiguration.hpp>
 
 namespace Ra
 {
@@ -51,12 +55,15 @@ namespace FancyMeshPlugin
         /// Returns the current display geometry.
         const Ra::Core::TriangleMesh& getMesh() const;
 
+        void triggerTexture( bool trigger );
+        void triggerSubdivWireframe( bool trigger );
 
     public:
         // Component communication management
         void setupIO(const std::string& id);
         void setContentName (const std::string name);
         void setDeformable (const bool b);
+
     private:
         const Ra::Engine::Mesh& getDisplayMesh() const;
         Ra::Engine::Mesh& getDisplayMesh();
@@ -80,6 +87,10 @@ namespace FancyMeshPlugin
         // for its non duplicated attributes (texture coordinates, face normal, tangent vector, ...).
         // Note: if duplicates have NOT been loaded, then m_duplicateTable[i] == i.
         std::vector<uint> m_duplicateTable;
+        std::shared_ptr<Ra::Engine::Material> m_basicMat;
+        std::shared_ptr<Ra::Engine::Material> m_texturedMat;
+        Ra::Engine::ShaderConfiguration m_basicShader;
+        Ra::Engine::ShaderConfiguration m_subdivShader;
 
         Ra::Core::Index m_meshIndex;
         Ra::Core::Index m_aabbIndex;

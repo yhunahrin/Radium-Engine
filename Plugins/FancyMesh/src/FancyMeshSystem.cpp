@@ -64,4 +64,20 @@ namespace FancyMeshPlugin
         return comp;
     }
 
+    void FancyMeshSystem::triggerTexture( bool trigger )
+    {
+        for (auto comp : m_components)
+        {
+            static_cast<FancyMeshComponent*>( comp.second )->triggerTexture( trigger );
+        }
+    }
+
+    void FancyMeshSystem::triggerSubdivWireframe( bool trigger )
+    {
+        for (auto comp : m_components)
+        {
+            static_cast<FancyMeshComponent*>( comp.second )->triggerSubdivWireframe( trigger );
+        }
+    }
+
 } // namespace FancyMeshPlugin

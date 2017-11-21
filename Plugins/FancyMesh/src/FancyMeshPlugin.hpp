@@ -19,6 +19,11 @@ namespace Ra
 
 namespace FancyMeshPlugin
 {
+    class FancyMeshSystem;
+}
+
+namespace FancyMeshPlugin
+{
 // Du to an ambigous name while compiling with Clang, must differentiate plugin claas from plugin namespace
     class FancyMeshPluginC : public QObject, Ra::Plugins::RadiumPluginInterface
     {
@@ -39,6 +44,15 @@ namespace FancyMeshPlugin
 
         virtual bool doAddAction( int& nb ) override;
         virtual QAction* getAction( int id ) override;
+
+    private slots:
+        void triggerTexture( bool trigger );
+        void triggerSubdivWireframe( bool trigger );
+
+    private:
+        QAction *m_textureAction;
+        QAction *m_subdivWireframeAction;
+        FancyMeshSystem* m_system;
     };
 
 } // namespace

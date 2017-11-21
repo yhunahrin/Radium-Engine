@@ -35,7 +35,10 @@ typedef Ra::Core::VectorArray<Ra::Core::Triangle> TriangleArray;
 namespace FancyMeshPlugin
 {
     FancyMeshComponent::FancyMeshComponent(const std::string& name , bool deformable)
-        : Ra::Engine::Component( name  ) , m_deformable(deformable)
+        : Ra::Engine::Component( name  )
+        , m_deformable( deformable )
+        , m_basicMat( nullptr )
+        , m_texturedMat( nullptr )
     {
     }
 
@@ -147,28 +150,48 @@ namespace FancyMeshPlugin
         // FIXME(Charly): Should not weights be part of the geometry ?
         //        mesh->addData( Ra::Engine::Mesh::VERTEX_WEIGHTS, meshData.weights );
 
-        std::shared_ptr<Ra::Engine::Material> mat(new Ra::Engine::Material( matName ));
+        m_texturedMat.reset( new Ra::Engine::Material( matName ) );
         auto m = data->getMaterial();
-        if ( m.hasDiffuse() )   mat->m_kd    = m.m_diffuse;
-        if ( m.hasSpecular() )  mat->m_ks    = m.m_specular;
-        if ( m.hasShininess() ) mat->m_ns    = m.m_shininess;
-        if ( m.hasOpacity() )   mat->m_alpha = m.m_opacity;
+        if ( m.hasDiffuse() )   m_texturedMat->m_kd    = m.m_diffuse;
+        if ( m.hasSpecular() )  m_texturedMat->m_ks    = m.m_specular;
+        if ( m.hasShininess() ) m_texturedMat->m_ns    = m.m_shininess;
+        if ( m.hasOpacity() )   m_texturedMat->m_alpha = m.m_opacity;
 
 #ifdef RADIUM_WITH_TEXTURES
-        if ( m.hasDiffuseTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_DIFFUSE, m.m_texDiffuse );
-        if ( m.hasSpecularTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_SPECULAR, m.m_texSpecular );
-        if ( m.hasShininessTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_SHININESS, m.m_texShininess );
-        if ( m.hasOpacityTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_ALPHA, m.m_texOpacity );
-        if ( m.hasNormalTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_NORMAL, m.m_texNormal );
+        if ( m.hasDiffuseTexture() || m.hasSpecularTexture() || m.hasShininessTexture() || m.hasOpacityTexture() || m.hasNormalTexture() )
+        {
+            m_basicMat.reset( new Ra::Engine::Material( matName+"empty" ) );
+            m_basicMat->m_kd = Ra::Core::Colors::Skin();
+            m_basicMat->m_ks = Ra::Core::Vector4::Ones();
+        }
+        if ( m.hasDiffuseTexture() )   m_texturedMat->addTexture( Ra::Engine::Material::TextureType::TEX_DIFFUSE, m.m_texDiffuse );
+        if ( m.hasSpecularTexture() )  m_texturedMat->addTexture( Ra::Engine::Material::TextureType::TEX_SPECULAR, m.m_texSpecular );
+        if ( m.hasShininessTexture() ) m_texturedMat->addTexture( Ra::Engine::Material::TextureType::TEX_SHININESS, m.m_texShininess );
+        if ( m.hasOpacityTexture() )   m_texturedMat->addTexture( Ra::Engine::Material::TextureType::TEX_ALPHA, m.m_texOpacity );
+        if ( m.hasNormalTexture() )    m_texturedMat->addTexture( Ra::Engine::Material::TextureType::TEX_NORMAL, m.m_texNormal );
 #endif
 
-        auto config = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong_wire");
+        m_basicShader  = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong");
+        m_subdivShader = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong_wire");
 
-        auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, config, mat );
-        ro->setTransparent( mat->m_alpha < 1.0 );
+        auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, m_subdivShader, m_texturedMat );
+        ro->setTransparent( m_texturedMat->m_alpha < 1.0 );
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
+    }
+
+    void FancyMeshComponent::triggerTexture( bool trigger )
+    {
+        if ( m_basicMat )
+        {
+            getRoMgr()->getRenderObject( m_meshIndex )->getRenderTechnique()->material = (trigger ? m_texturedMat : m_basicMat );
+        }
+    }
+
+    void FancyMeshComponent::triggerSubdivWireframe( bool trigger )
+    {
+        getRoMgr()->getRenderObject( m_meshIndex )->getRenderTechnique()->changeShader( (trigger ? m_subdivShader : m_basicShader ) );
     }
 
     Ra::Core::Index FancyMeshComponent::getRenderObjectIndex() const
