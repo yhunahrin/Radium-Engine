@@ -177,16 +177,6 @@ namespace Ra
         m_currentRenderer->resize( width*m_hdpiScale, height*m_hdpiScale );
     }
 
-    void Gui::Viewer::mouseDoubleClickEvent( QMouseEvent* event )
-    {
-        if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
-        {
-            // Check picking
-            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale), Core::MouseButton::RA_MOUSE_RIGHT_BUTTON };
-            m_currentRenderer->addPickingRequest(query);
-        }
-    }
-
     Engine::Renderer::PickingMode getPickingMode()
     {
         auto keyMap = Gui::KeyMappingManager::getInstance();
@@ -203,6 +193,18 @@ namespace Ra
             return Engine::Renderer::TRIANGLE;
         }
         return Engine::Renderer::RO;
+    }
+
+    void Gui::Viewer::mouseDoubleClickEvent( QMouseEvent* event )
+    {
+        if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
+        {
+            // Check picking
+            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
+                                                      Core::MouseButton::RA_MOUSE_RIGHT_BUTTON,
+                                                      getPickingMode() };
+            m_currentRenderer->addPickingRequest(query);
+        }
     }
 
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
@@ -233,14 +235,6 @@ namespace Ra
         else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::TRACKBALLCAMERA_MANIPULATION ) )
         {
             m_camera->handleMousePressEvent(event);
-        }
-        else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
-        {
-            // Check picking
-            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
-                                                      Core::MouseButton::RA_MOUSE_RIGHT_BUTTON,
-                                                      getPickingMode() };
-            m_currentRenderer->addPickingRequest(query);
         }
     }
 
