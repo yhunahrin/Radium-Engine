@@ -65,6 +65,7 @@ namespace Ra
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
+        , m_recordMeshes( false )
         , m_isAboutToQuit( false )
     {
         // Set application and organization names in order to ensure uniform
