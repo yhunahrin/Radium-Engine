@@ -47,6 +47,41 @@ function run_scene_video()
     --trans --showanat --saveframes --runanat >& $outfolder/log.txt
 }
 
+function run_scene_timings()
+{
+
+    local infolder=$1
+    local outfolder=$2
+    local scenefile=$3
+
+    source $infolder/$scenefile
+
+    mkdir -p "$outfolder/on"
+    mkdir -p "$outfolder/off"
+
+    # run anatomy
+    DISPLAY=":0.0" \
+    ./main-app --fps 30 --autoplay -e "$outfolder/on" -n $numframes -t \
+    -f $infolder/$assetfile \
+    -c $infolder/$camfile \
+    --anatfile $infolder/$anatfile \
+    --kffile $infolder/$kffile \
+    --phyfile $infolder/$phyfile \
+    --runanat >& "$outfolder/on/log.txt"
+
+    #run without anatomy
+
+    DISPLAY=":0.0" \
+    ./main-app --fps 30 --autoplay -e "$outfolder/off" -n $numframes -t \
+    -f $infolder/$assetfile \
+    -c $infolder/$camfile \
+    --anatfile $infolder/$anatfile \
+    --kffile $infolder/$kffile \
+    --phyfile $infolder/$phyfile \
+    --runanat >& "$outfolder/off/log.txt"
+}
+
+
 # call ffmpeg on the exported frames
 function make_video()
 {
@@ -68,8 +103,13 @@ function run_scene()
 
     local out="$SCRIPTDIR/scene$num"
 
+    echo "   Export meshes..."
     run_scene_exportmesh "$in" "$out/meshes" "$scene"
+
+    echo "   Export frames..."
     run_scene_video "$in" "$out/frames" "$scene"
+
+    echo "   Making video from frames..."
     make_video "$out/frames" "scene$num" "30"
 
     cp $in/desc.txt $out/meshes/scene.txt
@@ -81,6 +121,7 @@ cd $WORKDIR
 
 mkdir -p $SCRIPTDIR
 
+# run_scene_timings "/home/vroussel/Downloads/GEOM/arm_biceps_curl" "$SCRIPTDIR/timings" "scenefile"
 
 echo "Running scene 0 (parameters presentation)"
 run_scene "00" "/home/vroussel/Downloads/GEOM/arm_nomove" "scene00"

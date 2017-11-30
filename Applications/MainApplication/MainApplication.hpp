@@ -90,6 +90,7 @@ namespace Ra
 
         void recordFrame();
         void recordMeshes();
+        void recordTimings( const FrameTimerData& data );
 
         void onSelectedItem(const Ra::Engine::ItemEntry& entry) { emit selectedItem(entry); }
 

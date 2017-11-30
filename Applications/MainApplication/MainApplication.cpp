@@ -2,6 +2,8 @@
 
 #include <Core/CoreMacros.hpp>
 
+#include <fstream>
+
 #include <QTimer>
 #include <QDir>
 #include <QPluginLoader>
@@ -87,7 +89,7 @@ namespace Ra
         , m_frameCounter( 0 )
         , m_numFrames( 0 )
         , m_realFrameRate( false )
-        , m_exportFolderName("")  
+        , m_exportFolderName("")
         , m_recordFrames( false )
         , m_recordTimings( false )
         , m_recordGraph( false )
@@ -119,6 +121,7 @@ namespace Ra
         QCommandLineOption fileOpt(QStringList{"f", "file", "scene"}, "Open a scene file at startup.", "file name", "foo.bar");
         QCommandLineOption camOpt(QStringList{"c", "camera", "cam"}, "Open a camera file at startup", "file name", "foo.bar");
         QCommandLineOption exportOpt(QStringList{"e", "export", "exportFolder"}, "Name of the output folder of the application.", "folder name", "Numerical date and time");
+        QCommandLineOption timingsOpt(QStringList{"t", "timings", "exportTimings"}, "Export the timings of each frame", "", "");
 
 
 
@@ -138,7 +141,7 @@ namespace Ra
 
 
 
-        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt, exportOpt });
+        parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt, exportOpt,timingsOpt });
         parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt });
         parser.addOptions({anatFile, kfFile, physFile});
         parser.process(*this);
@@ -147,6 +150,8 @@ namespace Ra
         if (parser.isSet(pluginOpt))    pluginsPath = parser.value(pluginOpt).toStdString();
         if (parser.isSet(numFramesOpt)) m_numFrames = parser.value(numFramesOpt).toUInt();
         if (parser.isSet(maxThreadsOpt)) m_maxThreads = parser.value(maxThreadsOpt).toUInt();
+        if (parser.isSet(timingsOpt))    setRecordTimings(true);
+
 
         if (parser.isSet(showAnatOpt))  g_show_anat     = true;
         if (parser.isSet(runAnatOpt))   g_run_anat      = true;
@@ -165,7 +170,7 @@ namespace Ra
         if (parser.isSet(exportOpt))
         {
             m_exportFolderName = parser.value(exportOpt).toStdString();
-        }   
+        }
         // If the option was not set or if it was set to an empty string
         // use default date folder
 
@@ -455,8 +460,10 @@ namespace Ra
         timerData.frameEnd = Core::Timer::Clock::now();
         timerData.numFrame = m_frameCounter;
 
-        if (m_recordTimings) { timerData.print(std::cout); }
-
+        if (m_recordTimings)
+        {
+            recordTimings( timerData );
+        }
         m_timerData.push_back( timerData );
 
         if (m_recordFrames)
@@ -502,6 +509,14 @@ namespace Ra
     void BaseApplication::setRecordMeshes(bool on)
     {
         m_recordMeshes = on;
+    }
+
+    void BaseApplication::recordTimings( const FrameTimerData& data )
+    {
+        std::string filename;
+        Ra::Core::StringUtils::stringPrintf(filename, "%s/radiumtimings_%06u.txt", m_exportFolderName.c_str(), m_frameCounter);
+        std::ofstream file(filename);
+        data.print(file);
     }
 
     void BaseApplication::recordFrame()
