@@ -2,6 +2,7 @@
 
 import fileinput
 import numpy as np
+import operator
 
 dict={}
 
@@ -14,6 +15,7 @@ for line in fileinput.input():
         name = "frame"
     else:
         name = spl[0].split('(')[0]
+        name = name.strip()
 
     if "{" in spl[0] or "}" in spl[0] or spl[0] == "\n":
         continue
@@ -25,12 +27,20 @@ for line in fileinput.input():
     if name=="frame":
         dict[name].append(int(arr[1]))
     else:
-        dict[name].append( int(arr[2]))
+        dict[name].append( int(arr[-1]))
 
 
+averages=[]
 for x in dict:
-    print x
-    print np.mean(dict[x])
+    averages.append( (x, np.mean(dict[x])))
+
+averages.sort(key=operator.itemgetter(1))
+averages.reverse()
+for a in averages:
+    print a
+
+
+
 
 
 
