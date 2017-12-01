@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+ROOTDIR="/export/home/warhol/vroussel/code/git-clean/Radium-Engine"
 WORKDIR="/export/home/warhol/vroussel/code/git-clean/Radium-Engine/Bundle-GNU/RelWithDebInfo/bin"
 SCRIPTDIR="`date +%Y%m%d-%H%M`"
 
@@ -77,8 +78,7 @@ function run_scene_timings()
     -c $infolder/$camfile \
     --anatfile $infolder/$anatfile \
     --kffile $infolder/$kffile \
-    --phyfile $infolder/$phyfile \
-    --runanat >& "$outfolder/off/log.txt"
+    --phyfile $infolder/$phyfile  >& "$outfolder/off/log.txt"
 }
 
 
@@ -121,8 +121,6 @@ cd $WORKDIR
 
 mkdir -p $SCRIPTDIR
 
-# run_scene_timings "/home/vroussel/Downloads/GEOM/arm_biceps_curl" "$SCRIPTDIR/timings" "scenefile"
-
 echo "Running scene 0 (parameters presentation)"
 run_scene "00" "/home/vroussel/Downloads/GEOM/arm_nomove" "scene00"
 run_scene "01" "/home/vroussel/Downloads/GEOM/arm_nomove" "scene01"
@@ -142,6 +140,13 @@ do
 done
 ffmpeg -f concat -safe 0 -i list.txt -c copy fullvideo.mp4
 mv fullvideo.mp4 $SCRIPTDIR
+
+echo "Running timings on scene 2"
+run_scene_timings "/home/vroussel/Downloads/GEOM/arm_biceps_curl" "$SCRIPTDIR/timings" "scenefile"
+# do not cat the first frame because the setup task screw up the stats
+find "$SCRIPTDIR/timings/on"  | grep radiumtimings | grep -v 000000 | xargs cat | $ROOTDIR/parse_results.py >$SCRIPTDIR/timings_on.txt
+find "$SCRIPTDIR/timings/off" | grep radiumtimings | grep -v 000000 | xargs cat  |$ROOTDIR/parse_results.py >$SCRIPTDIR/timings_off.txt
+
 
 echo "Copying"
 cp -a $SCRIPTDIR /mnt/STORM/wip/muscle-skinning/videos/source_files/
