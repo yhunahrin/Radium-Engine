@@ -50,6 +50,7 @@ bool g_is_trans = false ;
 bool g_show_subdiv = false ;
 bool g_anim_autoplay = false;
 bool g_force_IS = false;
+bool g_export_meshes = false;
 
 
 Scalar g_animation_speed = 1.f;
@@ -75,6 +76,7 @@ const uint * g_frame_num_ptr;
 std::string g_anat_file = "";
 std::string g_phys_file = "";
 std::string g_kf_file = "";
+std::string g_export_folder="";
 
 bool g_debug_physics;
 namespace Ra
@@ -159,7 +161,7 @@ namespace Ra
         if (parser.isSet(subdivOpt))    g_show_subdiv   = true;
         if (parser.isSet(autoplayOpt))  g_anim_autoplay = true;
         if (parser.isSet(animSpeedOpt))  g_animation_speed = parser.value(animSpeedOpt).toDouble();
-        if (parser.isSet(saveMeshes))   m_recordMeshes  = true;
+        if (parser.isSet(saveMeshes))   m_recordMeshes  = g_export_meshes = true;
         if (parser.isSet(saveFrames))   m_recordFrames  = true;
 
         if (parser.isSet(anatFile)) g_anat_file = parser.value(anatFile).toStdString();
@@ -186,6 +188,7 @@ namespace Ra
                                             startTm->tm_min);
 
         }
+        g_export_folder = m_exportFolderName;
         QDir().mkdir(m_exportFolderName.c_str());
 
         // Boilerplate print.
