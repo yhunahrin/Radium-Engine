@@ -39,7 +39,7 @@ namespace Ra
             inline bool containsEdge( const Triangle& t1, uint v1, uint v2);
 
             /// Automatically compute normals for each vertex by averaging connected triangle normals.
-            RA_CORE_API void getAutoNormals( TriangleMesh& mesh, VectorArray<Vector3>& normalsOut );
+            RA_CORE_API void getAutoNormals(const TriangleMesh &mesh, VectorArray<Vector3>& normalsOut );
 
             /// Finds the duplicate vertices in a mesh, returning an array indicating for each vertex where to find the
             /// first occurrence.
@@ -59,6 +59,9 @@ namespace Ra
 
             /// Return the mean edge length of the given triangle mesh
             RA_CORE_API Scalar getMeanEdgeLength( const TriangleMesh& mesh );
+
+            /// Apply a transform to all vertices
+            RA_CORE_API void bakeTransform( TriangleMesh& mesh, const Transform& T);
 
             //
             // Checks

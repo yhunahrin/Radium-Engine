@@ -14,7 +14,7 @@ namespace Ra
     {
         namespace MeshUtils
         {
-            void getAutoNormals( TriangleMesh& mesh, VectorArray<Vector3>& normalsOut )
+            void getAutoNormals( const TriangleMesh& mesh, VectorArray<Vector3>& normalsOut )
             {
                 const uint numVertices = mesh.m_vertices.size();
                 const uint numTriangles = mesh.m_triangles.size();
@@ -178,7 +178,7 @@ namespace Ra
                     const Triangle& tri = mesh.m_triangles[t];
                     for ( uint i = 0; i < 3; ++i )
                     {
-                        CORE_ASSERT( uint( tri[i] ) < mesh.m_vertices.size(), 
+                        CORE_ASSERT( uint( tri[i] ) < mesh.m_vertices.size(),
                             "Vertex "<< tri[i] <<" is in triangle "<< t <<" (#"<< i <<") is out of bounds");
                         visited[tri[i]] = true;
                     }
@@ -194,6 +194,18 @@ namespace Ra
                 CORE_ASSERT( mesh.m_normals.size() ==  0 || mesh.m_normals.size() == mesh.m_vertices.size(),
                              "Inconsistent number of normals" );
 #endif
+            }
+
+            void bakeTransform(TriangleMesh &mesh, const Transform &T)
+            {
+                for (auto& v : mesh.m_vertices)
+                {
+                    v = T*v;
+                }
+                for (auto& n : mesh.m_normals)
+                {
+                    n = T.rotation() * n;
+                }
             }
 
 

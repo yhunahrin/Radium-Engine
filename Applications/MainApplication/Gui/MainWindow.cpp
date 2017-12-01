@@ -493,6 +493,7 @@ namespace Ra
 
         Ra::Core::OBJFileManager obj;
         Ra::Core::TriangleMesh mesh = ro->getMesh()->getGeometry();
+        Ra::Core::MeshUtils::bakeTransform(mesh, ro->getLocalTransform());
 
         std::string filename;
         const uint fcount = mainApp->getFrameCount();
