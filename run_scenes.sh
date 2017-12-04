@@ -24,6 +24,8 @@ function run_scene_exportmesh()
     --kffile $infolder/$kffile \
     --phyfile $infolder/$phyfile \
     --subdiv --showanat --savemeshes --runanat >& $outfolder/log.txt
+
+    cp $infolder/$camfile $outfolder/camera.cam
 }
 
 
@@ -133,6 +135,7 @@ echo "Running scene 2 (biceps curl)"
 run_scene 2 "/home/vroussel/Downloads/GEOM/arm_biceps_curl" "scenefile"
 
 rm -f list.txt
+touch list.txt
 echo "Making full video"
 find $SCRIPTDIR | grep mp4 | sort | while read file
 do
