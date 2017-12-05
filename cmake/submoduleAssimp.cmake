@@ -10,6 +10,7 @@ if( APPLE )
 elseif ( UNIX )
     set( ASSIMP_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/lib${ASSIMPLIBNAME}.so" )
 elseif (MINGW)
+    set( ASSIMP_DLL "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/bin/lib${ASSIMPLIBNAME}.dll" )
     set( ASSIMP_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/lib${ASSIMPLIBNAME}.dll.a" )
 elseif( MSVC )
     # in order to prevent DLL hell, each of the DLLs have to be suffixed with the major version and msvc prefix
@@ -55,6 +56,8 @@ ExternalProject_Add(
         # set the installatin to installed/assimp
         INSTALL_DIR "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}"
         BUILD_BYPRODUCTS "${ASSIMP_LIBRARIES}"
+        CMAKE_GENERATOR ${CMAKE_GENERATOR}
+        CMAKE_GENERATOR_TOOLSET ${CMAKE_GENERATOR_TOOLSET}
         CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
             -DASSIMP_BUILD_ASSIMP_TOOLS=False
@@ -88,4 +91,13 @@ if( MSVC )
 		DEPENDS assimp_prerename_compiled_lib_and_dll
 	)
 	add_dependencies(assimp_lib assimp_install_compiled_dll )
+endif()
+
+if( MINGW )
+    add_custom_target( assimp_install_compiled_dll
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ASSIMP_DLL} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+            COMMENT "copy assimp dll to bin dir" VERBATIM
+            DEPENDS assimp
+    )
+    add_dependencies(assimp_lib assimp_install_compiled_dll)
 endif()

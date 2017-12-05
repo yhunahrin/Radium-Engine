@@ -5,9 +5,11 @@ See [this presentation](https://docs.google.com/presentation/d/12W2KXY7ctJXFIelm
 for an overview of the project.
 
 ## Dependencies
-* Eigen 3.3 (as submodule )
+* Eigen 3.3 (as submodule in repository)
 * Assimp 3.2 (as submodule in repository)
 * glbinding (as submodule in repository)
+* globjects (as submodule in repository)
+* glm (as submodule in repository)
 * OpenGL 3+ / GLSL 330+
 * Qt Core, Qt Widgets and Qt OpenGL v5.4+
 * stb_image (in repository)
@@ -17,14 +19,14 @@ for an overview of the project.
 
 The following platforms and tool chains have been tested and should work :
 
-* *Windows* : MSVC 2017 with cmake support, MinGW-32 4.9.2 or higher (with Qt Creator).
+* *Windows* : RECOMMENDED: MinGW-32 4.9.2 or higher (with Qt Creator), MSVC 2017 with cmake might also be supported.
 * *Mac OSX* : gcc 5 or higher, Apple clang
 * *Linux* : gcc 5 or higher, clang
 
 ## Build instructions
 
 ### Getting submodules
-Eigen, Assimp, glbinding are submodules : you can get them by running these two commands
+Eigen, Assimp, glbinding, globjects, glm are submodules : you can get them by running these two commands
 ```bash
 $ git submodule init
 $ git submodule update
@@ -52,8 +54,8 @@ Plugins are generated in `bin/Plugins`.
 ### Configure build
 
 Radium offers two build options which are off by default :
-* `USE_DOUBLE` sets the floating point format to double-precision instead of single precisition
-* `USE_OMP` instructs the compiler to use OpenMP
+* `RADIUM_WITH_DOUBLE_PRECISION` sets the floating point format to double-precision instead of single precisition
+* `RADIUM_WITH_OMP` instructs the compiler to use OpenMP
 
 ###  Building on Linux/MacOS (command line instruction)
 
@@ -84,7 +86,7 @@ See general instruction on cmake for Visual Studio here: https://blogs.msdn.micr
 If using earlier versions of Qt (5.4 or 5.5)  or a different toolset you may have to compile Qt yourself.
 You will probaby have to manually point cmake to the Qt folder (see Troubleshooting below)
 
-Other dependencies (Eigen, Assimp and glbinding) are included as a submodule in the git repository.
+Other dependencies (Eigen, Assimp, glbinding, globjects and glm) are included as a submodule in the git repository.
 
 #### Getting started with Visual Studio
 
@@ -97,17 +99,28 @@ To fix them, you need to edit the VS-specific file `CMakeSettings.json`, via *CM
 For instance, it usually requires to set cmake build types manually, and to give path to Qt libraries.
 To fix it, edit `CMakeSettings.json`, such that
 ```json
-      {
-        ...
-        "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:/Qt/5.7/winrt_x64_msvc2015 -DCMAKE_BUILD_TYPE=Debug",
-        ...
-      },
-      {
-        "name": "x64-Release",
-        ...
-        "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:/Qt/5.7/winrt_x64_msvc2015 -DCMAKE_BUILD_TYPE=Release",
-        ...
-      }
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:/Qt-5.10/5.10.0/msvc2017_64 -DCMAKE_BUILD_TYPE=Debug",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:/Qt-5.10/5.10.0/msvc2017_64 -DCMAKE_BUILD_TYPE=Release",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
 ```
 *Note*: it is strongly encouraged to use `/` separators in your path, instead of `\\` as previously mentionned. See https://stackoverflow.com/questions/13737370/cmake-error-invalid-escape-sequence-u
 
@@ -138,6 +151,10 @@ $ cmake -DCMAKE_PREFIX_PATH=/opt/Qt/5.x/gcc_64
 On windows, using cmake-gui you can use the "add entry" button, adding `CMAKE_PREFIX_PATH`
 as a string to point to the Qt directory (for example in the default installation :
 `C:/Qt/5.6/msvc2015_64` )
+
+### Crash when starting main application on windows
+This is usally caused by missing dlls.
+With Visual Studio, you may need to copy the Qt dlls to Radium bin folder `Bundle-MSVC\{Release-or-Debug}\bin`.
 
 ## Documentation
 For more documentation about the engine (how to develop a plugin,

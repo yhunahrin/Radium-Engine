@@ -143,6 +143,9 @@ namespace Ra
 
             virtual void closeEvent( QCloseEvent* event ) override;
 
+            /// Update displayed texture according to the current renderer
+            void updateDisplayedTexture();
+
         private slots:
             /// Slot for the "load file" menu.
             void loadFile();
@@ -190,6 +193,9 @@ namespace Ra
 
             /// Widget to allow material edition.
             MaterialEditor* m_materialEditor;
+
+            /// viewer widget
+            Ra::Gui::Viewer *m_viewer;
         };
 
     } // namespace Gui

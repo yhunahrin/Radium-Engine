@@ -17,6 +17,7 @@ if( APPLE )
 elseif ( UNIX )
     set( GLBINDING_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/lib${GLBINDINGLIBNAME}.so")
 elseif (MINGW)
+    set(GLBINDING_DLL            "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib${GLBINDINGLIBNAME}.dll")
     set( GLBINDING_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/lib${GLBINDINGLIBNAME}.dll.a" )
 elseif( MSVC )
     # in order to prevent DLL hell, each of the DLLs have to be suffixed with the major version and msvc prefix
@@ -37,7 +38,7 @@ elseif( MSVC )
     endif()
 
     set(GLBINDING_DLL "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/${GLBINDINGLIBNAME}.dll")
-	set(GLBINDING_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/${GLBINDINGLIBNAME}.lib")
+    set(GLBINDING_LIBRARIES "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/lib/${GLBINDINGLIBNAME}.lib")
 endif()
 
 
@@ -55,6 +56,8 @@ ExternalProject_Add(
     # INSTALL_COMMAND cmake -E echo "Skipping install step."
     INSTALL_DIR "${RADIUM_SUBMODULES_INSTALL_DIRECTORY}"
     BUILD_BYPRODUCTS "${GLBINDING_LIBRARIES}"
+    CMAKE_GENERATOR ${CMAKE_GENERATOR}
+    CMAKE_GENERATOR_TOOLSET ${CMAKE_GENERATOR_TOOLSET}
     CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${RADIUM_SUBMODULES_INSTALL_DIRECTORY}/bin" # mandatory for dlls with MVSC
@@ -76,10 +79,10 @@ add_custom_target(glbinding_lib
     DEPENDS glbinding
     )
 # ----------------------------------------------------------------------------------------------------------------------
-if( MSVC )
+if( MSVC OR MINGW )
 
 	add_custom_target( glbinding_install_compiled_dll
-		COMMAND ${CMAKE_COMMAND} -E copy ${GLBINDING_DLL} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GLBINDING_DLL} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 		COMMENT "copy glbinding dll to bin dir" VERBATIM
 		DEPENDS glbinding
 	)

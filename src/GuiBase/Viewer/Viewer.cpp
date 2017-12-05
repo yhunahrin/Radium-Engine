@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+#include <QOpenGLContext>
+
 #include <QTimer>
 #include <QMouseEvent>
 #include <QPainter>
@@ -42,28 +44,25 @@
 
 namespace Ra
 {
-    Gui::Viewer::Viewer( QWidget* parent )
-        : QOpenGLWidget( parent )
+    Gui::Viewer::Viewer( QScreen * screen )
+        : QWindow(screen)
+        , m_context(nullptr)
         , m_currentRenderer( nullptr )
         , m_featurePickingManager( nullptr )
-        , m_gizmoManager(new GizmoManager(this))
+        , m_camera( nullptr )
+        , m_gizmoManager( new GizmoManager(this) )
         , m_renderThread( nullptr )
         , m_glInitStatus( false )
-        , m_hdpiScale( 1 )
     {
-        // Allow Viewer to receive events
-        setFocusPolicy( Qt::StrongFocus );
-
         setMinimumSize( QSize( 800, 600 ) );
 
-        m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
+        setSurfaceType(OpenGLSurface);
         m_featurePickingManager = new FeaturePickingManager();
-
-        m_hdpiScale = devicePixelRatio();
-        /// Intercept events to properly lock the renderer when it is compositing.
     }
 
-    Gui::Viewer::~Viewer(){}
+    Gui::Viewer::~Viewer(){
+        delete m_gizmoManager;
+    }
 
 
     int Gui::Viewer::addRenderer(std::shared_ptr<Engine::Renderer> e){
@@ -78,23 +77,44 @@ namespace Ra
         return m_renderers.size()-1;
     }
 
+
+    void Gui::Viewer::enableDebug()
+    {
+        glbinding::setCallbackMask(glbinding::CallbackMask::After | glbinding::CallbackMask::ParametersAndReturnValue);
+        glbinding::setAfterCallback([](const glbinding::FunctionCall & call)
+                                    {
+                                        std::cerr << call.function->name() << "(";
+                                        for (unsigned i = 0; i < call.parameters.size(); ++i)
+                                        {
+                                            std::cerr << call.parameters[i]->asString();
+                                            if (i < call.parameters.size() - 1)
+                                                std::cerr << ", ";
+                                        }
+                                        std::cerr << ")";
+
+                                        if (call.returnValue)
+                                            std::cerr << " -> " << call.returnValue->asString();
+
+                                        std::cerr << std::endl;
+
+                                    });
+    }
+
     void Gui::Viewer::initializeGL()
     {
-        //no need to initalize glbinding. globjects (magically) do this internally.
-        globjects::init(globjects::Shader::IncludeImplementation::Fallback);
-        
-        LOG( logINFO ) << "*** Radium Engine Viewer ***";
-        LOG( logINFO ) << "Renderer (glbinding) : " << glbinding::ContextInfo::renderer();
-        LOG( logINFO ) << "Vendor   (glbinding) : " << glbinding::ContextInfo::vendor();
-        LOG( logINFO ) << "OpenGL   (glbinding) : " << glbinding::ContextInfo::version().toString();
-        LOG( logINFO ) << "GLSL                 : " << gl::glGetString(gl::GLenum(GL_SHADING_LANGUAGE_VERSION));
+//        LOG( logDEBUG ) << "Gui::Viewer::initializeGL : "  << width() << 'x' << height() << std::endl;
+        // verify if context is created ?
+        m_context->makeCurrent(this);
 
+        m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
+
+        LOG( logINFO ) << "*** Radium Engine Viewer ***";
         Engine::ShaderProgramManager::createInstance("Shaders/Default.vert.glsl",
                                                      "Shaders/Default.frag.glsl");
 
         auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
         m_camera->attachLight( light );
-            
+
         m_glInitStatus = true;
         emit glInitialized();
 
@@ -108,6 +128,7 @@ namespace Ra
         m_currentRenderer = m_renderers[0].get();
 
         emit rendererReady();
+        m_context->doneCurrent();
     }
 
     Gui::CameraInterface* Gui::Viewer::getCameraInterface()
@@ -168,13 +189,33 @@ namespace Ra
             renderer->addLight( m_camera->getLight() );
     }
 
-    void Gui::Viewer::resizeGL( int width, int height )
+    void Gui::Viewer::resizeGL( int width_, int height_ )
     {
-        // WARNING (Mathias) : on hdpi screens, this implies very big framebuffers
-        m_hdpiScale = devicePixelRatio();
         // Renderer should have been locked by previous events.
-        m_camera->resizeViewport( width*m_hdpiScale, height*m_hdpiScale );
-        m_currentRenderer->resize( width*m_hdpiScale, height*m_hdpiScale );
+        m_context->makeCurrent(this);
+
+        // FIXME (Mathias) : try to understand the reasons of so different functionalities and how is managed the vieport size on MAcOs
+        // On MacOs, no need to define the initial viewport, as written in the glviewport documentation :
+        // "When a GL context is first attached to a window, width and height are set to the dimensions of that window.
+        // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml
+        // INFORMATION FOR MACOS WITH RETINA : on retina screens, the (QWindow) window report a size of wxh and the
+        // initial viewport of size of 2wx2h.
+        // It seems that this is not the case on Linux, where the (QWindow) window report a size of wxh and the
+        // initial viewport of size of 100x100. (at least on my Nvidia OpenGL 4.4 drivers)
+        // So we set here the initial viewport to the size of the window.
+        // Surprisingly, on MacOs, the wiewport follow the size of the window (I presume, as a consequence
+        // of the activation of the context by m_context->makeCurrent(this);). Not on Linux ... is it a Qt bunctionnality ?
+
+//        int qtViewport[4];
+//        glGetIntegerv(GL_VIEWPORT, qtViewport);
+//        LOG( logDEBUG ) << "Qt Viewport (Viewer/Qwindow): " << qtViewport[0] << '-' << qtViewport[1] << '+' << qtViewport[2] << '-' << qtViewport[3];
+
+#ifndef OS_MACOS
+        gl::glViewport(0, 0, width(), height());
+#endif
+        m_camera->resizeViewport( width_, height_ );
+        m_currentRenderer->resize( width_, height_ );
+        m_context->doneCurrent();
     }
 
     Engine::Renderer::PickingMode getPickingMode()
@@ -200,7 +241,7 @@ namespace Ra
         if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
         {
             // Check picking
-            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
+            Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x(), (height() - event->y())),
                                                       Core::MouseButton::RA_MOUSE_RIGHT_BUTTON,
                                                       getPickingMode() };
             m_currentRenderer->addPickingRequest(query);
@@ -209,13 +250,18 @@ namespace Ra
 
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
     {
+        if(! m_glInitStatus) {
+            event->ignore();
+            return;
+        }
+
         auto keyMap = Gui::KeyMappingManager::getInstance();
         if( keyMap->actionTriggered( event, Gui::KeyMappingManager::VIEWER_BUTTON_MANIP_PICKING_QUERY ) )
         {
             if ( isKeyPressed( keyMap->getKeyFromAction(Gui::KeyMappingManager::VIEWER_RAYCAST_QUERY ) ) )
             {
                 LOG( logINFO ) << "Raycast query launched";
-                Core::Ray r = m_camera->getCamera()->getRayFromScreen(Core::Vector2(event->x()*m_hdpiScale, event->y()*m_hdpiScale));
+                Core::Ray r = m_camera->getCamera()->getRayFromScreen(Core::Vector2(event->x(), event->y()));
                 RA_DISPLAY_POINT(r.origin(), Core::Colors::Cyan(), 0.1f);
                 RA_DISPLAY_RAY(r, Core::Colors::Yellow());
                 auto ents = Engine::RadiumEngine::getInstance()->getEntityManager()->getEntities();
@@ -226,10 +272,10 @@ namespace Ra
             }
             else
             {
-                m_currentRenderer->addPickingRequest({ Core::Vector2(event->x()*m_hdpiScale, (height() - event->y())*m_hdpiScale),
+                m_currentRenderer->addPickingRequest({ Core::Vector2(event->x(), height() - event->y()),
                                                        Core::MouseButton::RA_MOUSE_LEFT_BUTTON,
                                                        Engine::Renderer::RO });
-                m_gizmoManager->handleMousePressEvent(event, m_hdpiScale);
+                m_gizmoManager->handleMousePressEvent(event);
             }
         }
         else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::TRACKBALLCAMERA_MANIPULATION ) )
@@ -246,22 +292,35 @@ namespace Ra
 
     void Gui::Viewer::mouseMoveEvent( QMouseEvent* event )
     {
-        m_camera->handleMouseMoveEvent( event );
-        m_gizmoManager->handleMouseMoveEvent(event, m_hdpiScale);
+        if(m_glInitStatus)
+        {
+            m_camera->handleMouseMoveEvent( event );
+            m_gizmoManager->handleMouseMoveEvent(event);
+        }
+        else
+            event->ignore();
     }
 
     void Gui::Viewer::wheelEvent( QWheelEvent* event )
     {
-        m_camera->handleWheelEvent(event);
-        QOpenGLWidget::wheelEvent( event );
+        if(m_glInitStatus)
+            m_camera->handleWheelEvent(event);
+        else
+            event->ignore();
     }
 
     void Gui::Viewer::keyPressEvent( QKeyEvent* event )
     {
-        keyPressed(event->key());
-        m_camera->handleKeyPressEvent( event );
+        if(m_glInitStatus)
+        {
+            keyPressed(event->key());
+            m_camera->handleKeyPressEvent( event );
+        }
+        else
+            event->ignore();
 
-        QOpenGLWidget::keyPressEvent(event);
+        // Do we need this ?
+        //QWindow::keyPressEvent(event);
     }
 
     void Gui::Viewer::keyReleaseEvent( QKeyEvent* event )
@@ -274,16 +333,57 @@ namespace Ra
             m_currentRenderer->toggleWireframe();
         }
 
-        QOpenGLWidget::keyReleaseEvent(event);
+        // Do we need this ?
+        //QWindow::keyReleaseEvent(event);
+    }
+
+    void Gui::Viewer::resizeEvent(QResizeEvent *event)
+    {
+ //       LOG( logDEBUG ) << "Gui::Viewer --> Got resize event : "  << width() << 'x' << height();
+
+        if(!m_glInitStatus)
+            initializeGL();
+
+        if (!m_currentRenderer || !m_camera)
+            return;
+
+        resizeGL(event->size().width(), event->size().height());
+    }
+
+    void Gui::Viewer::showEvent(QShowEvent *ev)
+    {
+ //       LOG( logDEBUG ) << "Gui::Viewer --> Got show event : " << width() << 'x' << height();
+        if(!m_context) {
+            m_context.reset(new QOpenGLContext());
+            m_context->create();
+            m_context->makeCurrent(this);
+            // no need to initalize glbinding. globjects (magically) do this internally.
+            globjects::init(globjects::Shader::IncludeImplementation::Fallback);
+
+            LOG( logINFO ) << "*** Radium Engine OpenGL context ***";
+            LOG( logINFO ) << "Renderer (glbinding) : " << glbinding::ContextInfo::renderer();
+            LOG( logINFO ) << "Vendor   (glbinding) : " << glbinding::ContextInfo::vendor();
+            LOG( logINFO ) << "OpenGL   (glbinding) : " << glbinding::ContextInfo::version().toString();
+            LOG( logINFO ) << "GLSL                 : " << gl::glGetString(gl::GLenum(GL_SHADING_LANGUAGE_VERSION));
+
+            m_context->doneCurrent();
+        }
+    }
+
+    void Gui::Viewer::exposeEvent(QExposeEvent *ev)
+    {
+ //       LOG( logDEBUG ) << "Gui::Viewer --> Got exposed event : " << width() << 'x' << height();
     }
 
     void Gui::Viewer::reloadShaders()
     {
         // FIXME : check thread-saefty of this.
         m_currentRenderer->lockRendering();
-        makeCurrent();
+
+        m_context->makeCurrent(this);
         m_currentRenderer->reloadShaders();
-        doneCurrent();
+        m_context->doneCurrent();
+
         m_currentRenderer->unlockRendering();
     }
 
@@ -299,7 +399,7 @@ namespace Ra
         if (m_renderers[index]) {
             if(m_currentRenderer != nullptr) m_currentRenderer->lockRendering();
             m_currentRenderer = m_renderers[index].get();
-            m_currentRenderer->resize( width()*m_hdpiScale, height()*m_hdpiScale );
+            m_currentRenderer->resize( width(), height() );
             m_currentRenderer->unlockRendering();
         }
     }
@@ -308,7 +408,7 @@ namespace Ra
 
     void Gui::Viewer::startRendering( const Scalar dt )
     {
-        makeCurrent();
+        m_context->makeCurrent(this);
 
         // Move camera if needed. Disabled for now as it takes too long (see issue #69)
         //m_camera->update( dt );
@@ -323,6 +423,10 @@ namespace Ra
 
     void Gui::Viewer::waitForRendering()
     {
+        if (isExposed())
+            m_context->swapBuffers(this);
+
+        m_context->doneCurrent();
     }
 
     void Gui::Viewer::handleFileLoading( const std::string& file )
@@ -349,7 +453,7 @@ namespace Ra
     void Gui::Viewer::processPicking()
     {
         CORE_ASSERT( m_currentRenderer->getPickingQueries().size() == m_currentRenderer->getPickingResults().size(),
-                     "There should be one result per query." );
+                    "There should be one result per query." );
 
         for (uint i = 0 ; i < m_currentRenderer->getPickingQueries().size(); ++i)
         {
@@ -361,7 +465,7 @@ namespace Ra
             else if (query.m_button == Core::MouseButton::RA_MOUSE_RIGHT_BUTTON)
             {
                 const int roIdx = m_currentRenderer->getPickingResults()[i];
-                const Core::Ray ray = m_camera->getCamera()->getRayFromScreen({query.m_screenCoords(0), height()*m_hdpiScale-query.m_screenCoords(1)});
+                const Core::Ray ray = m_camera->getCamera()->getRayFromScreen({query.m_screenCoords(0), height()-query.m_screenCoords(1)});
                 // FIXME: this is safe as soon as there is no "queued connection" related to the signal
                 m_featurePickingManager->doPicking(roIdx, query, ray);
                 emit rightClickPicking(roIdx);
@@ -408,7 +512,7 @@ namespace Ra
 
     void Gui::Viewer::grabFrame( const std::string& filename )
     {
-        makeCurrent();
+        m_context->makeCurrent(this);
 
         uint w, h;
         uchar* writtenPixels = m_currentRenderer->grabFrame(w, h);
@@ -428,6 +532,7 @@ namespace Ra
             LOG(logWARNING) << "Cannot write frame to "<<filename<<" : unsupported extension";
         }
 
+        m_context->doneCurrent();
 
         delete[] writtenPixels;
 
@@ -445,7 +550,7 @@ namespace Ra
 
     void Gui::Viewer::resetCamera()
     {
-        m_camera.reset( new Gui::TrackballCamera( width()*m_hdpiScale, height()*m_hdpiScale ) );
+        m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
     }
 
 } // namespace Ra

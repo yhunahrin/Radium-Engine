@@ -162,6 +162,10 @@ namespace Ra
         format.setSwapInterval( 0 );
         QSurfaceFormat::setDefaultFormat( format );
 
+        // Create the instance of the keymapping manager, before creating
+        // Qt main windows, which may throw events on Microsoft Windows
+        Gui::KeyMappingManager::createInstance();
+
         // Create engine
         m_engine.reset(Engine::RadiumEngine::createInstance());
         m_engine->initialize();
@@ -184,7 +188,8 @@ namespace Ra
 
         m_viewer = m_mainWindow->getViewer();
         CORE_ASSERT( m_viewer != nullptr, "GUI was not initialized" );
-        CORE_ASSERT( m_viewer->context()->isValid(), "OpenGL was not initialized" );
+        CORE_ASSERT( m_viewer->getContext() != nullptr, "OpenGL context was not created" );
+        CORE_ASSERT( m_viewer->getContext()->isValid(), "OpenGL was not initialized" );
 
         // Allow all events to be processed (thus the viewer should have
         // initialized the OpenGL context..)
@@ -204,9 +209,6 @@ namespace Ra
             numThreads = m_maxThreads;
         }
         m_taskQueue.reset( new Core::TaskQueue(numThreads) );
-
-        // Create the instance of the keymapping manager (should it be done here ?)
-        Gui::KeyMappingManager::createInstance();
 
         createConnections();
 
@@ -261,7 +263,7 @@ namespace Ra
 
         if ( !res )
         {
-            LOG ( logERROR ) << "Aborting file loading !";
+           LOG ( logERROR ) << "Aborting file loading !";
 
             return;
         }
@@ -342,11 +344,9 @@ namespace Ra
         // Get picking results from last frame and forward it to the selection.
         m_viewer->processPicking();
 
-
         // ----------
         // 2. Kickoff rendering
         m_viewer->startRendering( dt );
-
 
         timerData.tasksStart = Core::Timer::Clock::now();
 
@@ -367,7 +367,6 @@ namespace Ra
         // ----------
         // 4. Wait until frame is fully rendered and display.
         m_viewer->waitForRendering();
-        m_viewer->update();
 
         timerData.renderData = m_viewer->getRenderer()->getTimerData();
 

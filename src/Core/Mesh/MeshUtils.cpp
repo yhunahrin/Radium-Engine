@@ -1,9 +1,12 @@
 #include <Core/Mesh/MeshUtils.hpp>
 
-#include <utility>
-#include <set>
-#include <map>
 
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+
+#include <Core/Log/Log.hpp>
 #include <Core/Math/Math.hpp>
 #include <Core/Math/RayCast.hpp>
 #include <Core/String/StringUtils.hpp>
@@ -46,19 +49,45 @@ namespace Ra
 
                 VectorArray<Vector3>::const_iterator vertPos;
                 VectorArray<Vector3>::const_iterator duplicatePos;
+                std::vector<std::pair<Vector3, VertexIdx>> vertices;
+
                 for ( uint i = 0; i < numVerts; ++i )
                 {
-                    // We look if we have previously seen the same vertex before in the array.
-                    const Vector3& vertex = mesh.m_vertices[i];
-                    vertPos = mesh.m_vertices.cbegin() + i;
-                    duplicatePos = std::find( mesh.m_vertices.cbegin(), vertPos, vertex );
-
-                    // The number in duplicates_map will be 'i' if no duplicates are found
-                    // up to v_i, or the index of the first vertex equal to v_i.
-                    duplicatesMap[i] = ( duplicatePos - mesh.m_vertices.cbegin() );
-                    CORE_ASSERT( duplicatesMap[i] <= i, " Invalid vertex indices" );
-                    hasDuplicates = ( hasDuplicates || duplicatesMap[i] != i );
+                    vertices.push_back(std::make_pair(mesh.m_vertices[i], VertexIdx(i)));
                 }
+
+                std::sort(vertices.begin(), vertices.end(),
+                          [](std::pair<Vector3, int>a , std::pair<Vector3, int>b){
+                              if(a.first.x() == b.first.x())
+                              {
+                                  if(a.first.y() == b.first.y())
+                                      if(a.first.z() == b.first.z())
+                                          return a.second < b.second;
+                                      else
+                                          return a.first.z() < b.first.z();
+                                  else
+                                      return a.first.y() < b.first.y();
+                              }
+                              return a.first.x() < b.first.x();
+                          }
+                    );
+                // Here vertices contains vertex pos and idx, with equal
+                // vertices contiguous, sorted by idx, so checking if current
+                // vertex equals the previous one state if its a duplicated
+                // vertex position.
+                duplicatesMap[vertices[0].second] = vertices[0].second;
+                for ( uint i = 1; i < numVerts; ++i )
+                {
+                    if(vertices[i].first == vertices[i-1].first)
+                    {
+                        duplicatesMap[vertices[i].second] = duplicatesMap[vertices[i-1].second];
+                        hasDuplicates = true;
+                    }
+                    else{
+                        duplicatesMap[vertices[i].second] = vertices[i].second;
+                    }
+                }
+
                 return hasDuplicates;
             }
 
@@ -74,7 +103,7 @@ namespace Ra
                     if (duplicatesMap[i] == i)
                     {
                         newIndices[i] = uniqueVertices.size();
-                        uniqueVertices.push_back( mesh.m_vertices[i] );
+                        uniqueVertices.push_back(mesh.m_vertices[i]);
 
                     }
                 }
@@ -99,7 +128,7 @@ namespace Ra
 
                 vertexMap.resize(mesh.m_vertices.size());
                 for (uint i = 0; i < mesh.m_vertices.size(); i++)
-                    vertexMap[i] = newIndices[ duplicatesMap[i] ];
+                    vertexMap[i] = newIndices[duplicatesMap[i]];
 
                 mesh.m_vertices = uniqueVertices;
             }

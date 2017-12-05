@@ -7,7 +7,8 @@
 #include <memory>
 #include <Engine/RadiumEngine.hpp>
 
-#include <QOpenGLWidget>
+#include <QWindow>
+
 #include <QThread>
 
 #include <Core/Math/LinearAlgebra.hpp>
@@ -15,6 +16,9 @@
 #include <GuiBase/Utils/FeaturePickingManager.hpp>
 
 // Forward declarations
+class QOpenGLContext;
+class QSurfaceFormat;
+
 namespace Ra
 {
     namespace Core
@@ -50,7 +54,15 @@ namespace Ra
         //                  Can it be done during runtime ? Must it be at startup ? ...
         //                  For now, default ForwardRenderer is used.
 
-        /// The Viewer is the main display class. It's the central screen QWidget.
+        /// The Viewer is the main display class. It could be used as an independant window or
+        /// can be set as a central widget on a more complex gui by using the adapter fro QWindow to QWidget
+        /// To do that, the following code could be used :
+        /// \code{.cpp}
+        ///     m_viewer = new Ra::Gui::Viewer();
+        ///     QWidget * viewerwidget = QWidget::createWindowContainer(m_viewer);
+        ///     setCentralWidget(viewerwidget);
+        /// \endcode
+        /// Whatever its usage (QWindow or QWidget) the Viewer has the same funtionalities.
         /// Its acts as a bridge between the interface, the engine and the renderer
         /// Among its responsibilities are :
         /// * Owning the renderer and camera, and managing their lifetime.
@@ -59,20 +71,24 @@ namespace Ra
         /// * catching user interaction (mouse clicks) at the lowest level and forward it to
         /// the camera and the rest of the application
         /// * Expose the asynchronous rendering interface
-        class RA_GUIBASE_API Viewer : public QOpenGLWidget
+        class RA_GUIBASE_API Viewer : public QWindow
         {
             Q_OBJECT
 
         public:
             /// Constructor
-            explicit Viewer( QWidget* parent = nullptr );
+            explicit Viewer( QScreen * screen = nullptr );
 
             /// Destructor
-            ~Viewer();
+            virtual ~Viewer();
 
             //
             // Accessors
             //
+
+            QOpenGLContext * getContext() const {
+                return m_context.get();
+            }
 
             /// Access to camera interface.
             CameraInterface* getCameraInterface();
@@ -127,6 +143,7 @@ namespace Ra
             /// Write the current frame as an image. Supports either BMP or PNG file names.
             void grabFrame( const std::string& filename );
 
+            void enableDebug();
         signals:
             void glInitialized();               //! Emitted when GL context is ready. We except call to addRenderer here
             void rendererReady();               //! Emitted when the rendered is correctly initialized
@@ -179,38 +196,42 @@ namespace Ra
             void intializeRenderer(Engine::Renderer* renderer);
 
             //
-            // QOpenGlWidget primitives
+            // OpenGL primitives
+            // Not herited, defined here in the same way QOpenGLWidget define them.
             //
 
             /// Initialize openGL. Called on by the first "show" call to the main window.
-            virtual void initializeGL() override;
+            virtual void initializeGL();
 
             /// Resize the view port and the camera. Called by the resize event.
-            virtual void resizeGL( int width, int height ) override;
-
-            /// Paint event is set to a no-op to prevent synchronous rendering.
-            /// We don't implement paintGL as well.
-            virtual void paintEvent( QPaintEvent* e ) override {}
+            virtual void resizeGL( int width, int height );
 
             //
             // Qt input events.
             //
+            void resizeEvent(QResizeEvent * event) override;
 
-            virtual void keyPressEvent( QKeyEvent* event ) override;
-            virtual void keyReleaseEvent( QKeyEvent* event ) override;
+            void keyPressEvent( QKeyEvent* event ) override;
+            void keyReleaseEvent( QKeyEvent* event ) override;
 
             /// We intercept the mouse events in this widget to get the coordinates of the mouse
             /// in screen space.
-            virtual void mouseDoubleClickEvent( QMouseEvent* event ) override;
-            virtual void mousePressEvent( QMouseEvent* event ) override;
-            virtual void mouseReleaseEvent( QMouseEvent* event ) override;
-            virtual void mouseMoveEvent( QMouseEvent* event ) override;
-            virtual void wheelEvent( QWheelEvent* event ) override;
+            void mouseDoubleClickEvent( QMouseEvent* event ) override;
+            void mousePressEvent( QMouseEvent* event ) override;
+            void mouseReleaseEvent( QMouseEvent* event ) override;
+            void mouseMoveEvent( QMouseEvent* event ) override;
+            void wheelEvent( QWheelEvent* event ) override;
+
+            void showEvent(QShowEvent *ev) override;
+            void exposeEvent(QExposeEvent *ev) override;
 
         public:
             Scalar m_dt;
 
         protected:
+            // OpenglContext used with this widget
+            std::unique_ptr<QOpenGLContext> m_context;
+
             /// Owning pointer to the renderers.
             std::vector<std::shared_ptr<Engine::Renderer>> m_renderers;
             Engine::Renderer* m_currentRenderer;
@@ -229,8 +250,6 @@ namespace Ra
 
             /// GL initialization status
             std::atomic_bool m_glInitStatus;
-        private :
-            int m_hdpiScale;
         };
 
     } // namespace Gui
