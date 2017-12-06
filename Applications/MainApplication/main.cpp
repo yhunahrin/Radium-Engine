@@ -6,8 +6,6 @@
 
 int main( int argc, char** argv )
 {
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
     Ra::MainApplication app( argc, argv );
 
     const uint& fpsMax = app.m_targetFPS;
