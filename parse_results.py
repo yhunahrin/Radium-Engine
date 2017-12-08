@@ -40,9 +40,3 @@ for a in averages:
     print a
 
 
-
-
-
-
-
-

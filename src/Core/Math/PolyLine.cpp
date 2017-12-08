@@ -66,6 +66,7 @@ Scalar PolyLine::project( const Vector3& p ) const
     ts.reserve( m_ptsDiff.size());
     ds.reserve( m_ptsDiff.size());
 
+    // Evaluate the projection on each segment and the related distance.
     for ( uint i = 0; i < m_ptsDiff.size(); ++i )
     {
         Scalar proj = DistanceQueries::projectOnSegment( p, m_pts[i], m_ptsDiff[i] );
@@ -80,7 +81,12 @@ Scalar PolyLine::project( const Vector3& p ) const
     }
 
     CORE_ASSERT( segment < m_ptsDiff.size(), "Invalid index" );
+
+    // Our answer would normally be the closest projected point from all segments.
     Scalar t  = ts[segment];
+    // But if any of the next or previous segment also has a
+    // projected point inside the segment, we are in the "inner"
+    // case and thus rescale the projection using cotangent weights.
     if ( t > 0 && t < 1)
     {
         bool prev = segment > 0 && ts[segment - 1] > 0 && ts[segment - 1] < 1;
