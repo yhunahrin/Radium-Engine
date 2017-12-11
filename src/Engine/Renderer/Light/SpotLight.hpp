@@ -6,60 +6,59 @@
 #include <Core/Math/Math.hpp>
 #include <Engine/Renderer/Light/Light.hpp>
 
-namespace Ra
-{
-    namespace Engine
+namespace Ra {
+  namespace Engine {
+
+    class RA_ENGINE_API SpotLight : public Light
     {
-
-        class RA_ENGINE_API SpotLight : public Light
+    public:
+        struct Attenuation
         {
-        public:
-            struct Attenuation
-            {
-                Scalar constant;
-                Scalar linear;
-                Scalar quadratic;
+            Scalar constant;
+            Scalar linear;
+            Scalar quadratic;
 
-                Attenuation() : constant( 1.0 ), linear(), quadratic() {}
-            };
-
-        public:
-            RA_CORE_ALIGNED_NEW
-
-            SpotLight();
-            virtual ~SpotLight();
-
-            virtual void getRenderParameters( RenderParameters& params ) override;
-
-            virtual void setPosition( const Core::Vector3& position ) override;
-            inline const Core::Vector3& getPosition() const;
-
-            virtual void setDirection( const Core::Vector3& direction ) override;
-            inline const Core::Vector3& getDirection() const;
-
-            inline void setInnerAngleInRadians( Scalar angle );
-            inline void setOuterAngleInRadians( Scalar angle );
-            inline void setInnerAngleInDegrees( Scalar angle );
-            inline void setOuterAngleInDegrees( Scalar angle );
-
-            inline Scalar getInnerAngle() const;
-            inline Scalar getOuterAngle() const;
-
-            inline void setAttenuation( const Attenuation& attenuation );
-            inline void setAttenuation( Scalar constant, Scalar linear, Scalar quadratic );
-            inline const Attenuation& getAttenuation() const;
-
-        private:
-            Core::Vector3 m_position;
-            Core::Vector3 m_direction;
-
-            Scalar m_innerAngle;
-            Scalar m_outerAngle;
-
-            Attenuation m_attenuation;
+            Attenuation() : constant(1.0), linear(), quadratic()
+            {}
         };
 
-    } // namespace Engine
+    public:
+        RA_CORE_ALIGNED_NEW
+
+        SpotLight();
+        virtual ~SpotLight();
+
+        void getRenderParameters(RenderParameters &params) override;
+
+        void setPosition(const Core::Vector3 &position) override;
+        inline const Core::Vector3 &getPosition() const;
+
+        void setDirection(const Core::Vector3 &direction) override;
+        inline const Core::Vector3 &getDirection() const;
+
+        inline void setInnerAngleInRadians(Scalar angle);
+        inline void setOuterAngleInRadians(Scalar angle);
+        inline void setInnerAngleInDegrees(Scalar angle);
+        inline void setOuterAngleInDegrees(Scalar angle);
+
+        inline Scalar getInnerAngle() const;
+        inline Scalar getOuterAngle() const;
+
+        inline void setAttenuation(const Attenuation &attenuation);
+        inline void setAttenuation(Scalar constant, Scalar linear, Scalar quadratic);
+        inline const Attenuation &getAttenuation() const;
+
+    private:
+        Core::Vector3 m_position;
+        Core::Vector3 m_direction;
+
+        Scalar m_innerAngle;
+        Scalar m_outerAngle;
+
+        Attenuation m_attenuation;
+    };
+
+  } // namespace Engine
 } // namespace Ra
 
 #include <Engine/Renderer/Light/SpotLight.inl>

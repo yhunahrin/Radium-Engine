@@ -9,10 +9,8 @@
 
 #include <Engine/ItemModel/ItemEntry.hpp>
 
-
-
 namespace Ra {
-namespace Engine {
+  namespace Engine {
     /** This class is used to inform the external world of events happening in the engine.
       * You can register a callback function which will be called any time the event happens.
       * Signals are fired when an object of the engine (entity, component or render object)
@@ -29,29 +27,30 @@ namespace Engine {
 
     public:
         // Callbacks are functions which accept an item entry.
-        typedef std::function<void( const ItemEntry& )> Callback;
-        typedef std::function<void( void )> EoFCallback;
+        typedef std::function<void(const ItemEntry &)> Callback;
+        typedef std::function<void(void)> EoFCallback;
 
     public:
-        SignalManager() : m_isOn( true ) {}
+        SignalManager() : m_isOn(true)
+        {}
 
-        void fireEntityCreated      (const ItemEntry& entity ) const;
-        void fireEntityDestroyed    (const ItemEntry& entity ) const;
+        void fireEntityCreated(const ItemEntry &entity) const;
+        void fireEntityDestroyed(const ItemEntry &entity) const;
 
-        void fireComponentAdded     (const ItemEntry& component ) const;
-        void fireComponentRemoved   (const ItemEntry& component ) const;
+        void fireComponentAdded(const ItemEntry &component) const;
+        void fireComponentRemoved(const ItemEntry &component) const;
 
-        void fireRenderObjectAdded  ( const ItemEntry& ro ) const;
-        void fireRenderObjectRemoved( const ItemEntry& ro ) const;
+        void fireRenderObjectAdded(const ItemEntry &ro) const;
+        void fireRenderObjectRemoved(const ItemEntry &ro) const;
 
         void fireFrameEnded() const;
 
-        void setOn( bool on )  { m_isOn = on; }
+        void setOn(bool on)
+        { m_isOn = on; }
 
     private:
-        void callFunctions( const std::vector<Callback>& funcs, const ItemEntry& arg ) const;
+        void callFunctions(const std::vector<Callback> &funcs, const ItemEntry &arg) const;
         mutable std::mutex m_mutex;
-
 
     public:
         bool m_isOn;
@@ -64,7 +63,8 @@ namespace Engine {
         std::vector<Callback> m_roRemovedCallbacks;
         std::vector<EoFCallback> m_frameEndCallbacks;
     };
-}}
+  }
+}
 
 #endif // RADIUMENGINE_SIGNAL_MANAGER_HPP_
 

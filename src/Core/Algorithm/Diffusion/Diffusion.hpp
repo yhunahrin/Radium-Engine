@@ -9,12 +9,11 @@
 #include <Core/Geometry/Adjacency/Adjacency.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Algorithm {
-
+  namespace Core {
+    namespace Algorithm {
 
 // Defining the vector of scalar values over the vertices
-typedef Sparse ScalarValue;
+      typedef Sparse ScalarValue;
 
 
 
@@ -28,7 +27,10 @@ typedef Sparse ScalarValue;
 * where C_i is the value of the centroid of v_i one-ring.
 */
 /// WARNING: THE IMPLEMENTATION COULD BE WRONG
-ScalarValue diffuseDelta( const Geometry::AdjacencyMatrix& A, const Delta& delta, const Scalar lambda, const uint iteration );
+      ScalarValue diffuseDelta(const Geometry::AdjacencyMatrix &A,
+                               const Delta &delta,
+                               const Scalar lambda,
+                               const uint iteration);
 
 
 
@@ -42,11 +44,14 @@ ScalarValue diffuseDelta( const Geometry::AdjacencyMatrix& A, const Delta& delta
 * where C_i is the value of the centroid of v_i one-ring.
 */
 /// WARNING: THE IMPLEMENTATION COULD BE WRONG
-void diffuseDelta( const Geometry::AdjacencyMatrix& A, const Delta& delta, const Scalar lambda, const uint iteration, ScalarValue& value );
+      void diffuseDelta(const Geometry::AdjacencyMatrix &A,
+                        const Delta &delta,
+                        const Scalar lambda,
+                        const uint iteration,
+                        ScalarValue &value);
 
-
-} // namespace Algorithm
-} // namespace Core
+    } // namespace Algorithm
+  } // namespace Core
 } // namespace Ra
 
 #endif // DIFFUSION_DEFINITION

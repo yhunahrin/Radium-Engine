@@ -4,23 +4,21 @@
 #include <Core/RaCore.hpp>
 #include <Core/Event/EventEnums.hpp>
 
-namespace Ra
-{
-    namespace Core
+namespace Ra {
+  namespace Core {
+
+    struct KeyEvent
     {
+        /// KeyEventType : Press, Release
+        int event;
+        /// Keycode. Test this with Qt::Keys enum values.
+        int key;
 
-        struct KeyEvent
-        {
-            /// KeyEventType : Press, Release
-            int event;
-            /// Keycode. Test this with Qt::Keys enum values.
-            int key;
+        /// Modifier used : Ctrl, Alt, Shift.
+        int modifier;
+    };
 
-            /// Modifier used : Ctrl, Alt, Shift.
-            int modifier;
-        };
-
-    }
+  }
 } // namespace Ra::Core
 
 #endif // RADIUMENGINE_KEYEVENT_HPP

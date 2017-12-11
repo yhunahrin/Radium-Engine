@@ -16,7 +16,8 @@
 
 #include <Engine/Renderer/Mesh/Mesh.hpp>
 
-#include <Engine/Renderer/RenderTechnique/Material.hpp>
+#include <Engine/Renderer/Material/Material.hpp>
+#include <Engine/Renderer/Material/MaterialConverters.hpp>
 #include <Engine/Renderer/RenderObject/RenderObject.hpp>
 #include <Engine/Renderer/RenderObject/RenderObjectTypes.hpp>
 #include <Engine/Renderer/RenderTechnique/RenderTechnique.hpp>
@@ -142,63 +143,27 @@ namespace FancyMeshPlugin
         // FIXME(Charly): Should not weights be part of the geometry ?
         //        mesh->addData( Ra::Engine::Mesh::VERTEX_WEIGHTS, meshData.weights );
 
+        // The technique for rendering this component
         Ra::Engine::RenderTechnique rt;
-        Ra::Engine::ShaderConfiguration shaderConfig;
+
         bool isTransparent { false };
+        const Ra::Asset::MaterialData& loadedMaterial = data->getMaterial();
 
-        const Ra::Asset::MaterialData& assimpMaterial = data->getMaterial();
+        // First extract the material from asset
+        auto converter = Ra::Engine::MaterialConverterSystem::getMaterialConverter(loadedMaterial.getType());
+        auto convertedMaterial = converter.second(&loadedMaterial);
 
-        switch ( assimpMaterial.getType() ) {
-            case Ra::Asset::MaterialData::BLINN_PHONG:
-            {
-                auto mat = Ra::Core::make_shared<Ra::Engine::Material>( matName ) ;
-                const Ra::Asset::MaterialData::BlinnPhongMaterial &m = assimpMaterial.getBlinnPhong();
-                if ( m.hasDiffuse() )   mat->m_kd    = m.m_diffuse;
-                if ( m.hasSpecular() )  mat->m_ks    = m.m_specular;
-                if ( m.hasShininess() ) mat->m_ns    = m.m_shininess;
-                if ( m.hasOpacity() )   mat->m_alpha = m.m_opacity;
-
-#ifdef RADIUM_WITH_TEXTURES
-                if ( m.hasDiffuseTexture() )   mat->addTexture( Ra::Engine::Material::TextureType::TEX_DIFFUSE  , m.m_texDiffuse );
-                if ( m.hasSpecularTexture() )  mat->addTexture( Ra::Engine::Material::TextureType::TEX_SPECULAR , m.m_texSpecular );
-                if ( m.hasShininessTexture() ) mat->addTexture( Ra::Engine::Material::TextureType::TEX_SHININESS, m.m_texShininess );
-                if ( m.hasOpacityTexture() )   mat->addTexture( Ra::Engine::Material::TextureType::TEX_ALPHA    , m.m_texOpacity );
-                if ( m.hasNormalTexture() )    mat->addTexture( Ra::Engine::Material::TextureType::TEX_NORMAL   , m.m_texNormal );
-#endif
-                // Configure the technique to render this object
-                isTransparent = ( mat->m_alpha < 1.0);
-
-                rt.setMaterial(mat);
-
-                // Configure the technique to render this object@
-                // Main pass : BlinnPhong
-                Ra::Engine::ShaderConfiguration lpconfig("BlinnPhong", "Shaders/BlinnPhong.vert.glsl", "Shaders/BlinnPhong.frag.glsl");
-                rt.setShader(lpconfig, Ra::Engine::RenderTechnique::LIGHTING_OPAQUE);
-
-                // Z prepass : DepthAmbiantPass
-                Ra::Engine::ShaderConfiguration dpconfig("DepthAmbiantPass", "Shaders/BlinnPhong.vert.glsl", "Shaders/DepthAmbientPass.frag.glsl");
-                rt.setShader(dpconfig, Ra::Engine::RenderTechnique::Z_PREPASS);
-
-                // If Transparent ... add LitOIT
-                if (isTransparent)
-                {
-                    Ra::Engine::ShaderConfiguration tpconfig("LitOIT", "Shaders/BlinnPhong.vert.glsl", "Shaders/LitOIT.frag.glsl");
-                    rt.setShader(tpconfig, Ra::Engine::RenderTechnique::LIGHTING_TRANSPARENT);
-                }
-
-            }
-                break;
-            case Ra::Asset::MaterialData::DISNEY:
-            case Ra::Asset::MaterialData::MATTE:
-            case Ra::Asset::MaterialData::METAL:
-            case Ra::Asset::MaterialData::MIRROR:
-            case Ra::Asset::MaterialData::PLASTIC:
-            case Ra::Asset::MaterialData::SUBSTRATE:
-            case Ra::Asset::MaterialData::TRANSLUCENT:
-            case Ra::Asset::MaterialData::UNKNOWN:
-                LOG (logERROR) << "FancyMeshComponent only support BlinnPhong Material.";
-
+        // Second, associate the material to the render technique
+        std::shared_ptr<Ra::Engine::Material> radiumMaterial(convertedMaterial);
+        if ( radiumMaterial != nullptr )
+        {
+            isTransparent = radiumMaterial->isTransparent();
         }
+        rt.setMaterial(radiumMaterial);
+
+        // Third, define the technique for rendering this material (here, using the default)
+        auto builder = Ra::Engine::EngineRenderTechniques::getDefaultTechnique(loadedMaterial.getType());
+        builder.second(rt, isTransparent);
 
         auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, rt );
         ro->setTransparent( isTransparent );

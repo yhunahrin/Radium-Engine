@@ -9,7 +9,9 @@
 #include <Engine/Renderer/Mesh/Mesh.hpp>
 #include <Engine/Renderer/RenderObject/RenderObjectManager.hpp>
 #include <Engine/Renderer/RenderObject/RenderObject.hpp>
-#include <Engine/Renderer/RenderTechnique/Material.hpp>
+
+#include <Engine/Renderer/Material/Material.hpp>
+#include <Engine/Renderer/Material/BlinnPhongMaterial.hpp>
 
 using Ra::Engine::ComponentMessenger;
 
@@ -28,11 +30,11 @@ namespace MeshFeatureTrackingPlugin
         auto sphere = Ra::Core::MeshUtils::makeParametricSphere(1.0);
         display->loadGeometry( sphere );
         std::shared_ptr<Ra::Engine::Material> material;
-        material.reset( new Ra::Engine::Material("VertexPickingManageSphereMaterial") );
-        material-> m_kd = Ra::Core::Color(0.f,1.f,0.f,1.f);
+        auto bpMaterial = new Ra::Engine::BlinnPhongMaterial("VertexPickingManageSphereMaterial");
+        material.reset( bpMaterial);
+        bpMaterial->m_kd = Ra::Core::Color(0.f,1.f,0.f,1.f);
         m_RO = Ra::Engine::RenderObject::createRenderObject( "FeaturePickingManagerSphereRO", this,
                                                              Ra::Engine::RenderObjectType::Fancy, display,
- //                                                            Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong"),
                                                              Ra::Engine::RenderTechnique::createDefaultRenderTechnique(),
                                                              material );
         m_RO->setPickable( false );

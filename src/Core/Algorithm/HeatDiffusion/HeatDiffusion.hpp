@@ -10,17 +10,17 @@
 #include <Core/Algorithm/Delta/Delta.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Algorithm {
+  namespace Core {
+    namespace Algorithm {
 
 // Defining a vector containing the indices of the heat sources
-typedef Source HeatSource;
+      typedef Source HeatSource;
 
 // Defining the time the heat is allowed to travel through the surface
-typedef Scalar Time;
+      typedef Scalar Time;
 
 // Defining the vector containing the heat value of each point of the surface
-typedef VectorArray< Scalar > Heat;
+      typedef VectorArray<Scalar> Heat;
 //typedef Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > Heat;
 
 
@@ -35,7 +35,7 @@ typedef VectorArray< Scalar > Heat;
 * [Keenan Crane, Clarisse Weischedel, Max Wardetzky ]
 * TOG 2013
 */
-Time t( const Scalar& m, const Scalar& h );
+      Time t(const Scalar &m, const Scalar &h);
 
 
 
@@ -52,7 +52,11 @@ Time t( const Scalar& m, const Scalar& h );
 * TOG 2013
 */
 /// WARNING: L must be a positive semi-definite matrix
-void RA_CORE_API heat( const Geometry::AreaMatrix& A, const Time& t, const Geometry::LaplacianMatrix& L, Heat& u, const Delta& delta );
+      void RA_CORE_API heat(const Geometry::AreaMatrix &A,
+                            const Time &t,
+                            const Geometry::LaplacianMatrix &L,
+                            Heat &u,
+                            const Delta &delta);
 
 
 
@@ -69,12 +73,13 @@ void RA_CORE_API heat( const Geometry::AreaMatrix& A, const Time& t, const Geome
 * TOG 2013
 */
 /// WARNING: L must be a positive semi-definite matrix
-Heat RA_CORE_API heat( const Geometry::AreaMatrix& A, const Time& t, const Geometry::LaplacianMatrix& L, const Delta& delta );
+      Heat RA_CORE_API heat(const Geometry::AreaMatrix &A,
+                            const Time &t,
+                            const Geometry::LaplacianMatrix &L,
+                            const Delta &delta);
 
-
-
-}
-}
+    }
+  }
 }
 
 #endif //HEAT_DIFFUSION

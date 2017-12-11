@@ -5,23 +5,19 @@
 
 #include <Engine/Renderer/RenderTechnique/ShaderConfiguration.hpp>
 
-
 #include <memory>
 #include <map>
+#include <functional>
 
-namespace Ra
-{
-    namespace Engine
-    {
-        class ShaderProgram;
-        class Material;
-    }
+namespace Ra {
+  namespace Engine {
+    class ShaderProgram;
+    class Material;
+  }
 }
 
-namespace Ra
-{
-    namespace Engine
-    {
+namespace Ra {
+  namespace Engine {
     // TODO (Mathias) : Adapt RenderTechnique for multi-material purpose
     // TODO transform the folowing ideas and insight into a real doc ...
     //      --> Interface that must be implemented by a RenderTechnique
@@ -79,52 +75,80 @@ namespace Ra
  *
  *   TODO : Default rendertechnique must be renderer dependant ...
  */
-        class RenderTechnique
+    class RenderTechnique
+    {
+    public:
+        enum PassName
         {
-        public:
-            enum PassName {
-                Z_PREPASS               = 1 << 0,
-                LIGHTING_OPAQUE         = 1 << 1,
-                LIGHTING_TRANSPARENT    = 1 << 2,
-                NO_PASS                 = 0
-            };
-
-            RenderTechnique();
-            RenderTechnique(const RenderTechnique&);
-            ~RenderTechnique();
-
-            RA_ENGINE_API void setShader( const ShaderConfiguration& newConfig, PassName pass = LIGHTING_OPAQUE );
-            RA_ENGINE_API const ShaderProgram* getShader( PassName pass = LIGHTING_OPAQUE ) const;
-            RA_ENGINE_API ShaderConfiguration getConfiguration( PassName pass = LIGHTING_OPAQUE ) const;
-
-            RA_ENGINE_API const std::shared_ptr<Material>& getMaterial() const;
-            RA_ENGINE_API void resetMaterial( Material* mat );
-            RA_ENGINE_API void setMaterial( const std::shared_ptr<Material>& material );
-            RA_ENGINE_API void updateGL();
-            RA_ENGINE_API bool shaderIsDirty ( PassName pass = LIGHTING_OPAQUE ) const;
-
-            // creates a Radium default rendertechnique :
-            //      Z_PREPASS = DepthDepthAmbientPass
-            //      LIGHTING_OPAQUE = BlinnPhong
-            //      LIGHTING_TRANSPARENT = LitOIT
-            static RA_ENGINE_API Ra::Engine::RenderTechnique createDefaultRenderTechnique();
-        private:
-            using ConfigurationSet = std::map<PassName, ShaderConfiguration>;
-            using ShaderSet = std::map<PassName, const ShaderProgram*>;
-            ConfigurationSet shaderConfig;
-            ShaderSet shaders;
-
-            std::shared_ptr<Material> material = nullptr;
-
-            // Change this if there is more than 8 configurations
-            unsigned char dirtyBits = (Z_PREPASS | LIGHTING_OPAQUE | LIGHTING_TRANSPARENT);
-            unsigned char setPasses = NO_PASS;
-
-
-
+            Z_PREPASS = 1 << 0,
+            LIGHTING_OPAQUE = 1 << 1,
+            LIGHTING_TRANSPARENT = 1 << 2,
+            NO_PASS = 0
         };
 
-    } // namespace Engine
+        RenderTechnique();
+        RenderTechnique(const RenderTechnique &);
+        ~RenderTechnique();
+
+        RA_ENGINE_API void setShader(const ShaderConfiguration &newConfig, PassName pass = LIGHTING_OPAQUE);
+        RA_ENGINE_API const ShaderProgram *getShader(PassName pass = LIGHTING_OPAQUE) const;
+        RA_ENGINE_API ShaderConfiguration getConfiguration(PassName pass = LIGHTING_OPAQUE) const;
+
+        RA_ENGINE_API const std::shared_ptr<Material> &getMaterial() const;
+        RA_ENGINE_API void resetMaterial(Material *mat);
+        RA_ENGINE_API void setMaterial(const std::shared_ptr<Material> &material);
+        RA_ENGINE_API void updateGL();
+        RA_ENGINE_API bool shaderIsDirty(PassName pass = LIGHTING_OPAQUE) const;
+
+        // creates a Radium default rendertechnique :
+        //      Z_PREPASS = DepthDepthAmbientPass
+        //      LIGHTING_OPAQUE = BlinnPhong
+        //      LIGHTING_TRANSPARENT = LitOIT
+        static RA_ENGINE_API Ra::Engine::RenderTechnique createDefaultRenderTechnique();
+    private:
+        using ConfigurationSet = std::map<PassName, ShaderConfiguration>;
+        using ShaderSet = std::map<PassName, const ShaderProgram *>;
+        ConfigurationSet shaderConfig;
+        ShaderSet shaders;
+
+        std::shared_ptr<Material> material = nullptr;
+
+        // Change this if there is more than 8 configurations
+        unsigned char dirtyBits = (Z_PREPASS | LIGHTING_OPAQUE | LIGHTING_TRANSPARENT);
+        unsigned char setPasses = NO_PASS;
+
+    };
+
+///////////////////////////////////////////////
+////        Radium defined technique        ///
+///////////////////////////////////////////////
+    namespace EngineRenderTechniques
+    {
+
+      // A default technique function is a function that will fill the given RenderTEchnique with the default
+      // configurations associated with a material
+      using DefaultTechniqueBuilder = std::function<void(RenderTechnique &, bool)>;
+
+      /** register a new default builder for a technique
+      *  @return true if builder added, false else (e.g, a builder with the same name exists)
+      */
+      bool registerDefaultTechnique(const std::string &name, DefaultTechniqueBuilder builder);
+
+      /** remove a default builder
+       *  @return true if builder removed, false else (e.g, a builder with the same name does't exists)
+       */
+      bool removeDefaultTechnique(const std::string &name);
+
+      /**
+       * @param name name of the technique to construct
+       * @return a pair containing the search result and, if true, the functor to call to build the technique.
+       */
+      std::pair<bool, DefaultTechniqueBuilder> getDefaultTechnique(const std::string &name);
+
+
+    }
+
+  } // namespace Engine
 } // namespace Ra
 
 

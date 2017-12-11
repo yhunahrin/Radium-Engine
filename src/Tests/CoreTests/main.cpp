@@ -12,7 +12,10 @@
 
 int main()
 {
-    if (! RaTests::TestManager::getInstance()) {RaTests::TestManager::createInstance();}
+    if (!RaTests::TestManager::getInstance())
+    {
+        RaTests::TestManager::createInstance();
+    }
     RaTests::TestManager::getInstance()->m_options.m_breakOnFailure = true;
     return RaTests::TestManager::getInstance()->run();
 }

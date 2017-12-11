@@ -5,39 +5,35 @@
 #include <Core/Mesh/DCEL/FullEdge.hpp>
 
 namespace Ra {
-namespace Core {
-
-
+  namespace Core {
 
 /// CONSTRUCTOR
-VFEIterator::VFEIterator( Vertex_ptr& v ) : VIterator< FullEdge >( v ) { }
-
-
+    VFEIterator::VFEIterator(Vertex_ptr &v) : VIterator<FullEdge>(v)
+    {}
 
 /// DESTRUCTOR
-VFEIterator::~VFEIterator() { }
-
-
+    VFEIterator::~VFEIterator()
+    {}
 
 /// LIST
-inline FullEdgeList VFEIterator::list() const {
-    FullEdgeList L;
-    HalfEdge_ptr it = m_v->HE();
-    do {
-        L.push_back( it->FE() );
-        it = it->Prev()->Twin();
-    } while( it != m_v->HE() );
-    return L;
-}
-
-
+    inline FullEdgeList VFEIterator::list() const
+    {
+        FullEdgeList L;
+        HalfEdge_ptr it = m_v->HE();
+        do
+        {
+            L.push_back(it->FE());
+            it = it->Prev()->Twin();
+        }
+        while (it != m_v->HE());
+        return L;
+    }
 
 /// OPERATOR
-inline FullEdge* VFEIterator::operator->() const {
-    return m_he->FE().get();
-}
+    inline FullEdge *VFEIterator::operator->() const
+    {
+        return m_he->FE().get();
+    }
 
-
-
-} // namespace Core
+  } // namespace Core
 } // namespace Ra

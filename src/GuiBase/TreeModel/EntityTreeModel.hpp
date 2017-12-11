@@ -7,80 +7,74 @@
 #include <Engine/RadiumEngine.hpp>
 
 #include <GuiBase/TreeModel/TreeModel.hpp>
-namespace Ra
-{
-    namespace GuiBase
+namespace Ra {
+  namespace GuiBase {
+
+    class RA_GUIBASE_API EngineTreeItem : public TreeItem
     {
+    public:
 
-        class RA_GUIBASE_API EngineTreeItem : public TreeItem
+        std::string getName() const override
         {
-        public:
+            return getEntryName(Engine::RadiumEngine::getInstance(), m_entry);
+        }
 
-            std::string getName() const override
-            {
-                return getEntryName( Engine::RadiumEngine::getInstance(), m_entry);
-            }
-
-            bool isValid() const override
-            {
-                return m_entry.isValid();
-            }
-
-            bool isSelectable() const override
-            {
-                return m_entry.isSelectable();
-            }
-        public:
-            Engine::ItemEntry m_entry;
-        };
-
-
-
-        /// Implementation of QAbstractItemModel to show the engine objects
-        /// as a tree in the main GUI.
-        class RA_GUIBASE_API ItemModel : public TreeModel
+        bool isValid() const override
         {
-            Q_OBJECT
-        public:
+            return m_entry.isValid();
+        }
 
-            ItemModel ( const Engine::RadiumEngine* engine, QObject* parent = nullptr)
-                    : TreeModel( parent )
-                    , m_engine( engine )
-            {
-                buildModel();
-            }
+        bool isSelectable() const override
+        {
+            return m_entry.isSelectable();
+        }
+    public:
+        Engine::ItemEntry m_entry;
+    };
 
-            // Other functions
+    /// Implementation of QAbstractItemModel to show the engine objects
+    /// as a tree in the main GUI.
+    class RA_GUIBASE_API ItemModel : public TreeModel
+    {
+    Q_OBJECT
+    public:
 
-            /// Returns the entry corresponding to a given index or an invalid entry
-            /// if the index doesn't match any entry.
-            const Engine::ItemEntry& getEntry( const QModelIndex& index )const;
+        ItemModel(const Engine::RadiumEngine *engine, QObject *parent = nullptr)
+            : TreeModel(parent), m_engine(engine)
+        {
+            buildModel();
+        }
 
-            /// Returns the index corresponding to the given entry if it exists in the
-            /// model, or an invalid index if not found.
-            QModelIndex findEntryIndex( const Engine::ItemEntry& entry ) const;
+        // Other functions
 
-        public slots:
+        /// Returns the entry corresponding to a given index or an invalid entry
+        /// if the index doesn't match any entry.
+        const Engine::ItemEntry &getEntry(const QModelIndex &index) const;
 
-            void addItem( const Engine::ItemEntry& ent );
+        /// Returns the index corresponding to the given entry if it exists in the
+        /// model, or an invalid index if not found.
+        QModelIndex findEntryIndex(const Engine::ItemEntry &entry) const;
 
-            void removeItem( const Engine::ItemEntry& ent );
+    public slots:
 
+        void addItem(const Engine::ItemEntry &ent);
 
-        protected:
-            /// Internal function to build the tree.
-            void buildModel() override;
+        void removeItem(const Engine::ItemEntry &ent);
 
-            std::string getHeaderString() const override{ return "Engine Objects Tree"; }
+    protected:
+        /// Internal function to build the tree.
+        void buildModel() override;
 
-        protected:
-            /// Engine instance.
-            const Engine::RadiumEngine* m_engine;
+        std::string getHeaderString() const override
+        { return "Engine Objects Tree"; }
 
-        };
+    protected:
+        /// Engine instance.
+        const Engine::RadiumEngine *m_engine;
 
+    };
 
-    } // namespace Gui
+  } // namespace Gui
 } // namespace Ra
 
 #endif // RADIUMENGINE_ENTITYTREEMODEL_HPP

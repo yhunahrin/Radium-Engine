@@ -9,8 +9,8 @@
 #include <Core/Utils/Graph/AdjacencyList.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Geometry {
+  namespace Core {
+    namespace Geometry {
 
 
 /////////////////////
@@ -25,10 +25,10 @@ namespace Geometry {
 //      A( i, j ) = f( i, j ) , if exist the edge from i to j
 //      A( i, j ) = 0         , otherwise
 // where f( i, j ) is a generic function defined over an edge
-typedef Sparse AdjacencyMatrix;
-typedef AdjacencyMatrix VVAdj;
-typedef AdjacencyMatrix VTAdj;
-typedef AdjacencyMatrix TVAdj;
+      typedef Sparse AdjacencyMatrix;
+      typedef AdjacencyMatrix VVAdj;
+      typedef AdjacencyMatrix VTAdj;
+      typedef AdjacencyMatrix TVAdj;
 
 
 
@@ -38,7 +38,7 @@ typedef AdjacencyMatrix TVAdj;
 *       f( i, j ) = 1 , if exist the edge from i to j
 *       f( i, j ) = 0 , otherwise
 */
-RA_CORE_API AdjacencyMatrix uniformAdjacency( const uint point_size, const VectorArray< Triangle >& T );
+      RA_CORE_API AdjacencyMatrix uniformAdjacency(const uint point_size, const VectorArray<Triangle> &T);
 
 
 
@@ -48,7 +48,7 @@ RA_CORE_API AdjacencyMatrix uniformAdjacency( const uint point_size, const Vecto
 *       f( i, j ) = 1 , if exist the edge from i to j
 *       f( i, j ) = 0 , otherwise
 */
-RA_CORE_API AdjacencyMatrix uniformAdjacency( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T );
+      RA_CORE_API AdjacencyMatrix uniformAdjacency(const VectorArray<Vector3> &p, const VectorArray<Triangle> &T);
 
 
 
@@ -58,8 +58,7 @@ RA_CORE_API AdjacencyMatrix uniformAdjacency( const VectorArray< Vector3 >& p, c
 *       f( i, j ) = 1 , if triangle i contains to vertex j
 *       f( i, j ) = 0 , otherwise
 */
-RA_CORE_API TVAdj triangleUniformAdjacency( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T );
-
+      RA_CORE_API TVAdj triangleUniformAdjacency(const VectorArray<Vector3> &p, const VectorArray<Triangle> &T);
 
 /*
 * Return the AdjacencyMatrix Adj for the given set of points and triangles.
@@ -67,7 +66,7 @@ RA_CORE_API TVAdj triangleUniformAdjacency( const VectorArray< Vector3 >& p, con
 *       f( i, j ) = 1 , if exist the edge from i to j
 *       f( i, j ) = 0 , otherwise
 */
-void uniformAdjacency( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T, AdjacencyMatrix& Adj );
+      void uniformAdjacency(const VectorArray<Vector3> &p, const VectorArray<Triangle> &T, AdjacencyMatrix &Adj);
 
 
 /*
@@ -77,7 +76,8 @@ void uniformAdjacency( const VectorArray< Vector3 >& p, const VectorArray< Trian
 *       f( i, j ) = 0                                          , otherwise
 * where alpha_ij and beta_ij are the angles opposite the edge
 */
-RA_CORE_API AdjacencyMatrix cotangentWeightAdjacency( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T );
+      RA_CORE_API AdjacencyMatrix cotangentWeightAdjacency(const VectorArray<Vector3> &p,
+                                                           const VectorArray<Triangle> &T);
 
 
 
@@ -89,14 +89,14 @@ RA_CORE_API AdjacencyMatrix cotangentWeightAdjacency( const VectorArray< Vector3
 //      D( i, j ) = sum( A( i ) ) , if i == j
 //      D( i, j ) = 0             , if i != j
 // where A( i ) is the i-th row of a AdjacencyMatrix
-typedef Diagonal DegreeMatrix;
+      typedef Diagonal DegreeMatrix;
 
 
 
 /*
 * Return the DegreeMatrix of the given AdjacencyMatrix A.
 */
-RA_CORE_API DegreeMatrix adjacencyDegree( const AdjacencyMatrix& A ) ;
+      RA_CORE_API DegreeMatrix adjacencyDegree(const AdjacencyMatrix &A);
 
 
 
@@ -111,8 +111,8 @@ RA_CORE_API DegreeMatrix adjacencyDegree( const AdjacencyMatrix& A ) ;
 //Graph::Adjacency meshOneRing( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T );
 
 
-}
-}
+    }
+  }
 }
 
 #endif // ADJACENCY_DEFINITION

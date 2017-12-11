@@ -3,83 +3,38 @@
 namespace Ra {
   namespace Asset {
 
-
-/// CONSTRUCTOR
-    MaterialData::MaterialData(const std::string&  name, const MaterialType& type )
-        : AssetData( name )
-        , m_type(type)
-        , m_BlinnPhong()
+    /// CONSTRUCTOR
+    MaterialData::MaterialData(const std::string &name, const std::string &type)
+        : AssetData(name), m_type(type)
     {
 
     }
 
-    MaterialData::MaterialData( const MaterialData& material ) : AssetData(material.m_name), m_type( material.m_type )
+    MaterialData::~MaterialData()
     {
-        switch ( m_type )
-        {
-            case BLINN_PHONG:
-                m_BlinnPhong = material.m_BlinnPhong;
-                break;
-            case DISNEY:
-            case MATTE:
-            case METAL:
-            case MIRROR:
-            case PLASTIC:
-            case SUBSTRATE:
-            case TRANSLUCENT:
-            case UNKNOWN:
-                LOG (logERROR) << "MaterialData : unkonwn material type";
-        }
+
     }
 
-    MaterialData& MaterialData::operator=( const MaterialData& material )
+    /// DEBUG
+    void MaterialData::displayInfo() const
     {
-        if (this != &material)
-        {
-            m_name = material.m_name;
-            m_type = material.m_type;
-            switch ( m_type )
-            {
-                case BLINN_PHONG:
-                    m_BlinnPhong = material.m_BlinnPhong;
-                    break;
-                case DISNEY:
-                case MATTE:
-                case METAL:
-                case MIRROR:
-                case PLASTIC:
-                case SUBSTRATE:
-                case TRANSLUCENT:
-                case UNKNOWN:
-                    LOG (logERROR) << "MaterialData : unkonwn material type";
-            }
-        }
-        return *this;
+        LOG(logERROR) << "MaterialData : unkonwn material type : " << m_type;
     }
+
 
     ///////////////////
     /// BLINN PHONG ///
     ///////////////////
+    BlinnPhongMaterialData::BlinnPhongMaterialData(const std::string &name)
+        : MaterialData(name, "BlinnPhong"), m_diffuse(), m_specular(), m_shininess(), m_opacity(1.0), m_texDiffuse(""), m_texSpecular(""),
+          m_texShininess(""), m_texNormal(""), m_texOpacity(""), m_hasDiffuse(false), m_hasSpecular(false),
+          m_hasShininess(false), m_hasOpacity(false), m_hasTexDiffuse(false), m_hasTexSpecular(false),
+          m_hasTexShininess(false), m_hasTexNormal(false), m_hasTexOpacity(false)
+    {
 
-    MaterialData::BlinnPhongMaterial::BlinnPhongMaterial()
-        : m_diffuse()
-        , m_specular()
-        , m_shininess()
-        , m_opacity(1.0)
-        , m_texDiffuse("")
-        , m_texSpecular("")
-        , m_texShininess("")
-        , m_texNormal("")
-        , m_texOpacity("")
-        , m_hasDiffuse( false )
-        , m_hasSpecular( false )
-        , m_hasShininess( false )
-        , m_hasOpacity(false)
-        , m_hasTexDiffuse(false)
-        , m_hasTexSpecular(false)
-        , m_hasTexShininess(false)
-        , m_hasTexNormal(false)
-        , m_hasTexOpacity(false)
+    }
+
+    BlinnPhongMaterialData::~BlinnPhongMaterialData()
     {
 
     }

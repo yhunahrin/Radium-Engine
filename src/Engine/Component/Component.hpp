@@ -7,104 +7,101 @@
 #include <Core/Math/Ray.hpp>
 #include <Core/Index/IndexedObject.hpp>
 
-
-namespace Ra
-{
-    namespace Engine
-    {
-        class System;
-        class Entity;
-        class RenderObject;
-        class RenderObjectManager;
-    }
+namespace Ra {
+  namespace Engine {
+    class System;
+    class Entity;
+    class RenderObject;
+    class RenderObjectManager;
+  }
 }
 
-namespace Ra
-{
-    namespace Engine
+namespace Ra {
+  namespace Engine {
+
+    /**
+     * @brief A component is an element that can be updated by a system.
+     * It is also linked to some other components in an entity.
+     * Each component share a transform through their entity.
+     */
+    class RA_ENGINE_API Component
     {
+    public:
+        /// CONSTRUCTOR
+        Component(const std::string &name);
+
+        /// DESTRUCTOR
+        virtual ~Component();
 
         /**
-         * @brief A component is an element that can be updated by a system.
-         * It is also linked to some other components in an entity.
-         * Each component share a transform through their entity.
+        * @brief Pure virtual method to be overridden by any component.
+        * When this method is called you are guaranteed that all other startup systems
+        * have been loaded.
+        */
+        virtual void initialize() = 0;
+        /**
+         * @brief Set entity the component is part of.
+         * This method is called by the entity.
+         * @param entity The entity the component is part of.
          */
-        class RA_ENGINE_API Component
-        {
-        public:
-            /// CONSTRUCTOR
-            Component( const std::string& name );
+        virtual void setEntity(Entity *entity);
 
-            /// DESTRUCTOR
-            virtual ~Component();
+        /// Return the entity the component belongs to
+        virtual Entity *getEntity() const;
 
-            /**
-            * @brief Pure virtual method to be overridden by any component.
-            * When this method is called you are guaranteed that all other startup systems
-            * have been loaded.
-            */
-            virtual void initialize() = 0;
-            /**
-             * @brief Set entity the component is part of.
-             * This method is called by the entity.
-             * @param entity The entity the component is part of.
-             */
-            virtual void setEntity( Entity* entity );
+        /// Return the component's name
+        virtual const std::string &getName() const;
 
-            /// Return the entity the component belongs to
-            virtual Entity* getEntity() const;
+        /// Set the system to which the  component belongs.
+        virtual void setSystem(System *system);
 
-            /// Return the component's name
-            virtual const std::string& getName() const;
+        /// Returns the system to which the component belongs.
+        virtual System *getSystem() const;
 
-            /// Set the system to which the  component belongs.
-            virtual void setSystem( System* system );
+        /// Add a new render object to the component. This adds the RO to the manager for drawing.
+        Core::Index addRenderObject(RenderObject *renderObject);
 
-            /// Returns the system to which the component belongs.
-            virtual System* getSystem() const;
+        /// Remove the render object from the component.
+        void removeRenderObject(Core::Index roIdx);
 
-            /// Add a new render object to the component. This adds the RO to the manager for drawing.
-            virtual Core::Index addRenderObject( RenderObject* renderObject ) final;
+        /// Perform a ray cast query.
+        virtual void rayCastQuery(const Core::Ray &ray) const;
 
-            /// Remove the render object from the component.
-            virtual void removeRenderObject( Core::Index roIdx ) final;
+        // Editable transform interface.
+        // This allow to edit the data in the component with a render object
+        // as a key. An invalid RO index can be passed, meaning no specific RO is
+        // queried.
 
-            /// Perform a ray cast query.
-            virtual void rayCastQuery(const Core::Ray& ray) const;
+        /// Returns true if a transform can be edited with the render object index given as a key.
+        virtual bool canEdit(Core::Index roIdx) const
+        { return false; }
 
-            // Editable transform interface.
-            // This allow to edit the data in the component with a render object
-            // as a key. An invalid RO index can be passed, meaning no specific RO is
-            // queried.
+        /// Get the transform associated with the given RO index key.
+        virtual Core::Transform getTransform(Core::Index roIdx) const
+        { return Core::Transform::Identity(); };
 
-            /// Returns true if a transform can be edited with the render object index given as a key.
-            virtual bool canEdit( Core::Index roIdx ) const { return false; }
+        /// Set the new transform associated with the RO index key.
+        virtual void setTransform(Core::Index roIdx, const Core::Transform &transform)
+        {};
 
-            /// Get the transform associated with the given RO index key.
-            virtual Core::Transform getTransform( Core::Index roIdx ) const { return Core::Transform::Identity();};
+        void notifyRenderObjectExpired(const Core::Index &idx);
 
-            /// Set the new transform associated with the RO index key.
-            virtual void setTransform ( Core::Index roIdx, const Core::Transform& transform ) {};
+    protected:
+        /// Shortcut to access the render object manager.
+        static RenderObjectManager *getRoMgr();
 
-            void notifyRenderObjectExpired( const Core::Index& idx );
+    public:
+        std::vector<Core::Index> m_renderObjects;
 
-        protected:
-            /// Shortcut to access the render object manager.
-            static RenderObjectManager* getRoMgr();
+    protected:
 
+        std::string m_name;
+        Entity *m_entity;
+        System *m_system;
 
-        public:
-            std::vector<Core::Index> m_renderObjects;
+    };
 
-        protected:
-
-            std::string m_name;
-            Entity* m_entity;
-            System* m_system;
-
-        };
-
-    } // namespace Engine
+  } // namespace Engine
 } // namespace Ra
 
 #include <Engine/Component/Component.inl>

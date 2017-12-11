@@ -12,102 +12,105 @@
 #include <Core/File/AssetData.hpp>
 
 namespace Ra {
-    namespace Asset {
+  namespace Asset {
 
-        struct RA_CORE_API HandleComponentData {
-            RA_CORE_ALIGNED_NEW
+    struct RA_CORE_API HandleComponentData
+    {
+        RA_CORE_ALIGNED_NEW
 
-            HandleComponentData();
+        HandleComponentData();
 
-            Core::Transform                          m_frame;
-            std::string                              m_name;
-            std::vector< std::pair< uint, Scalar > > m_weight;
+        Core::Transform m_frame;
+        std::string m_name;
+        std::vector<std::pair<uint, Scalar> > m_weight;
+    };
+
+    class RA_CORE_API HandleData : public AssetData
+    {
+    public:
+        RA_CORE_ALIGNED_NEW
+
+        /// ENUM
+        enum HandleType
+        {
+            UNKNOWN = 1 << 0,
+            POINT_CLOUD = 1 << 1,
+            SKELETON = 1 << 2,
+            CAGE = 1 << 3
         };
 
-        class RA_CORE_API HandleData : public AssetData {
-        public:
-            RA_CORE_ALIGNED_NEW
+        /// CONSTRUCTOR
+        HandleData(const std::string &name = "",
+                   const HandleType &type = UNKNOWN);
 
-            /// ENUM
-            enum HandleType {
-                UNKNOWN     = 1 << 0,
-                POINT_CLOUD = 1 << 1,
-                SKELETON    = 1 << 2,
-                CAGE        = 1 << 3
-            };
+        HandleData(const HandleData &data) = default;
 
-            /// CONSTRUCTOR
-            HandleData( const std::string& name = "",
-                        const HandleType&  type = UNKNOWN );
+        /// DESTRUCTOR
+        ~HandleData();
 
-            HandleData( const HandleData& data ) = default;
+        /// NAME
+        inline void setName(const std::string &name);
 
-            /// DESTRUCTOR
-            ~HandleData();
+        /// TYPE
+        inline HandleType getType() const;
+        inline void setType(const HandleType &type);
 
-            /// NAME
-            inline void setName( const std::string& name );
+        /// FRAME
+        inline Core::Transform getFrame() const;
+        inline void setFrame(const Core::Transform &frame);
 
-            /// TYPE
-            inline HandleType getType() const;
-            inline void setType( const HandleType& type );
+        /// VERTEX SIZE
+        inline uint getVertexSize() const;
+        inline void setVertexSize(uint size);
 
-            /// FRAME
-            inline Core::Transform getFrame() const;
-            inline void setFrame( const Core::Transform& frame );
+        /// NAME TABLE
+        inline void setNameTable(const std::map<std::string, uint> &nameTable);
 
-            /// VERTEX SIZE
-            inline uint getVertexSize() const;
-            inline void setVertexSize( uint size );
+        /// DATA
+        inline uint getComponentDataSize() const;
+        inline const Core::AlignedStdVector<HandleComponentData> &getComponentData() const;
+        inline Core::AlignedStdVector<HandleComponentData> &getComponentData();
+        inline const HandleComponentData &getComponent(const uint i) const;
+        inline HandleComponentData &getComponent(const uint i);
+        inline void setComponents(const Core::AlignedStdVector<HandleComponentData> &components);
+        inline const Core::AlignedStdVector<Core::Vector2i> &getEdgeData() const;
+        inline Core::AlignedStdVector<Core::Vector2i> &getEdgeData();
+        inline void setEdges(const Core::AlignedStdVector<Core::Vector2i> &edgeList);
+        inline const Core::AlignedStdVector<Core::VectorNi> &getFaceData() const;
+        inline Core::AlignedStdVector<Core::VectorNi> &getFaceData();
+        inline void setFaces(const Core::AlignedStdVector<Core::VectorNi> &faceList);
+        inline void recomputeAllIndices();
 
-            /// NAME TABLE
-            inline void setNameTable( const std::map< std::string, uint >& nameTable );
+        /// QUERY
+        inline bool isPointCloud() const;
+        inline bool isSkeleton() const;
+        inline bool isCage() const;
+        inline bool hasComponents() const;
+        inline bool hasEdges() const;
+        inline bool hasFaces() const;
+        inline bool needsEndNodes() const;
+        inline int getIndexOf(const std::string &name) const;
 
-            /// DATA
-            inline uint getComponentDataSize() const;
-            inline const Core::AlignedStdVector<HandleComponentData>& getComponentData() const;
-            inline       Core::AlignedStdVector<HandleComponentData>& getComponentData();
-            inline const HandleComponentData& getComponent( const uint i ) const;
-            inline       HandleComponentData& getComponent( const uint i );
-            inline void setComponents( const Core::AlignedStdVector< HandleComponentData >& components );
-            inline const Core::AlignedStdVector<Core::Vector2i>& getEdgeData() const;
-            inline       Core::AlignedStdVector<Core::Vector2i>& getEdgeData();
-            inline void setEdges( const Core::AlignedStdVector< Core::Vector2i >& edgeList );
-            inline const Core::AlignedStdVector<Core::VectorNi>& getFaceData() const;
-            inline       Core::AlignedStdVector<Core::VectorNi>& getFaceData();
-            inline void setFaces( const Core::AlignedStdVector< Core::VectorNi >& faceList );
-            inline void recomputeAllIndices();
+        inline void needEndNodes(bool need);
 
-            /// QUERY
-            inline bool isPointCloud() const;
-            inline bool isSkeleton() const;
-            inline bool isCage() const;
-            inline bool hasComponents() const;
-            inline bool hasEdges() const;
-            inline bool hasFaces() const;
-            inline bool needsEndNodes() const;
-            inline int  getIndexOf( const std::string& name ) const;
+        /// DEBUG
+        inline void displayInfo() const;
 
-            inline void needEndNodes( bool need );
+    protected:
+        /// VARIABLE
+        Core::Transform m_frame;
+        HandleType m_type;
 
-            /// DEBUG
-            inline void displayInfo() const;
+        bool m_endNode;
+        uint m_vertexSize;
+        std::map<std::string, uint> m_nameTable;
 
-        protected:
-            /// VARIABLE
-            Core::Transform                    m_frame;
-            HandleType                         m_type;
+        Core::AlignedStdVector<HandleComponentData> m_component;
+        Core::AlignedStdVector<Core::Vector2i> m_edge;
+        Core::AlignedStdVector<Core::VectorNi> m_face;
+    };
 
-            bool                               m_endNode;
-            uint                               m_vertexSize;
-            std::map< std::string, uint >      m_nameTable;
-
-            Core::AlignedStdVector< HandleComponentData > m_component;
-            Core::AlignedStdVector< Core::Vector2i >      m_edge;
-            Core::AlignedStdVector< Core::VectorNi >      m_face;
-        };
-
-    } // namespace Asset
+  } // namespace Asset
 } // namespace Ra
 
 #include <Core/File/HandleData.inl>

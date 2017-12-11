@@ -4,36 +4,37 @@
 #include <Core/Mesh/DCEL/Iterator/Iterator.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
-template < typename OBJECT >
-class [[deprecated]] FIterator : public Iterator< OBJECT > {
-public:
-    /// CONSTRUCTOR
-    FIterator( Face_ptr& f );
-    FIterator( const FIterator& it ) = default;
+    template<typename OBJECT>
+    class [[deprecated]] FIterator : public Iterator<OBJECT>
+    {
+    public:
+        /// CONSTRUCTOR
+        FIterator(Face_ptr &f);
+        FIterator(const FIterator &it) = default;
 
-    /// DESTRUCTOR
-    ~FIterator();
+        /// DESTRUCTOR
+        ~FIterator();
 
-    /// SIZE
-    inline uint size() const override;
+        /// SIZE
+        inline uint size() const override;
 
-    /// RESET
-    inline void reset() override;
+        /// RESET
+        inline void reset() override;
 
-    /// OPERATOR
-    inline FIterator& operator= ( const FIterator& it );
-    inline FIterator& operator++() override;
-    inline FIterator& operator--() override;
-    inline bool       operator==( const FIterator& it ) const;
+        /// OPERATOR
+        inline FIterator &operator=(const FIterator &it);
+        inline FIterator &operator++() override;
+        inline FIterator &operator--() override;
+        inline bool operator==(const FIterator &it) const;
 
-protected:
-    /// VARIABLE
-    Face_ptr   m_f;
-};
+    protected:
+        /// VARIABLE
+        Face_ptr m_f;
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #include <Core/Mesh/DCEL/Iterator/Face/FaceIterator.inl>

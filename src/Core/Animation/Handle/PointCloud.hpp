@@ -4,8 +4,8 @@
 #include <Core/Animation/Handle/Handle.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Animation {
+  namespace Core {
+    namespace Animation {
 
 /**
 * The PointCloud Handle class.
@@ -13,10 +13,10 @@ namespace Animation {
 * For now it is just a typedef. Maybe in the future a miracle will happen,
 * PointCloud will grow up, will make friends and will grow a family too.
 */
-typedef Handle PointCloud;
+      typedef Handle PointCloud;
 
-} // namespace Animation
-} // Namespace Core
+    } // namespace Animation
+  } // Namespace Core
 } // Namespace Ra
 
 #endif // HANDLE

@@ -4,25 +4,26 @@
 #include <Core/Mesh/DCEL/Iterator/Face/FaceIterator.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
-class [[deprecated]] FFIterator : public FIterator< Face > {
-public:
-    /// CONSTRUCTOR
-    FFIterator( Face_ptr& f );
-    FFIterator( const FFIterator& it ) = default;
+    class [[deprecated]] FFIterator : public FIterator<Face>
+    {
+    public:
+        /// CONSTRUCTOR
+        FFIterator(Face_ptr &f);
+        FFIterator(const FFIterator &it) = default;
 
-    /// DESTRUCTOR
-    ~FFIterator();
+        /// DESTRUCTOR
+        ~FFIterator();
 
-    /// LIST
-    inline FaceList list() const override;
+        /// LIST
+        inline FaceList list() const override;
 
-    /// OPERATOR
-    inline Face* operator->() const override;
-};
+        /// OPERATOR
+        inline Face *operator->() const override;
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #include <Core/Mesh/DCEL/Iterator/Face/FFIterator.inl>

@@ -8,26 +8,26 @@
 #include <Core/File/FileLoaderInterface.hpp>
 
 namespace Ra {
-    namespace IO {
+  namespace IO {
 
-        //! This class loads scenes containing MESHES only (not point-clouds)
-        class RA_IO_API AssimpFileLoader : public Asset::FileLoaderInterface
-        {
-        public:
-            AssimpFileLoader();
+    //! This class loads scenes containing MESHES only (not point-clouds)
+    class RA_IO_API AssimpFileLoader : public Asset::FileLoaderInterface
+    {
+    public:
+        AssimpFileLoader();
 
-            virtual ~AssimpFileLoader();
+        virtual ~AssimpFileLoader();
 
-            std::vector<std::string> getFileExtensions() const override;
-            bool handleFileExtension( const std::string& extension ) const override;
-            Asset::FileData * loadFile( const std::string& filename ) override;
-            std::string name() const override;
+        std::vector<std::string> getFileExtensions() const override;
+        bool handleFileExtension(const std::string &extension) const override;
+        Asset::FileData *loadFile(const std::string &filename) override;
+        std::string name() const override;
 
-        private:
-            Assimp::Importer m_importer;
-        };
+    private:
+        Assimp::Importer m_importer;
+    };
 
-    } // namespace IO
+  } // namespace IO
 } // namespace Ra
 
 #endif //RADIUMENGINE_ASSIMPFILELOADER_HPP

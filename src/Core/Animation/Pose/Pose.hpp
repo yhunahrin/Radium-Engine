@@ -5,8 +5,8 @@
 #include <Core/Math/LinearAlgebra.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Animation {
+  namespace Core {
+    namespace Animation {
 
 /**
 * Definition of the Pose of a generic handle for model animation or deformation.
@@ -15,19 +15,19 @@ namespace Animation {
 /*
 * The Pose is represented just as a vector of Transforms.
 */
-typedef AlignedStdVector< Transform > Pose;
+      typedef AlignedStdVector<Transform> Pose;
 
 // Typedef for code redability purposes only.
-typedef Pose     RestPose;
-typedef RestPose RefPose;
+      typedef Pose RestPose;
+      typedef RestPose RefPose;
 
-typedef Pose LocalPose;
-typedef Pose ModelPose;
+      typedef Pose LocalPose;
+      typedef Pose ModelPose;
 
-typedef Pose RelativePose;
+      typedef Pose RelativePose;
 
-} // namespace Animation
-} // namespace Core
+    } // namespace Animation
+  } // namespace Core
 } // namespace Ra
 
 #endif // POSE_H

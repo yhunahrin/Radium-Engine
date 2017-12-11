@@ -5,9 +5,9 @@
 #include <Core/File/deprecated/FileManager.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
-using namespace Geometry;
+    using namespace Geometry;
 
 /*
 * The class MAPFileManager handles the loading/storing of MAP files.
@@ -20,25 +20,26 @@ using namespace Geometry;
 *
 * where HEADER is equal to the string "MAP" and #rows defines how many rows there are in the file.
 */
-class MAPFileManager : public FileManager< Parametrization > {
-public:
-    /// CONSTRUCTOR
-    MAPFileManager();
+    class MAPFileManager : public FileManager<Parametrization>
+    {
+    public:
+        /// CONSTRUCTOR
+        MAPFileManager();
 
-    /// DESTRUCTOR
-    virtual ~MAPFileManager();
+        /// DESTRUCTOR
+        virtual ~MAPFileManager();
 
-protected:
-    /// HEADER
-    std::string header() const;
+    protected:
+        /// HEADER
+        std::string header() const;
 
-    /// INTERFACE
-    virtual std::string fileExtension() const override;
-    virtual bool importData( std::istream& file, Parametrization& data ) override;
-    virtual bool exportData( std::ostream& file, const Parametrization& data ) override;
-};
+        /// INTERFACE
+        virtual std::string fileExtension() const override;
+        virtual bool importData(std::istream &file, Parametrization &data) override;
+        virtual bool exportData(std::ostream &file, const Parametrization &data) override;
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #endif // RADIUMENGINE_MAP_FILE_MANAGER_HPP

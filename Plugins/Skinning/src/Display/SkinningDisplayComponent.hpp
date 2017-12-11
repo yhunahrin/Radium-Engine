@@ -14,7 +14,7 @@
 
 #include <Engine/Renderer/RenderTechnique/RenderTechnique.hpp>
 #include <Engine/Renderer/Mesh/Mesh.hpp>
-#include <Engine/Renderer/RenderTechnique/Material.hpp>
+#include <Engine/Renderer/Material/BlinnPhongMaterial.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderProgram.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderConfigFactory.hpp>
 #include <Engine/Renderer/RenderObject/RenderObject.hpp>
@@ -112,7 +112,8 @@ public:
             }
 
             std::shared_ptr<Ra::Engine::RenderTechnique> technique(new Ra::Engine::RenderTechnique);
-            Ra::Engine::Material *nm = new Ra::Engine::Material( std::string( "Partition" ) + m_name );
+
+            Ra::Engine::BlinnPhongMaterial *nm = new Ra::Engine::BlinnPhongMaterial( std::string( "Partition" ) + m_name );
             nm->m_kd = Ra::Core::Vector4::Zero();
             nm->m_ks = Ra::Core::Vector4::Zero();
             nm->m_ns = 100;

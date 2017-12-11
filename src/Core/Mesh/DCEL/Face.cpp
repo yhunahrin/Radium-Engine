@@ -3,29 +3,24 @@
 #include <Core/Mesh/DCEL/HalfEdge.hpp>
 
 namespace Ra {
-namespace Core {
-
-
+  namespace Core {
 
 /// CONSTRUCTOR
-Face::Face( const Index& index ) :
-    IndexedObject( index ),
-    m_he( nullptr ) { }
+    Face::Face(const Index &index) :
+        IndexedObject(index),
+        m_he(nullptr)
+    {}
 
-
-
-Face::Face( const HalfEdge_ptr& he,
-            const Index&        index ) :
-    IndexedObject( index ),
-    m_he( he ) { }
-
-
+    Face::Face(const HalfEdge_ptr &he,
+               const Index &index) :
+        IndexedObject(index),
+        m_he(he)
+    {}
 
 /// DESTRUCTOR
-Face::~Face() { }
+    Face::~Face()
+    {}
 
-
-
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 

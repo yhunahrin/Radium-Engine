@@ -4,46 +4,47 @@
 #include <Core/CoreMacros.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
-class CircularIndex {
-public:
-    /// CONSTRUCTOR
-    CircularIndex( const uint size = 1,
-                   const int  i    = 0 );
-    CircularIndex( const CircularIndex& index );
+    class CircularIndex
+    {
+    public:
+        /// CONSTRUCTOR
+        CircularIndex(const uint size = 1,
+                      const int i = 0);
+        CircularIndex(const CircularIndex &index);
 
-    /// DESTRUCTOR
-    ~CircularIndex();
+        /// DESTRUCTOR
+        ~CircularIndex();
 
-    /// DIMENSION
-    inline uint size() const;
-    inline void setSize( const uint size );
+        /// DIMENSION
+        inline uint size() const;
+        inline void setSize(const uint size);
 
-    /// INDEX
-    inline uint value() const;
-    inline void setValue( const int i );
+        /// INDEX
+        inline uint value() const;
+        inline void setValue(const int i);
 
-    /// OPERATOR
-    inline operator int();
-    inline CircularIndex& operator= ( const CircularIndex& id );
-    inline CircularIndex& operator= ( const int i );
-    inline CircularIndex& operator++();
-    inline CircularIndex& operator--();
-    inline CircularIndex  operator+ ( const int off );
-    inline CircularIndex  operator- ( const int off );
-    inline bool operator==( const CircularIndex& id ) const;
-    inline bool operator< ( const CircularIndex& id ) const;
-    inline bool operator==( const int i ) const;
-    inline bool operator< ( const int i ) const;
+        /// OPERATOR
+        inline operator int();
+        inline CircularIndex &operator=(const CircularIndex &id);
+        inline CircularIndex &operator=(const int i);
+        inline CircularIndex &operator++();
+        inline CircularIndex &operator--();
+        inline CircularIndex operator+(const int off);
+        inline CircularIndex operator-(const int off);
+        inline bool operator==(const CircularIndex &id) const;
+        inline bool operator<(const CircularIndex &id) const;
+        inline bool operator==(const int i) const;
+        inline bool operator<(const int i) const;
 
-protected:
-    /// VARIABLE
-    uint idx;
-    uint N;
-};
+    protected:
+        /// VARIABLE
+        uint idx;
+        uint N;
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #include <Core/Index/CircularIndex.inl>

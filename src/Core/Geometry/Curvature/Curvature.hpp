@@ -6,18 +6,14 @@
 #include <Core/Geometry/Area/Area.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Geometry {
-
-
+  namespace Core {
+    namespace Geometry {
 
 // Typedef
-typedef Scalar MeanCurvature;
-typedef Scalar GaussianCurvature;
-typedef Scalar MaximumCurvature;
-typedef Scalar MinimumCurvature;
-
-
+      typedef Scalar MeanCurvature;
+      typedef Scalar GaussianCurvature;
+      typedef Scalar MaximumCurvature;
+      typedef Scalar MinimumCurvature;
 
 /*
 * Return the Gaussian Curvature for the given point v and its one-ring.
@@ -31,10 +27,11 @@ typedef Scalar MinimumCurvature;
 * Visualization and Mathematics III 2003
 * Chapter 4, Paragraph 4.2, Page 12
 */
-Scalar gaussianCurvature( const Vector3& v, const VectorArray< Vector3 >& p, const Scalar& area );
-void   gaussianCurvature( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T, const AreaMatrix& A, VectorArray< Scalar >& K );
-
-
+      Scalar gaussianCurvature(const Vector3 &v, const VectorArray<Vector3> &p, const Scalar &area);
+      void gaussianCurvature(const VectorArray<Vector3> &p,
+                             const VectorArray<Triangle> &T,
+                             const AreaMatrix &A,
+                             VectorArray<Scalar> &K);
 
 /*
 * Return the Gaussian Curvature from the maximum curvature k1 and the minimum curvature k2.
@@ -43,10 +40,10 @@ void   gaussianCurvature( const VectorArray< Vector3 >& p, const VectorArray< Tr
 *
 * This is the mathematical definition of Gaussian Curvature.
 */
-Scalar gaussianCurvature( const MaximumCurvature& k1, const MinimumCurvature& k2 );
-void   gaussianCurvature( const VectorArray< MaximumCurvature >& k1, const VectorArray< MinimumCurvature >& k2, VectorArray< Scalar >& K );
-
-
+      Scalar gaussianCurvature(const MaximumCurvature &k1, const MinimumCurvature &k2);
+      void gaussianCurvature(const VectorArray<MaximumCurvature> &k1,
+                             const VectorArray<MinimumCurvature> &k2,
+                             VectorArray<Scalar> &K);
 
 /*
 * Return the Mean Curvature Normal from the given Laplacian vector and the given area.
@@ -59,10 +56,8 @@ void   gaussianCurvature( const VectorArray< MaximumCurvature >& k1, const Vecto
 * Visualization and Mathematics III 2003
 * Chapter 3, Paragraph 3.5, Page 10
 */
-Vector3 meanCurvatureNormal( const Vector3& laplacian, const Scalar& area );
-void    meanCurvatureNormal( const VectorArray< Vector3 >& laplacian, const AreaMatrix& A, VectorArray< Vector3 >& Hn );
-
-
+      Vector3 meanCurvatureNormal(const Vector3 &laplacian, const Scalar &area);
+      void meanCurvatureNormal(const VectorArray<Vector3> &laplacian, const AreaMatrix &A, VectorArray<Vector3> &Hn);
 
 /*
 * Return the Mean Curvature value from the given Mean Curvature Normal.
@@ -75,10 +70,8 @@ void    meanCurvatureNormal( const VectorArray< Vector3 >& laplacian, const Area
 * Visualization and Mathematics III 2003
 * Chapter 3, Paragraph 3.5, Page 10
 */
-Scalar meanCurvature( const Vector3& mean_curvature_normal );
-void   meanCurvature( const VectorArray< Vector3 >& mean_curvature_normal, VectorArray< Scalar >& H );
-
-
+      Scalar meanCurvature(const Vector3 &mean_curvature_normal);
+      void meanCurvature(const VectorArray<Vector3> &mean_curvature_normal, VectorArray<Scalar> &H);
 
 /*
 * Return the Mean Curvature from the maximum curvature k1 and the minimum curvature k2.
@@ -87,9 +80,10 @@ void   meanCurvature( const VectorArray< Vector3 >& mean_curvature_normal, Vecto
 *
 * This is the mathematical definition of Mean Curvature.
 */
-Scalar meanCurvature( const MaximumCurvature& k1, const MinimumCurvature& k2 );
-void   meanCurvature( const VectorArray< MaximumCurvature >& k1, const VectorArray< MinimumCurvature >& k2, VectorArray< Scalar >& H );
-
+      Scalar meanCurvature(const MaximumCurvature &k1, const MinimumCurvature &k2);
+      void meanCurvature(const VectorArray<MaximumCurvature> &k1,
+                         const VectorArray<MinimumCurvature> &k2,
+                         VectorArray<Scalar> &H);
 
 /*
 * Return the Maximum Curvature from the Mean Curvature H and the Gaussian Curvature K.
@@ -98,10 +92,10 @@ void   meanCurvature( const VectorArray< MaximumCurvature >& k1, const VectorArr
 *
 * This is the mathematical definition of Maximum Curvature.
 */
-Scalar maxCurvature( const MeanCurvature& H, const GaussianCurvature& K );
-void   maxCurvature( const VectorArray< MeanCurvature >& H, const VectorArray< GaussianCurvature >& K, VectorArray< Scalar >& k1 );
-
-
+      Scalar maxCurvature(const MeanCurvature &H, const GaussianCurvature &K);
+      void maxCurvature(const VectorArray<MeanCurvature> &H,
+                        const VectorArray<GaussianCurvature> &K,
+                        VectorArray<Scalar> &k1);
 
 /*
 * Return the Minimum Curvature from the Mean Curvature H and the Gaussian Curvature K.
@@ -110,13 +104,13 @@ void   maxCurvature( const VectorArray< MeanCurvature >& H, const VectorArray< G
 *
 * This is the mathematical definition of Minimum Curvature.
 */
-Scalar minCurvature( const MeanCurvature& H, const GaussianCurvature& K );
-void   minCurvature( const VectorArray< MeanCurvature >& H, const VectorArray< GaussianCurvature >& K, VectorArray< Scalar >& k2 );
+      Scalar minCurvature(const MeanCurvature &H, const GaussianCurvature &K);
+      void minCurvature(const VectorArray<MeanCurvature> &H,
+                        const VectorArray<GaussianCurvature> &K,
+                        VectorArray<Scalar> &k2);
 
-
-
-}
-}
+    }
+  }
 }
 
 #endif // CURVATURE_DEFINITION

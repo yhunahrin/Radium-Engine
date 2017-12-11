@@ -5,35 +5,38 @@
 #include <Core/File/KeyFrame/KeyFrame.hpp>
 
 namespace Ra {
-namespace Asset {
+  namespace Asset {
 
-class KeyTranslation : public KeyFrame< Core::Vector3 > {
-public:
-    /// CONSTRUCTOR
-    KeyTranslation( const AnimationTime& time = AnimationTime() ) : KeyFrame< Core::Vector3 >( time ) { }
-    KeyTranslation( const KeyTranslation& keyframe ) = default;
+    class KeyTranslation : public KeyFrame<Core::Vector3>
+    {
+    public:
+        /// CONSTRUCTOR
+        KeyTranslation(const AnimationTime &time = AnimationTime()) : KeyFrame<Core::Vector3>(time)
+        {}
+        KeyTranslation(const KeyTranslation &keyframe) = default;
 
-    /// DESTRUCTOR
-    ~KeyTranslation() { }
+        /// DESTRUCTOR
+        ~KeyTranslation()
+        {}
 
-protected:
-    /// TRANSFORMATION
-    inline Core::Vector3 defaultFrame() const override {
-        return Core::Vector3( 0.0, 0.0, 0.0 );
-    }
+    protected:
+        /// TRANSFORMATION
+        inline Core::Vector3 defaultFrame() const override
+        {
+            return Core::Vector3(0.0, 0.0, 0.0);
+        }
 
-    inline Core::Vector3 interpolate( const Core::Vector3& F0,
-                                      const Core::Vector3& F1,
-                                      const Scalar t ) const override {
-        Core::Vector3 result;
-        Core::interpolate( F0, F1, t, result );
-        return result;
-    }
-};
+        inline Core::Vector3 interpolate(const Core::Vector3 &F0,
+                                         const Core::Vector3 &F1,
+                                         const Scalar t) const override
+        {
+            Core::Vector3 result;
+            Core::interpolate(F0, F1, t, result);
+            return result;
+        }
+    };
 
-
-
-} // namespace Asset
+  } // namespace Asset
 } // namespace Ra
 
 #endif // RADIUMENGINE_KEY_TRANSLATION_HPP

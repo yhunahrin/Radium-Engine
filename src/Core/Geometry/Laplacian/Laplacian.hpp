@@ -8,8 +8,8 @@
 #include <Core/Geometry/Adjacency/Adjacency.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Geometry {
+  namespace Core {
+    namespace Geometry {
 
 /**
 * For further reading on how to compute the Laplacian over a triangle mesh
@@ -39,7 +39,7 @@ namespace Geometry {
 // Defining the LaplacianMatrix as the sparse matrix such that:
 //      L = f( D, A )
 // where f( D, A ) is a function taking in input a DegreeMatrix and an AdjacencyMatrix
-typedef Sparse LaplacianMatrix;
+      typedef Sparse LaplacianMatrix;
 
 
 
@@ -55,9 +55,9 @@ typedef Sparse LaplacianMatrix;
 * where L could/should be a negative semi-definite matrix.
 */
 /// WARNING; FOR COMPUTING THE POSITIVE SEMI-DEFINITE COTANGENT WEIGHT LAPLACIAN FASTER USE cotangentWeightLaplacian
-LaplacianMatrix RA_CORE_API standardLaplacian( const DegreeMatrix& D, const AdjacencyMatrix& A, const bool POSITIVE_SEMI_DEFINITE = true );
-
-
+      LaplacianMatrix RA_CORE_API standardLaplacian(const DegreeMatrix &D,
+                                                    const AdjacencyMatrix &A,
+                                                    const bool POSITIVE_SEMI_DEFINITE = true);
 
 /*
 * Return the LaplacianMatrix from the given matrices D and A.
@@ -66,9 +66,7 @@ LaplacianMatrix RA_CORE_API standardLaplacian( const DegreeMatrix& D, const Adja
 *       L = I - D^-1/2 A D^-1/2
 * where I is the identity matrix.
 */
-LaplacianMatrix RA_CORE_API symmetricNormalizedLaplacian( const DegreeMatrix& D, const AdjacencyMatrix& A );
-
-
+      LaplacianMatrix RA_CORE_API symmetricNormalizedLaplacian(const DegreeMatrix &D, const AdjacencyMatrix &A);
 
 /*
 * Return the LaplacianMatrix from the given matrices D and A.
@@ -77,7 +75,7 @@ LaplacianMatrix RA_CORE_API symmetricNormalizedLaplacian( const DegreeMatrix& D,
 *       L = I - D^-1 A
 * where I is the identity matrix.
 */
-LaplacianMatrix RA_CORE_API randomWalkNormalizedLaplacian( const DegreeMatrix& D, const AdjacencyMatrix& A );
+      LaplacianMatrix RA_CORE_API randomWalkNormalizedLaplacian(const DegreeMatrix &D, const AdjacencyMatrix &A);
 
 
 
@@ -90,7 +88,7 @@ LaplacianMatrix RA_CORE_API randomWalkNormalizedLaplacian( const DegreeMatrix& D
 * Eurographics 2004
 */
 /// WARNING: THE IMPLEMENTATION COULD BE WRONG
-LaplacianMatrix RA_CORE_API powerLaplacian( const LaplacianMatrix& L, const uint k );
+      LaplacianMatrix RA_CORE_API powerLaplacian(const LaplacianMatrix &L, const uint k);
 
 
 
@@ -104,7 +102,8 @@ LaplacianMatrix RA_CORE_API powerLaplacian( const LaplacianMatrix& L, const uint
 * and L could/should be a positive semi-definite matrix.
 */
 /// WARNING: THIS IMPLEMENTATION IS FASTER THAN DOING L = D - A.
-LaplacianMatrix RA_CORE_API cotangentWeightLaplacian( const VectorArray< Vector3 >& p, const VectorArray< Triangle >& T );
+      LaplacianMatrix RA_CORE_API cotangentWeightLaplacian(const VectorArray<Vector3> &p,
+                                                           const VectorArray<Triangle> &T);
 
 
 
@@ -119,9 +118,7 @@ LaplacianMatrix RA_CORE_API cotangentWeightLaplacian( const VectorArray< Vector3
 *       L = sum( ( v - p_j ) )
 */
 /// WARNING: THE IMPLEMENTATION COULD BE WRONG
-Vector3 RA_CORE_API uniformLaplacian( const Vector3& v, const VectorArray< Vector3 >& p );
-
-
+      Vector3 RA_CORE_API uniformLaplacian(const Vector3 &v, const VectorArray<Vector3> &p);
 
 /*
 * Return the Laplacian vector for the given point v and its one-ring.
@@ -130,12 +127,10 @@ Vector3 RA_CORE_API uniformLaplacian( const Vector3& v, const VectorArray< Vecto
 *       L = 0.5 * sum( ( cot( alpha_vj ) + cot( beta_vj ) ) * ( v - p_j ) )
 * where alpha_ij and beta_ij are the angles opposite the edge { v, p_j }
 */
-Vector3 RA_CORE_API cotangentWeightLaplacian( const Vector3& v, const VectorArray< Vector3 >& p );
+      Vector3 RA_CORE_API cotangentWeightLaplacian(const Vector3 &v, const VectorArray<Vector3> &p);
 
-
-
-}
-}
+    }
+  }
 }
 
 #endif // LAPLACIAN_DEFINITION

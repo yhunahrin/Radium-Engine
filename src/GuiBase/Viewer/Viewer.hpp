@@ -19,237 +19,230 @@
 class QOpenGLContext;
 class QSurfaceFormat;
 
-namespace Ra
-{
-    namespace Core
-    {
-        struct KeyEvent;
-        struct MouseEvent;
-    }
+namespace Ra {
+  namespace Core {
+    struct KeyEvent;
+    struct MouseEvent;
+  }
 }
 
-namespace Ra
-{
-    namespace Engine
-    {
-        class Renderer;
-    }
+namespace Ra {
+  namespace Engine {
+    class Renderer;
+  }
 }
 
-namespace Ra
-{
-    namespace Gui
-    {
-        class CameraInterface;
-        class GizmoManager;
-    }
+namespace Ra {
+  namespace Gui {
+    class CameraInterface;
+    class GizmoManager;
+  }
 }
 
-namespace Ra
-{
-    namespace Gui
+namespace Ra {
+  namespace Gui {
+
+    // FIXME (Charly) : Which way do we want to be able to change renderers ?
+    //                  Can it be done during runtime ? Must it be at startup ? ...
+    //                  For now, default ForwardRenderer is used.
+
+    /// The Viewer is the main display class. It could be used as an independant window or
+    /// can be set as a central widget on a more complex gui by using the adapter fro QWindow to QWidget
+    /// To do that, the following code could be used :
+    /// \code{.cpp}
+    ///     m_viewer = new Ra::Gui::Viewer();
+    ///     QWidget * viewerwidget = QWidget::createWindowContainer(m_viewer);
+    ///     setCentralWidget(viewerwidget);
+    /// \endcode
+    /// Whatever its usage (QWindow or QWidget) the Viewer has the same funtionalities.
+    /// Its acts as a bridge between the interface, the engine and the renderer
+    /// Among its responsibilities are :
+    /// * Owning the renderer and camera, and managing their lifetime.
+    /// * setting up the renderer and camera by keeping it informed of interfaces changes
+    ///  (e.g. resize).
+    /// * catching user interaction (mouse clicks) at the lowest level and forward it to
+    /// the camera and the rest of the application
+    /// * Expose the asynchronous rendering interface
+    class RA_GUIBASE_API Viewer : public QWindow
     {
+    Q_OBJECT
 
-        // FIXME (Charly) : Which way do we want to be able to change renderers ?
-        //                  Can it be done during runtime ? Must it be at startup ? ...
-        //                  For now, default ForwardRenderer is used.
+    public:
+        /// Constructor
+        explicit Viewer(QScreen *screen = nullptr);
 
-        /// The Viewer is the main display class. It could be used as an independant window or
-        /// can be set as a central widget on a more complex gui by using the adapter fro QWindow to QWidget
-        /// To do that, the following code could be used :
-        /// \code{.cpp}
-        ///     m_viewer = new Ra::Gui::Viewer();
-        ///     QWidget * viewerwidget = QWidget::createWindowContainer(m_viewer);
-        ///     setCentralWidget(viewerwidget);
-        /// \endcode
-        /// Whatever its usage (QWindow or QWidget) the Viewer has the same funtionalities.
-        /// Its acts as a bridge between the interface, the engine and the renderer
-        /// Among its responsibilities are :
-        /// * Owning the renderer and camera, and managing their lifetime.
-        /// * setting up the renderer and camera by keeping it informed of interfaces changes
-        ///  (e.g. resize).
-        /// * catching user interaction (mouse clicks) at the lowest level and forward it to
-        /// the camera and the rest of the application
-        /// * Expose the asynchronous rendering interface
-        class RA_GUIBASE_API Viewer : public QWindow
+        /// Destructor
+        virtual ~Viewer();
+
+        /// create gizmos
+        void createGizmoManager();
+        //
+        // Accessors
+        //
+
+        QOpenGLContext *getContext() const
         {
-            Q_OBJECT
+            return m_context.get();
+        }
 
-        public:
-            /// Constructor
-            explicit Viewer( QScreen * screen = nullptr );
+        /// Access to camera interface.
+        CameraInterface *getCameraInterface();
 
-            /// Destructor
-            virtual ~Viewer();
+        /// Access to gizmo manager
+        GizmoManager *getGizmoManager();
 
-            /// create gizmos
-            void createGizmoManager();
-            //
-            // Accessors
-            //
+        /// Read-only access to renderer
+        const Engine::Renderer *getRenderer() const;
 
-            QOpenGLContext * getContext() const {
-                return m_context.get();
-            }
+        /// Read-write access to renderer
+        Engine::Renderer *getRenderer();
 
-            /// Access to camera interface.
-            CameraInterface* getCameraInterface();
+        /// Access to the feature picking manager
+        FeaturePickingManager *getFeaturePickingManager();
 
-            /// Access to gizmo manager
-            GizmoManager* getGizmoManager();
+        //
+        // Rendering management
+        //
 
-            /// Read-only access to renderer
-            const Engine::Renderer* getRenderer() const;
+        /// Start rendering (potentially asynchronously in a separate thread)
+        void startRendering(const Scalar dt);
 
-            /// Read-write access to renderer
-            Engine::Renderer* getRenderer();
+        /// Blocks until rendering is finished.
+        void waitForRendering();
 
-            /// Access to the feature picking manager
-            FeaturePickingManager* getFeaturePickingManager();
+        //
+        // Misc functions
+        //
 
-            //
-            // Rendering management
-            //
+        /// Load data from a file.
+        void handleFileLoading(const std::string &file);
 
-            /// Start rendering (potentially asynchronously in a separate thread)
-            void startRendering( const Scalar dt );
+        /// Load data from a FileData.
+        void handleFileLoading(const Ra::Asset::FileData &filedata);
 
-            /// Blocks until rendering is finished.
-            void waitForRendering();
+        /// Emits signals corresponding to picking requests.
+        void processPicking();
 
-            //
-            // Misc functions
-            //
+        /// Moves the camera so that the whole scene is visible.
+        void fitCameraToScene(const Core::Aabb &sceneAabb);
 
-            /// Load data from a file.
-            void handleFileLoading( const std::string& file );
+        /// Returns the names of the different registred renderers.
+        std::vector<std::string> getRenderersName() const;
 
-            /// Load data from a FileData.
-            void handleFileLoading( const Ra::Asset::FileData &filedata );
+        /// Write the current frame as an image. Supports either BMP or PNG file names.
+        void grabFrame(const std::string &filename);
 
-            /// Emits signals corresponding to picking requests.
-            void processPicking();
+        void enableDebug();
+    signals:
+        void glInitialized();               //! Emitted when GL context is ready. We except call to addRenderer here
+        void rendererReady();               //! Emitted when the rendered is correctly initialized
+        void leftClickPicking(int id);   //! Emitted when the result of a left click picking is known
+        void rightClickPicking(int id);   //! Emitted when the resut of a right click picking is known
 
-            /// Moves the camera so that the whole scene is visible.
-            void fitCameraToScene( const Core::Aabb& sceneAabb );
+    public slots:
+        /// Tell the renderer to reload all shaders.
+        void reloadShaders();
 
-            /// Returns the names of the different registred renderers.
-            std::vector<std::string> getRenderersName() const;
+        /// Set the final display texture
+        void displayTexture(const QString &tex);
 
-            /// Write the current frame as an image. Supports either BMP or PNG file names.
-            void grabFrame( const std::string& filename );
+        /// Set the renderer
+        bool changeRenderer(int index);
 
-            void enableDebug();
-        signals:
-            void glInitialized();               //! Emitted when GL context is ready. We except call to addRenderer here
-            void rendererReady();               //! Emitted when the rendered is correctly initialized
-            void leftClickPicking ( int id );   //! Emitted when the result of a left click picking is known
-            void rightClickPicking( int id );   //! Emitted when the resut of a right click picking is known
+        /// Toggle the post-process effetcs
+        void enablePostProcess(int enabled);
 
-        public slots:
-            /// Tell the renderer to reload all shaders.
-            void reloadShaders();
+        /// Toggle the debug drawing
+        void enableDebugDraw(int enabled);
 
-            /// Set the final display texture
-            void displayTexture( const QString& tex );
+        /// Resets the camaera to initial values
+        void resetCamera();
 
-            /// Set the renderer
-            bool changeRenderer( int index );
+        /** Add a renderer and return its index. Need to be called when catching
+         * \param e : unique_ptr to your own renderer
+         * \return index of the newly added renderer
+         * \code
+         * int rendererId = addRenderer(new MyRenderer(width(), height()));
+         * changeRenderer(rendererId);
+         * getRenderer()->initialize();
+         * auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
+         * getRenderer()->addLight( light );
+         * m_camera->attachLight( light );
+         * \endcode
+         */
+        int addRenderer(std::shared_ptr<Engine::Renderer> e);
 
-            /// Toggle the post-process effetcs
-            void enablePostProcess(int enabled);
+    private slots:
+        /// These slots are connected to the base class signals to properly handle
+        /// concurrent access to the renderer.
+        void onAboutToCompose();
+        void onAboutToResize();
+        void onFrameSwapped();
+        void onResized();
 
-            /// Toggle the debug drawing
-            void enableDebugDraw(int enabled);
+    protected:
+        /// Initialize renderer internal state + configure lights.
+        void intializeRenderer(Engine::Renderer *renderer);
 
-            /// Resets the camaera to initial values
-            void resetCamera();
+        //
+        // OpenGL primitives
+        // Not herited, defined here in the same way QOpenGLWidget define them.
+        //
 
-            /** Add a renderer and return its index. Need to be called when catching
-             * \param e : unique_ptr to your own renderer
-             * \return index of the newly added renderer
-             * \code
-             * int rendererId = addRenderer(new MyRenderer(width(), height()));
-             * changeRenderer(rendererId);
-             * getRenderer()->initialize();
-             * auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
-             * getRenderer()->addLight( light );
-             * m_camera->attachLight( light );
-             * \endcode
-             */
-            int addRenderer(std::shared_ptr<Engine::Renderer> e);
+        /// Initialize openGL. Called on by the first "show" call to the main window.
+        /// \warning This function is NOT reentrant, and may behave incorrectly
+        /// if called at the same time than #intializeRenderer
+        virtual void initializeGL();
 
-        private slots:
-            /// These slots are connected to the base class signals to properly handle
-            /// concurrent access to the renderer.
-            void onAboutToCompose();
-            void onAboutToResize();
-            void onFrameSwapped();
-            void onResized();
+        /// Resize the view port and the camera. Called by the resize event.
+        virtual void resizeGL(int width, int height);
 
-        protected:
-            /// Initialize renderer internal state + configure lights.
-            void intializeRenderer(Engine::Renderer* renderer);
+        //
+        // Qt input events.
+        //
+        void resizeEvent(QResizeEvent *event) override;
 
-            //
-            // OpenGL primitives
-            // Not herited, defined here in the same way QOpenGLWidget define them.
-            //
+        void keyPressEvent(QKeyEvent *event) override;
+        void keyReleaseEvent(QKeyEvent *event) override;
 
-            /// Initialize openGL. Called on by the first "show" call to the main window.
-            /// \warning This function is NOT reentrant, and may behave incorrectly
-            /// if called at the same time than #intializeRenderer
-            virtual void initializeGL();
+        /// We intercept the mouse events in this widget to get the coordinates of the mouse
+        /// in screen space.
+        void mousePressEvent(QMouseEvent *event) override;
+        void mouseReleaseEvent(QMouseEvent *event) override;
+        void mouseMoveEvent(QMouseEvent *event) override;
+        void wheelEvent(QWheelEvent *event) override;
 
-            /// Resize the view port and the camera. Called by the resize event.
-            virtual void resizeGL( int width, int height );
+        void showEvent(QShowEvent *ev) override;
+        void exposeEvent(QExposeEvent *ev) override;
 
-            //
-            // Qt input events.
-            //
-            void resizeEvent(QResizeEvent * event) override;
+    public:
+        Scalar m_dt;
 
-            void keyPressEvent( QKeyEvent* event ) override;
-            void keyReleaseEvent( QKeyEvent* event ) override;
+    protected:
+        // OpenglContext used with this widget
+        std::unique_ptr<QOpenGLContext> m_context;
 
-            /// We intercept the mouse events in this widget to get the coordinates of the mouse
-            /// in screen space.
-            void mousePressEvent( QMouseEvent* event ) override;
-            void mouseReleaseEvent( QMouseEvent* event ) override;
-            void mouseMoveEvent( QMouseEvent* event ) override;
-            void wheelEvent( QWheelEvent* event ) override;
+        /// Owning pointer to the renderers.
+        std::vector<std::shared_ptr<Engine::Renderer>> m_renderers;
+        Engine::Renderer *m_currentRenderer;
 
-            void showEvent(QShowEvent *ev) override;
-            void exposeEvent(QExposeEvent *ev) override;
+        /// Owning Pointer to the feature picking manager.
+        FeaturePickingManager *m_featurePickingManager;
 
-        public:
-            Scalar m_dt;
+        /// Owning pointer to the camera.
+        std::unique_ptr<CameraInterface> m_camera;
 
-        protected:
-            // OpenglContext used with this widget
-            std::unique_ptr<QOpenGLContext> m_context;
+        /// Owning (QObject child) pointer to gizmo manager.
+        GizmoManager *m_gizmoManager;
 
-            /// Owning pointer to the renderers.
-            std::vector<std::shared_ptr<Engine::Renderer>> m_renderers;
-            Engine::Renderer* m_currentRenderer;
+        /// Thread in which rendering is done.
+        QThread *m_renderThread; // We have to use a QThread for MT rendering
 
-            /// Owning Pointer to the feature picking manager.
-            FeaturePickingManager* m_featurePickingManager;
+        /// GL initialization status
+        std::atomic_bool m_glInitStatus;
+    };
 
-            /// Owning pointer to the camera.
-            std::unique_ptr<CameraInterface> m_camera;
-
-            /// Owning (QObject child) pointer to gizmo manager.
-            GizmoManager* m_gizmoManager;
-
-            /// Thread in which rendering is done.
-            QThread* m_renderThread; // We have to use a QThread for MT rendering
-
-            /// GL initialization status
-            std::atomic_bool m_glInitStatus;
-        };
-
-    } // namespace Gui
+  } // namespace Gui
 } // namespace Ra
 
 #endif // RADIUMENGINE_VIEWER_HPP

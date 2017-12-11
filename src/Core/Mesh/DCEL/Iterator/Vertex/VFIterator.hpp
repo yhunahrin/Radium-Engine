@@ -4,25 +4,26 @@
 #include <Core/Mesh/DCEL/Iterator/Vertex/VertexIterator.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
-class [[deprecated]] VFIterator : public VIterator< Face > {
-public:
-    /// CONSTRUCTOR
-    VFIterator( Vertex_ptr& v );
-    VFIterator( const VFIterator& it ) = default;
+    class [[deprecated]] VFIterator : public VIterator<Face>
+    {
+    public:
+        /// CONSTRUCTOR
+        VFIterator(Vertex_ptr &v);
+        VFIterator(const VFIterator &it) = default;
 
-    /// DESTRUCTOR
-    ~VFIterator();
+        /// DESTRUCTOR
+        ~VFIterator();
 
-    /// LIST
-    inline FaceList list() const override;
+        /// LIST
+        inline FaceList list() const override;
 
-    /// OPERATOR
-    inline Face* operator->() const override;
-};
+        /// OPERATOR
+        inline Face *operator->() const override;
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #include <Core/Mesh/DCEL/Iterator/Vertex/VFIterator.inl>

@@ -5,19 +5,17 @@
 #include <Core/Math/LinearAlgebra.hpp>
 
 namespace Ra {
-namespace Core {
-namespace Algorithm {
+  namespace Core {
+    namespace Algorithm {
 
 // Defining a vector containing true for the indices different than 0
-typedef std::vector< bool > BitSet;
+      typedef std::vector<bool> BitSet;
 
 // Defining a vector containing the indices of the sources
-typedef std::vector< uint >  Source;
+      typedef std::vector<uint> Source;
 
 // Defining the vector containing the value of the sources
-typedef Sparse Delta;
-
-
+      typedef Sparse Delta;
 
 /*
 * Return the Delta vector.
@@ -30,9 +28,7 @@ typedef Sparse Delta;
 * [Keenan Crane, Clarisse Weischedel, Max Wardetzky ]
 * TOG 2013
 */
-Delta delta( const BitSet& source, const Scalar& default_value = 1.0 );
-
-
+      Delta delta(const BitSet &source, const Scalar &default_value = 1.0);
 
 /*
 * Return the Delta vector.
@@ -45,9 +41,7 @@ Delta delta( const BitSet& source, const Scalar& default_value = 1.0 );
 * [Keenan Crane, Clarisse Weischedel, Max Wardetzky ]
 * TOG 2013
 */
-void delta( const BitSet& source, Delta& u, const Scalar& default_value = 1.0 );
-
-
+      void delta(const BitSet &source, Delta &u, const Scalar &default_value = 1.0);
 
 /*
 * Return the Delta vector.
@@ -60,9 +54,7 @@ void delta( const BitSet& source, Delta& u, const Scalar& default_value = 1.0 );
 * [Keenan Crane, Clarisse Weischedel, Max Wardetzky ]
 * TOG 2013
 */
-Delta delta( const Source& source, const uint size, const Scalar& default_value = 1.0 );
-
-
+      Delta delta(const Source &source, const uint size, const Scalar &default_value = 1.0);
 
 /*
 * Return the Delta vector.
@@ -75,9 +67,7 @@ Delta delta( const Source& source, const uint size, const Scalar& default_value 
 * [Keenan Crane, Clarisse Weischedel, Max Wardetzky ]
 * TOG 2013
 */
-void delta( const Source& source, const uint size, Delta& u, const Scalar& default_value = 1.0 );
-
-
+      void delta(const Source &source, const uint size, Delta &u, const Scalar &default_value = 1.0);
 
 /*
 * Return a BitSet from a given Delta.
@@ -85,10 +75,10 @@ void delta( const Source& source, const uint size, Delta& u, const Scalar& defau
 *       bit_i = false   , if delta( i )  = 0
 *       bit_i = true    , if delta( i ) != 0
 */
-void bitset( const Delta& u, BitSet& bit );
+      void bitset(const Delta &u, BitSet &bit);
 
-}
-}
+    }
+  }
 }
 
 #endif //DELTA_DEFINITION

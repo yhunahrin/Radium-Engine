@@ -7,7 +7,7 @@
 #include <Core/Mesh/DCEL/Definition.hpp>
 
 namespace Ra {
-namespace Core {
+  namespace Core {
 
 /**
 * Class Vertex
@@ -21,44 +21,45 @@ namespace Core {
 *
 */
 
-class [[deprecated]] RA_CORE_API Vertex : public IndexedObject {
-public:
-    /// CONSTRUCTOR
+    class [[deprecated]] RA_CORE_API Vertex : public IndexedObject
+    {
+    public:
+        /// CONSTRUCTOR
 
-    Vertex( const Index& index = Index::INVALID_IDX() );        // Build a vertex with a given index
-    Vertex( const HalfEdge_ptr& he );                           // Build a vertex having he as its halfedge
-    Vertex( const Vector3&      p,
-            const Vector3&      n,
-            const HalfEdge_ptr& he    = nullptr,
-            const Index&        index = Index::INVALID_IDX() ); // Build a complete vertex
-    Vertex( const Vertex& v ) = default;                        // Copy constructor
+        Vertex(const Index &index = Index::INVALID_IDX());        // Build a vertex with a given index
+        Vertex(const HalfEdge_ptr &he);                           // Build a vertex having he as its halfedge
+        Vertex(const Vector3 &p,
+               const Vector3 &n,
+               const HalfEdge_ptr &he = nullptr,
+               const Index &index = Index::INVALID_IDX()); // Build a complete vertex
+        Vertex(const Vertex &v) = default;                        // Copy constructor
 
-    /// DESTRUCTOR
-    ~Vertex();
+        /// DESTRUCTOR
+        ~Vertex();
 
-    /// POINT
-    inline Vector3  P() const;                  // Return the position of the vertex in space
-    inline Vector3& P();                        // Return the position of the vertex in space
-    inline void     setP( const Vector3& p );   // Set the position of the vertex to p
+        /// POINT
+        inline Vector3 P() const;                  // Return the position of the vertex in space
+        inline Vector3 &P();                        // Return the position of the vertex in space
+        inline void setP(const Vector3 &p);   // Set the position of the vertex to p
 
-    /// NORMAL
-    inline Vector3  N() const;                  // Return the normal of the vertex
-    inline Vector3& N();                        // Return the normal of the vertex
-    inline void     setN( const Vector3& n );   // Set the normal of the vertex to n
+        /// NORMAL
+        inline Vector3 N() const;                  // Return the normal of the vertex
+        inline Vector3 &N();                        // Return the normal of the vertex
+        inline void setN(const Vector3 &n);   // Set the normal of the vertex to n
 
-    /// HALFEDGE
-    inline HalfEdge_ptr  HE() const;                      // Return the reference to the vertex halfedge
-    inline HalfEdge_ptr& HE();                            // Return the reference to the vertex halfedge
-    inline void          setHE( const HalfEdge_ptr& he ); // Set the halfedge of the vertex to he
+        /// HALFEDGE
+        inline HalfEdge_ptr HE() const;                      // Return the reference to the vertex halfedge
+        inline HalfEdge_ptr &HE();                            // Return the reference to the vertex halfedge
+        inline void setHE(const HalfEdge_ptr &he); // Set the halfedge of the vertex to he
 
-protected:
-    /// VARIABLE
-    Vector3      m_p;   // Vertex position
-    Vector3      m_n;   // Vertex normal
-    HalfEdge_ptr m_he;  // Reference to the halgedge
-};
+    protected:
+        /// VARIABLE
+        Vector3 m_p;   // Vertex position
+        Vector3 m_n;   // Vertex normal
+        HalfEdge_ptr m_he;  // Reference to the halgedge
+    };
 
-} // namespace Core
+  } // namespace Core
 } // namespace Ra
 
 #include <Core/Mesh/DCEL/Vertex.inl>

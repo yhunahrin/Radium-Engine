@@ -64,7 +64,7 @@
 #       error unsupported arch
 #   endif
 #else
-    #error unsupported OS
+#error unsupported OS
 #endif
 
 // Todo : endianness, pointer sixe
@@ -142,9 +142,9 @@
 // Preprocessor concatenation can be tricky if arguments are macros unless
 // "recursively" calling concatenation through chained macros which forces
 // the preprocessor to run another pass.
-#define CONCATENATE(XX,YY) CONCATENATE2(XX,YY)
-#define CONCATENATE2(XX,YY) CONCATENATE3(XX,YY)
-#define CONCATENATE3(XX,YY) XX##YY
+#define CONCATENATE(XX, YY) CONCATENATE2(XX,YY)
+#define CONCATENATE2(XX, YY) CONCATENATE3(XX,YY)
+#define CONCATENATE3(XX, YY) XX##YY
 
 // Stringification has a similar problem.
 #ifdef __STRING
@@ -162,11 +162,11 @@
 // This macro will trigger a breakpoint where it is placed. With MSVC a dialog
 // will ask you if you want to launch the debugger.
 #if defined (COMPILER_GCC) || defined (COMPILER_CLANG)
-    #define BREAKPOINT(ARG) asm volatile ("int $3")
+#define BREAKPOINT(ARG) asm volatile ("int $3")
 #elif defined (COMPILER_MSVC)
-    #define BREAKPOINT(ARG) __debugbreak()
+#define BREAKPOINT(ARG) __debugbreak()
 #else
-    #error unsupported platform
+#error unsupported platform
 #endif
 
 // Platform-independent macros
@@ -214,7 +214,7 @@
 #elif defined(COMPILER_GCC) || defined (COMPILER_CLANG) // ------- GCC and CLang
 
 #   define ALIGN_OF(X) __alignof__(X)
-#   define ALIGNED(DECL,ALIGN) DECL __attribute__((aligned(ALIGN)))
+#   define ALIGNED(DECL, ALIGN) DECL __attribute__((aligned(ALIGN)))
 
 #   define UNLIKELY(IFEXPR) __builtin_expect(bool(IFEXPR),0)
 #   define LIKELY(IFEXPR)   __builtin_expect(bool(IFEXPR),1)
@@ -249,10 +249,10 @@
 // Useful typedefs
 // ----------------------------------------------------------------------------
 
-typedef unsigned char   uchar;
-typedef unsigned short  ushort;
-typedef unsigned int    uint;
-typedef unsigned long   ulong;
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
 // Use this to use double precision for all maths
 // #define CORE_USE_DOUBLE
@@ -266,9 +266,8 @@ typedef double Scalar;
 // Debug tools
 // ----------------------------------------------------------------------------
 
-namespace compile_time_utils
-{
-template<int x> struct size;
+namespace compile_time_utils {
+  template<int x> struct size;
 }
 // This macro will print the size of a type in a compiler error
 // Note : there is a way to print it as a warning instead on StackOverflow
@@ -280,7 +279,7 @@ template<int x> struct size;
 # define ON_ASSERT( CODE ) CODE
 #else
 # undef CORE_ENABLE_ASSERT
-# define ON_ASSERT( CODE ) /* nothing */
+# define ON_ASSERT(CODE) /* nothing */
 #endif
 
 
@@ -290,7 +289,7 @@ template<int x> struct size;
 // the description of the error, and a format string.
 // (arguments to printf are, in order :
 // filename (%s), line (%i), expr(%s), desc (%s)
-#define REPORT_FAIL( EXP, DESC, FMT )   \
+#define REPORT_FAIL(EXP, DESC, FMT)   \
     MACRO_START                         \
     std::stringstream stream;           \
     stream << DESC;                     \
@@ -323,12 +322,12 @@ MACRO_END
     } else{}                       \
     MACRO_END
 #else
-#define CORE_ASSERT( EXP, DESC ) // nothing
-#define CORE_WARN_IF( EXP, DESC ) // nothing
+#define CORE_ASSERT(EXP, DESC) // nothing
+#define CORE_WARN_IF(EXP, DESC) // nothing
 #endif
 
 // Print an error and break, even in release.
-#define CORE_ERROR( DESC )                     \
+#define CORE_ERROR(DESC)                     \
     MACRO_START                                \
     REPORT_FAIL(ERROR, DESC, "%s:%i %s: %s\n");\
     BREAKPOINT(0);                             \
@@ -336,7 +335,7 @@ MACRO_END
     MACRO_END
 
 // Print an error and break if condition is not met, even in release
-#define CORE_ERROR_IF( EXP, DESC ) \
+#define CORE_ERROR_IF(EXP, DESC) \
     MACRO_START                    \
     if( UNLIKELY(!(EXP))) {        \
         REPORT_FAIL(EXP, DESC, "%s:%i ERROR `%s`: %s\n");\
@@ -357,18 +356,18 @@ MACRO_END
 
 #if defined(COMPILER_GCC)
 // Triggered by the typedef in static assert.
-    #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
 #if defined(COMPILER_MSVC)
-    #pragma warning(disable: 4244) // Conversion from double to float loses data.
-    #pragma warning(disable: 4251) // stl dllexports
-    #pragma warning(disable: 4267) // conversion from size_t to uint
-    #pragma warning(disable: 4577) // noexcept used with no exception handling mode
-    #pragma warning(disable: 4838) // conversion from enum to uint.
-    #pragma warning(disable: 4996) // sprintf unsafe
-    #pragma warning(disable: 4503) // Truncated decorated name
-    #define NOMINMAX
-    #include <windows.h>
+#pragma warning(disable: 4244) // Conversion from double to float loses data.
+#pragma warning(disable: 4251) // stl dllexports
+#pragma warning(disable: 4267) // conversion from size_t to uint
+#pragma warning(disable: 4577) // noexcept used with no exception handling mode
+#pragma warning(disable: 4838) // conversion from enum to uint.
+#pragma warning(disable: 4996) // sprintf unsafe
+#pragma warning(disable: 4503) // Truncated decorated name
+#define NOMINMAX
+#include <windows.h>
 #endif
 
 #define eigen_assert(XXX) CORE_ASSERT(XXX, "Eigen Assert");

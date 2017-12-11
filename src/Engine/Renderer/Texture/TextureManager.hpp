@@ -9,71 +9,67 @@
 
 #include <Engine/Renderer/OpenGL/OpenGL.hpp>
 
-namespace Ra
-{
-    namespace Engine
-    {
-        class Texture;
-    }
+namespace Ra {
+  namespace Engine {
+    class Texture;
+  }
 }
 
-namespace Ra
-{
-    namespace Engine
+namespace Ra {
+  namespace Engine {
+    struct TextureData
     {
-        struct TextureData
-        {
-            std::string name;
-            int width;
-            int height;
+        std::string name;
+        int width;
+        int height;
 
-            GLenum format = GL_RGB;
-            GLenum internalFormat = GL_RGB;
-            GLenum type = GL_UNSIGNED_BYTE;
+        GLenum format = GL_RGB;
+        GLenum internalFormat = GL_RGB;
+        GLenum type = GL_UNSIGNED_BYTE;
 
-            GLenum wrapS = GL_CLAMP_TO_EDGE;
-            GLenum wrapT = GL_CLAMP_TO_EDGE;
-     
-            GLenum minFilter = GL_LINEAR_MIPMAP_LINEAR;
-            GLenum magFilter = GL_LINEAR;
+        GLenum wrapS = GL_CLAMP_TO_EDGE;
+        GLenum wrapT = GL_CLAMP_TO_EDGE;
 
-            void* data = nullptr;
-        };
+        GLenum minFilter = GL_LINEAR_MIPMAP_LINEAR;
+        GLenum magFilter = GL_LINEAR;
 
-        class RA_ENGINE_API TextureManager 
-        {
-            RA_SINGLETON_INTERFACE(TextureManager);
-        private:
-            typedef std::pair<std::string, Texture*> TexturePair;
+        void *data = nullptr;
+    };
 
-        public:
-            TextureData& addTexture( const std::string& name, int width, int height, void* data );
-            Texture* addTexture( const std::string& filename );
-            Texture* getOrLoadTexture( const std::string& filename );
-            Texture* getOrLoadTexture( const TextureData& data );
+    class RA_ENGINE_API TextureManager
+    {
+    RA_SINGLETON_INTERFACE(TextureManager);
+    private:
+        typedef std::pair<std::string, Texture *> TexturePair;
 
-            void deleteTexture( const std::string& filename );
-            void deleteTexture( Texture* texture );
+    public:
+        TextureData &addTexture(const std::string &name, int width, int height, void *data);
+        Texture *addTexture(const std::string &filename);
+        Texture *getOrLoadTexture(const std::string &filename);
+        Texture *getOrLoadTexture(const TextureData &data);
 
-            // Call this method to update given texture
-            void updateTexture( const std::string& texture, void* data );
-            
-            // Called by materials
-            void updateTextures();
+        void deleteTexture(const std::string &filename);
+        void deleteTexture(Texture *texture);
 
-        private:
-            TextureManager();
-            ~TextureManager();
+        // Call this method to update given texture
+        void updateTexture(const std::string &texture, void *data);
 
-        private:
-            std::map<std::string, Texture*> m_textures;
-            std::map<std::string, TextureData> m_pendingTextures;
-            std::map<std::string, void*> m_pendingData;
-            
-            bool m_verbose;
-        };
+        // Called by materials
+        void updateTextures();
 
-    } // namespace Engine
+    private:
+        TextureManager();
+        ~TextureManager();
+
+    private:
+        std::map<std::string, Texture *> m_textures;
+        std::map<std::string, TextureData> m_pendingTextures;
+        std::map<std::string, void *> m_pendingData;
+
+        bool m_verbose;
+    };
+
+  } // namespace Engine
 } // namespace Ra
 
 #endif // RADIUMENGINE_TEXTUREMANAGER_HPP

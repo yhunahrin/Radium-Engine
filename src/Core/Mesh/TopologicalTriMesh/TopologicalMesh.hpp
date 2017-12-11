@@ -9,8 +9,7 @@
 #include <OpenMesh/Core/Mesh/Traits.hh>
 
 namespace Ra {
-namespace Core {
-
+  namespace Core {
 
     //Define an OpenMesh TriMesh structure according to http://openmesh.org/Documentation/OpenMesh-2.1-Documentation/mesh_type.html
     // Attributes define data store on structure.
@@ -22,7 +21,7 @@ namespace Core {
         VertexAttributes(OpenMesh::Attributes::Status | OpenMesh::Attributes::Normal);
         FaceAttributes(OpenMesh::Attributes::Status | OpenMesh::Attributes::Normal);
         EdgeAttributes(OpenMesh::Attributes::Status);
-        HalfedgeAttributes(OpenMesh::Attributes::Status| OpenMesh::Attributes::Normal);
+        HalfedgeAttributes(OpenMesh::Attributes::Status | OpenMesh::Attributes::Normal);
     };
     typedef OpenMesh::TriMesh_ArrayKernelT<TopologicalMeshTraits> RA_CORE_API TopologicalMesh;
 
@@ -30,7 +29,7 @@ namespace Core {
     {
         return Eigen::Map<const Vector3>(vec.begin());
     }
-}
+  }
 }
 
 #endif // TOPOLOGICALMESH_H

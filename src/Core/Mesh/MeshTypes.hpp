@@ -4,21 +4,22 @@
 #include <Core/RaCore.hpp>
 #include <Core/Math/LinearAlgebra.hpp>
 
-namespace Ra
-{
-    namespace Core
+namespace Ra {
+  namespace Core {
+
+    // todo : enclose this in a more specific namespace ?
+    typedef Vector2ui Edge;
+    typedef Vector3ui Triangle;
+
+    typedef uint TriangleIdx;
+    typedef uint VertexIdx;
+    typedef uint HalfEdgeIdx;
+
+    enum
     {
-
-        // todo : enclose this in a more specific namespace ?
-        typedef Vector2ui Edge;
-        typedef Vector3ui Triangle;
-
-        typedef uint TriangleIdx;
-        typedef uint VertexIdx;
-        typedef uint HalfEdgeIdx;
-
-        enum { InvalidIdx = uint( -1 ) };
-    }
+        InvalidIdx = uint(-1)
+    };
+  }
 }
 
 #endif //RADIUMENGINE_MESHTYPES_HPP
