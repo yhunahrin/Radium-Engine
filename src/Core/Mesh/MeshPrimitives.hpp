@@ -32,6 +32,12 @@ namespace Ra {
       /// Create an axis-aligned cubic mesh
       RA_CORE_API TriangleMesh makeBox(const Aabb &aabb);
 
+      /// Create an axis-aligned cubic mesh with the given half extents, centered on the origin.
+      RA_CORE_API TriangleMesh makeSharpBox(const Vector3 &halfExts = Vector3(0.5, 0.5, 0.5));
+
+      /// Create an axis-aligned cubic mesh
+      RA_CORE_API TriangleMesh makeSharpBox(const Aabb &aabb);
+
       /// Create a parametric spherical mesh of given radius. Template parameters set the resolution.
       template<uint U = 16, uint V = U>
       TriangleMesh makeParametricSphere(Scalar radius = 1.0);

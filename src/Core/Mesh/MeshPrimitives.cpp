@@ -62,6 +62,71 @@ namespace Ra {
 
       }
 
+      TriangleMesh makeSharpBox(const Vector3 &halfExts)
+      {
+          Aabb aabb(-halfExts, halfExts);
+          return makeSharpBox(aabb);
+      }
+
+      TriangleMesh makeSharpBox(const Aabb &aabb)
+      {
+          TriangleMesh result;
+          result.m_vertices =
+              {
+                  // Floor Face
+                  aabb.corner(Aabb::BottomLeftFloor),
+                  aabb.corner(Aabb::TopLeftFloor),
+                  aabb.corner(Aabb::TopRightFloor),
+                  aabb.corner(Aabb::BottomRightFloor),
+
+                  // Ceil Face
+                  aabb.corner(Aabb::BottomLeftCeil),
+                  aabb.corner(Aabb::BottomRightCeil),
+                  aabb.corner(Aabb::TopRightCeil),
+                  aabb.corner(Aabb::TopLeftCeil),
+
+                  // Left Face
+                  aabb.corner(Aabb::TopLeftFloor),
+                  aabb.corner(Aabb::BottomLeftFloor),
+                  aabb.corner(Aabb::BottomLeftCeil),
+                  aabb.corner(Aabb::TopLeftCeil),
+
+                  // Right Face
+                  aabb.corner(Aabb::BottomRightFloor),
+                  aabb.corner(Aabb::TopRightFloor),
+                  aabb.corner(Aabb::TopRightCeil),
+                  aabb.corner(Aabb::BottomRightCeil),
+
+                  // Bottom Face
+                  aabb.corner(Aabb::BottomLeftFloor),
+                  aabb.corner(Aabb::BottomRightFloor),
+                  aabb.corner(Aabb::BottomRightCeil),
+                  aabb.corner(Aabb::BottomLeftCeil),
+
+                  // Top face
+                  aabb.corner(Aabb::TopLeftFloor),
+                  aabb.corner(Aabb::TopLeftCeil),
+                  aabb.corner(Aabb::TopRightCeil),
+                  aabb.corner(Aabb::TopRightFloor)
+
+              };
+          result.m_triangles =
+              {
+
+                  Triangle(0, 1, 2), Triangle(0, 2, 3),   // Floor
+                  Triangle(4, 5, 6), Triangle(4, 6, 7),   // Ceil
+                  Triangle(8, 9, 10), Triangle(8, 10, 11),   // Left
+                  Triangle(12, 13, 14), Triangle(12, 14, 15),   // Right
+                  Triangle(16, 17, 18), Triangle(16, 18, 19),   // Bottom
+                  Triangle(20, 21, 22), Triangle(20, 22, 23)    // Top
+              };
+
+          getAutoNormals(result, result.m_normals);
+          checkConsistency(result);
+          return result;
+
+      }
+
       TriangleMesh makeGeodesicSphere(Scalar radius, uint numSubdiv)
       {
           TriangleMesh result;
@@ -134,13 +199,13 @@ namespace Ra {
               result.m_triangles = newTris;
           }
 
-          // Project vertices on the sphere
+
+          // FIXED : Compute the good normal as vertices are not uniques
+          // getAutoNormals(result, result.m_normals);
           for (auto &vertex : result.m_vertices)
           {
-              const Scalar r = radius / vertex.norm();
-              vertex *= r;
+              result.m_normals.push_back( vertex.normalized() );
           }
-          getAutoNormals(result, result.m_normals);
           checkConsistency(result);
           return result;
       }
