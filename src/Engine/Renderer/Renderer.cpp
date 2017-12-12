@@ -75,7 +75,28 @@ namespace Ra
             TextureManager::createInstance();
 
             m_shaderMgr->addShaderProgram("DrawScreen", "Shaders/Basic2D.vert.glsl", "Shaders/DrawScreen.frag.glsl");
-            m_shaderMgr->addShaderProgram("Picking", "Shaders/Picking.vert.glsl", "Shaders/Picking.frag.glsl");
+            m_shaderMgr->addShaderProgram("DrawScreenI", "Shaders/Basic2D.vert.glsl", "Shaders/DrawScreenI.frag.glsl");
+
+            ShaderConfiguration pickingPointsConfig( "PickingPoints" );
+            pickingPointsConfig.addShader(ShaderType_VERTEX  , "Shaders/Picking.vert.glsl");
+            pickingPointsConfig.addShader(ShaderType_GEOMETRY, "Shaders/PickingPoints.geom.glsl");
+            pickingPointsConfig.addShader(ShaderType_FRAGMENT, "Shaders/Picking.frag.glsl");
+            ShaderConfigurationFactory::addConfiguration( pickingPointsConfig );
+            m_pickingShaders[0] = m_shaderMgr->addShaderProgram( pickingPointsConfig );
+
+            ShaderConfiguration pickingLinesConfig( "PickingLines" );
+            pickingLinesConfig.addShader(ShaderType_VERTEX  , "Shaders/Picking.vert.glsl");
+            pickingLinesConfig.addShader(ShaderType_GEOMETRY, "Shaders/PickingLines.geom.glsl");
+            pickingLinesConfig.addShader(ShaderType_FRAGMENT, "Shaders/Picking.frag.glsl");
+            ShaderConfigurationFactory::addConfiguration( pickingLinesConfig );
+            m_pickingShaders[1] = m_shaderMgr->addShaderProgram( pickingLinesConfig );
+
+            ShaderConfiguration pickingTrianglesConfig( "PickingTriangles" );
+            pickingTrianglesConfig.addShader(ShaderType_VERTEX  , "Shaders/Picking.vert.glsl");
+            pickingTrianglesConfig.addShader(ShaderType_GEOMETRY, "Shaders/PickingTriangles.geom.glsl");
+            pickingTrianglesConfig.addShader(ShaderType_FRAGMENT, "Shaders/Picking.frag.glsl");
+            ShaderConfigurationFactory::addConfiguration( pickingTrianglesConfig );
+            m_pickingShaders[2] = m_shaderMgr->addShaderProgram( pickingTrianglesConfig );
 
             m_depthTexture.reset(new Texture("Depth"));
             m_depthTexture->internalFormat = GL_DEPTH_COMPONENT24;
@@ -234,6 +255,89 @@ namespace Ra
             }
         }
 
+        // subroutine to Renderer::splitRenderQueuesForPicking()
+        void Renderer::splitRQ( const std::vector<RenderObjectPtr>& renderQueue,
+                                std::array<std::vector<RenderObjectPtr>,3>& renderQueuePicking )
+        {
+            // clean renderQueuePicking
+            for (uint i=0; i<renderQueuePicking.size(); ++i)
+            {
+                renderQueuePicking[i].clear();
+            }
+            // fill renderQueuePicking from renderQueue
+            for (auto it = renderQueue.begin(); it != renderQueue.end(); ++it)
+            {
+                switch ((*it)->getMesh()->getRenderMode())
+                {
+                case Mesh::RM_POINTS:
+                {
+                    renderQueuePicking[0].push_back( *it );
+                    break;
+                }
+                case Mesh::RM_LINES:
+                case Mesh::RM_LINES_ADJACENCY:
+                case Mesh::RM_LINE_STRIP_ADJACENCY: // fall through
+                {
+                    renderQueuePicking[1].push_back( *it );
+                    break;
+                }
+                case Mesh::RM_TRIANGLES:
+                {
+                    renderQueuePicking[2].push_back( *it );
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+                }
+            }
+        }
+
+        void Renderer::splitRenderQueuesForPicking( const RenderData& renderData )
+        {
+            splitRQ( m_fancyRenderObjects, m_fancyRenderObjectsPicking );
+            splitRQ( m_debugRenderObjects, m_debugRenderObjectsPicking );
+            splitRQ( m_uiRenderObjects   , m_uiRenderObjectsPicking );
+            splitRQ( m_xrayRenderObjects , m_xrayRenderObjectsPicking );
+        }
+
+        // subroutine to Renderer::doPicking()
+        void Renderer::renderForPicking( const RenderData& renderData,
+                                         const std::array<const ShaderProgram*,3>& pickingShaders,
+                                         const std::array<std::vector<RenderObjectPtr>,3>& renderQueuePicking )
+        {
+            for (uint i = 0; i < pickingShaders.size(); ++i)
+            {
+                pickingShaders[i]->bind();
+                pickingShaders[i]->setUniform("eltType", i); // FIXME (Florian): this does not apply!
+                if (i==1)
+                {
+                    pickingShaders[i]->setUniform("lineWidth", 10);
+                }
+
+                for ( const auto& ro : renderQueuePicking[i] )
+                {
+                    if ( ro->isVisible() && ro->isPickable() )
+                    {
+                        int id = ro->idx.getValue();
+                        pickingShaders[i]->setUniform( "objectId", id );
+
+                        Core::Matrix4 M = ro->getTransformAsMatrix();
+                        pickingShaders[i]->setUniform( "transform.proj", renderData.projMatrix );
+                        pickingShaders[i]->setUniform( "transform.view", renderData.viewMatrix );
+                        pickingShaders[i]->setUniform( "transform.model", M );
+
+                        ro->getRenderTechnique()->material->bind( pickingShaders[i] );
+
+                        // render
+                        ro->getMesh()->render();
+                        std::cout << "render for shader " << i << std::endl;
+                    }
+                }
+            }
+        }
+
         void Renderer::doPicking( const RenderData& renderData )
         {
             m_pickingResults.reserve( m_pickingQueries.size() );
@@ -250,48 +354,67 @@ namespace Ra
             GL_ASSERT(glClearBufferiv(GL_COLOR, 0, clearColor));
             GL_ASSERT(glClearBufferfv(GL_DEPTH, 0, &clearDepth));
 
-            const ShaderProgram* shader = m_shaderMgr->getShaderProgram("Picking");
-            shader->bind();
+            splitRenderQueuesForPicking( renderData );
 
+            // First draw Fancy Objects
             GL_ASSERT( glEnable( GL_DEPTH_TEST ) );
             GL_ASSERT( glDepthFunc( GL_LESS ) );
 
-            for ( const auto& ro : m_fancyRenderObjects )
-            {
-                if ( ro->isVisible() && ro->isPickable() )
-                {
-                    int id = ro->idx.getValue();
-                    shader->setUniform( "objectId", id );
+            renderForPicking( renderData, m_pickingShaders, m_fancyRenderObjectsPicking );
 
-                    Core::Matrix4 M = ro->getTransformAsMatrix();
-                    shader->setUniform( "transform.proj", renderData.projMatrix );
-                    shader->setUniform( "transform.view", renderData.viewMatrix );
-                    shader->setUniform( "transform.model", M );
-
-                    ro->getRenderTechnique()->material->bind( shader );
-
-                    // render
-                    ro->getMesh()->render();
-                }
-            }
-
-            // Draw debug objects
+            // Then draw debug objects
             GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
             if ( m_drawDebug )
             {
-                for ( const auto& ro : m_debugRenderObjects )
+                renderForPicking( renderData, m_pickingShaders, m_debugRenderObjectsPicking );
+            }
+
+            // Then draw xrayed objects on top of normal objects
+            GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
+            if ( m_drawDebug )
+            {
+                renderForPicking( renderData, m_pickingShaders, m_xrayRenderObjectsPicking );
+            }
+
+
+            // Finally draw ui stuff on top of everything
+            // these have a different way to compute the transform matrices
+            // FIXME (florian): find a way to use renderForPicking()!
+            GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
+            for (uint i = 0; i < m_pickingShaders.size(); ++i)
+            {
+                m_pickingShaders[i]->bind();
+                m_pickingShaders[i]->setUniform("eltType", i);
+                if (i==0)
+                {
+                    m_pickingShaders[i]->setUniform("pointCloudSplatRadius", 10);
+                }
+                if (i==1)
+                {
+                    m_pickingShaders[i]->setUniform("lineWidth", 10);
+                }
+
+                for ( const auto& ro : m_uiRenderObjectsPicking[i] )
                 {
                     if ( ro->isVisible() && ro->isPickable() )
                     {
                         int id = ro->idx.getValue();
-                        shader->setUniform( "objectId", id );
+                        m_pickingShaders[i]->setUniform( "objectId", id );
 
                         Core::Matrix4 M = ro->getTransformAsMatrix();
-                        shader->setUniform( "transform.proj", renderData.projMatrix );
-                        shader->setUniform( "transform.view", renderData.viewMatrix );
-                        shader->setUniform( "transform.model", M );
+                        Core::Matrix4 MV = renderData.viewMatrix * M;
+                        Scalar d = MV.block<3, 1>( 0, 3 ).norm();
 
-                        ro->getRenderTechnique()->material->bind( shader );
+                        Core::Matrix4 S = Core::Matrix4::Identity();
+                        S( 0, 0 ) = S( 1, 1 ) = S( 2, 2 ) = d;
+
+                        M = M * S;
+
+                        m_pickingShaders[i]->setUniform( "transform.proj", renderData.projMatrix );
+                        m_pickingShaders[i]->setUniform( "transform.view", renderData.viewMatrix );
+                        m_pickingShaders[i]->setUniform( "transform.model", M );
+
+                        ro->getRenderTechnique()->material->bind( m_pickingShaders[i] );
 
                         // render
                         ro->getMesh()->render();
@@ -299,69 +422,55 @@ namespace Ra
                 }
             }
 
-            // Draw xrayed objects on top of normal objects
-            GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
-            if ( m_drawDebug )
-            {
-                for ( const auto& ro : m_xrayRenderObjects )
-                {
-                    if ( ro->isVisible() && ro->isPickable() )
-                    {
-                        int id = ro->idx.getValue();
-                        shader->setUniform( "objectId", id );
-
-                        Core::Matrix4 M = ro->getTransformAsMatrix();
-                        shader->setUniform( "transform.proj", renderData.projMatrix );
-                        shader->setUniform( "transform.view", renderData.viewMatrix );
-                        shader->setUniform( "transform.model", M );
-
-                        ro->getRenderTechnique()->material->bind( shader );
-
-                        // render
-                        ro->getMesh()->render();
-                    }
-                }
-            }
-
-
-            // Always draw ui stuff on top of everything
-            GL_ASSERT( glClear( GL_DEPTH_BUFFER_BIT ) );
-            for ( const auto& ro : m_uiRenderObjects )
-            {
-                if ( ro->isVisible() && ro->isPickable() )
-                {
-                    int id = ro->idx.getValue();
-                    shader->setUniform( "objectId", id );
-
-                    Core::Matrix4 M = ro->getTransformAsMatrix();
-                    Core::Matrix4 MV = renderData.viewMatrix * M;
-                    Scalar d = MV.block<3, 1>( 0, 3 ).norm();
-
-                    Core::Matrix4 S = Core::Matrix4::Identity();
-                    S( 0, 0 ) = S( 1, 1 ) = S( 2, 2 ) = d;
-
-                    M = M * S;
-
-                    shader->setUniform( "transform.proj", renderData.projMatrix );
-                    shader->setUniform( "transform.view", renderData.viewMatrix );
-                    shader->setUniform( "transform.model", M );
-
-                    ro->getRenderTechnique()->material->bind( shader );
-
-                    // render
-                    ro->getMesh()->render();
-                }
-            }
-
+            // Now read the Picking Texture to address the Picking Requests.
             GL_ASSERT( glReadBuffer( GL_COLOR_ATTACHMENT0 ) );
 
+            int pick[4];
             for ( const auto& query : m_pickingQueries )
             {
-                int picking_result[4];
-                GL_ASSERT( glReadPixels( query.m_screenCoords.x(), query.m_screenCoords.y(),
-                                         1, 1, GL_RGBA_INTEGER, GL_INT, picking_result ) );
-
-                m_pickingResults.push_back( picking_result[0] );
+                PickingResult result;
+                // fill picking result according to picking mode
+                if (query.m_mode < C_VERTEX)
+                {
+                    GL_ASSERT( glReadPixels( query.m_screenCoords.x(), query.m_screenCoords.y(),
+                                             1, 1, GL_RGBA_INTEGER, GL_INT, pick ) );
+                    result.m_roIdx = pick[0];                   // RO idx
+                    result.m_vertexIdx.emplace_back( pick[1] ); // vertex idx in the element
+                    result.m_vertexIdx.emplace_back( pick[2] ); // element idx
+                    result.m_vertexIdx.emplace_back( pick[3] ); // edge opposite idx for triangles
+                    std::cout << pick[0] << " " << pick[1] << " " << pick[2] << " " << pick[3] << " " << std::endl;
+                }
+                else
+                {
+                    // select the results for the RO with the most representatives
+                    // (or first to come if same amount)
+                    std::map<int,PickingResult> resultPerRO;
+                    for(int i=-query.m_circleRadius; i<=query.m_circleRadius; i+=3)
+                    {
+                        int h = std::round( std::sqrt( query.m_circleRadius*query.m_circleRadius - i*i ) );
+                        for(int j=-h; j<=+h; j+=3)
+                        {
+                            GL_ASSERT( glReadPixels(query.m_screenCoords.x()+i, m_height-query.m_screenCoords.y()-j,
+                                                    1, 1, GL_RGBA_INTEGER, GL_INT, pick ) );
+                            resultPerRO[ pick[0] ].m_roIdx = pick[0];
+                            resultPerRO[ pick[0] ].m_vertexIdx.emplace_back( pick[1] );
+                            resultPerRO[ pick[0] ].m_vertexIdx.emplace_back( pick[2] );
+                            resultPerRO[ pick[0] ].m_vertexIdx.emplace_back( pick[3] );
+                        }
+                    }
+                    int maxRO = -1;
+                    int nbMax = 0;
+                    for (const auto& res : resultPerRO)
+                    {
+                        if (res.second.m_vertexIdx.size() > nbMax)
+                        {
+                            maxRO = res.first;
+                            nbMax = res.second.m_vertexIdx.size();
+                        }
+                    }
+                    result = resultPerRO[ maxRO ];
+                }
+                m_pickingResults.push_back( result );
             }
 
             m_pickingFbo->unbind();
@@ -384,7 +493,10 @@ namespace Ra
 
             GL_ASSERT( glDepthFunc( GL_ALWAYS ) );
 
-            auto shader = m_shaderMgr->getShaderProgram("DrawScreen");
+            auto shader = (m_displayedTexture->dataType == GL_INT ||
+                           m_displayedTexture->dataType == GL_UNSIGNED_INT) ?
+                                m_shaderMgr->getShaderProgram("DrawScreenI") :
+                                m_shaderMgr->getShaderProgram("DrawScreen");
             shader->bind();
             shader->setUniform( "screenTexture", m_displayedTexture, 0 );
             m_quadMesh->render();
