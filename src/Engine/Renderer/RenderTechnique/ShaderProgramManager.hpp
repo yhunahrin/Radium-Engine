@@ -43,6 +43,8 @@ namespace Ra {
         void reloadAllShaderPrograms();
         void reloadNotCompiledShaderPrograms();
 
+        void addNamedString(const std::string& includepath, const std::string& realfile);
+
     private:
         /// need Initialization after ctr and before use
         ShaderProgramManager(const std::string &vs, const std::string &fs);

@@ -45,6 +45,13 @@ namespace Ra {
 
     }
 
+    void ShaderProgramManager::addNamedString(const std::string& includepath, const std::string& realfile)
+    {
+        LOG(logINFO) << "Inserting named string : " << includepath << " --> " << realfile;
+        m_files.push_back(globjects::File::create(realfile));
+        m_namedStrings.push_back(globjects::NamedString::create(includepath, m_files[m_files.size()-1].get()));
+    }
+
     const ShaderProgram *ShaderProgramManager::addShaderProgram(const std::string &name,
                                                                 const std::string &vert,
                                                                 const std::string &frag)
