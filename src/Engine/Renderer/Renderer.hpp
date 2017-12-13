@@ -87,11 +87,11 @@ namespace Ra
                 Core::Vector2 m_screenCoords;
                 Core::MouseButton::MouseButton m_button;
                 PickingMode m_mode;
-                float m_circleRadius;
             };
 
             struct PickingResult
             {
+                PickingMode m_mode;             // Picking mode of the query
                 int m_roIdx;                    // Idx of the picked RO
                 std::vector<int> m_vertexIdx;   // Idx of the picked vertex in the element, i.e. point's idx OR idx in line or triangle
                 std::vector<int> m_elementIdx;  // Idx of the element, i.e. triangle for mesh, edge for lines and -1 for points
@@ -203,6 +203,17 @@ namespace Ra
             inline virtual const std::vector<PickingQuery>& getPickingQueries() const final
             {
                 return m_lastFramePickingQueries;
+            }
+
+            inline virtual void setMousePosition(const Core::Vector2& pos) final
+            {
+                m_mousePosition[0] = pos[0];
+                m_mousePosition[1] = m_height - pos[1];
+            }
+
+            inline virtual void setBrushRadius(Scalar brushRadius) final
+            {
+                m_brushRadius = brushRadius;
             }
 
             inline virtual void toggleDrawDebug()
@@ -346,7 +357,7 @@ namespace Ra
             std::array<std::vector<RenderObjectPtr>,3> m_debugRenderObjectsPicking;
             std::array<std::vector<RenderObjectPtr>,3> m_xrayRenderObjectsPicking;
             std::array<std::vector<RenderObjectPtr>,3> m_uiRenderObjectsPicking;
-            std::array<const ShaderProgram*,3>               m_pickingShaders;
+            std::array<const ShaderProgram*,3>         m_pickingShaders;
 
             // Simple quad mesh, used to render the final image
             std::unique_ptr<Mesh> m_quadMesh;
@@ -368,6 +379,8 @@ namespace Ra
             std::mutex m_renderMutex;
 
             // PICKING STUFF
+            Ra::Core::Vector2 m_mousePosition;
+            float m_brushRadius;
             std::unique_ptr<globjects::Framebuffer> m_pickingFbo;
             std::unique_ptr<Texture>                m_pickingTexture;
 
