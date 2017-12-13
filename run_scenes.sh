@@ -167,6 +167,12 @@ then
     run_scene 3 "/home/vroussel/Downloads/GEOM/arm_pecs_biceps" "scenefile"
 fi
 
+if $(contains "$args" "4")
+then
+    echo "Running scene 4 (Boss Jump)"
+    run_scene 4 "/home/vroussel/Downloads/GEOM/boss_jump" "scenefile"
+fi
+
 
 if $(contains "$args" "f")
 then
@@ -175,7 +181,7 @@ then
     echo "Making full video"
     find $SCRIPTDIR | grep mp4 | sort | while read file
     do
-        echo "file ' $file'" >> list.txt
+        echo "file '$file'" >> list.txt
     done
     ffmpeg -f concat -safe 0 -i list.txt -c copy fullvideo.mp4
     mv fullvideo.mp4 $SCRIPTDIR
