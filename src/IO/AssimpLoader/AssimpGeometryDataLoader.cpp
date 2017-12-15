@@ -285,7 +285,7 @@ namespace Ra {
             #pragma omp parallel for
             for( uint i = 0; i < size; ++i )
             {
-                tangent[i] = assimpToCore( mesh.mTangents[i]);
+                tangent[i] = assimpToCore( mesh.mTangents[i] );
             }
 #endif
         }
@@ -298,7 +298,7 @@ namespace Ra {
             #pragma omp parallel for
             for( uint i = 0; i < size; ++i )
             {
-                bitangent[i] = assimpToCore(mesh.mBitangents[i]);
+                bitangent[i] = assimpToCore( mesh.mBitangents[i] );
             }
 #endif
         }

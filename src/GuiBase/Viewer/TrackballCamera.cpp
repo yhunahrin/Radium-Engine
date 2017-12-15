@@ -224,7 +224,7 @@ namespace Ra
 
         updatePhiTheta();
 
-        if (m_hasLightAttached)
+        if ( m_hasLightAttached )
         {
             m_light->setPosition( m_camera->getPosition() );
             m_light->setDirection( m_camera->getDirection() );
@@ -364,7 +364,7 @@ namespace Ra
 
     void Gui::TrackballCamera::handleCameraZoom( Scalar dx, Scalar dy )
     {
-        handleCameraZoom(Ra::Core::Math::sign(dx) * (std::abs(dx) + std::abs(dy)));
+        handleCameraZoom(Ra::Core::Math::sign(dy) * (std::abs(dy) + std::abs(dx)));
     }
 
     void Gui::TrackballCamera::handleCameraZoom( Scalar z )

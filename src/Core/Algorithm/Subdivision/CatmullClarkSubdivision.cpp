@@ -18,10 +18,10 @@ namespace Algorithm {
                            CatmullClarkOperation* operation,
                            bool register_op )
         {
-            const HalfEdge& he = heData[ he_idx ];
+            const HalfEdgeData::HalfEdge& he = heData[ he_idx ];
             if (edgePoints.find( he_idx ) == edgePoints.end())
             {
-                const HalfEdge& he_pair = heData[ he.m_pair ];
+                const HalfEdgeData::HalfEdge& he_pair = heData[ he.m_pair ];
                 Vector3 p;
                 Vector3 n;
                 CS cs;
@@ -78,6 +78,7 @@ namespace Algorithm {
         mesh.m_vertices.resize( N + F );
         mesh.m_normals.resize( N + F );
         uint nb_quads = 0;
+        #pragma omp parallel for
         for (uint f = 0; f < F; ++f)
         {
             const VectorNui& face = mesh.m_faces[ f ];
@@ -103,7 +104,10 @@ namespace Algorithm {
             }
             mesh.m_vertices[ N + f ] = facePoint;
             mesh.m_normals[ N + f ] = faceNormal;
-            nb_quads += fs;
+        }
+        for (uint f = 0; f < F; ++f)
+        {
+            nb_quads += mesh.m_faces[ f ].size();
         }
         // second: add edge points
         EdgePointMap edgePoints;
@@ -113,6 +117,7 @@ namespace Algorithm {
         }
         // third: move original vertices
         Vector3Array new_pos( N );
+        #pragma omp parallel for
         for (VertexIdx v = 0; v < N; ++v)
         {
             // check if vertex on hole
@@ -120,7 +125,7 @@ namespace Algorithm {
             const auto& v_he = heData.getVertexHalfEdges(v);
             for (const HalfEdgeIdx& he_idx : v_he)
             {
-                const HalfEdge &he = heData[he_idx];
+                const HalfEdgeData::HalfEdge &he = heData[he_idx];
                 if (he.m_leftTriIdx == InvalidIdx)
                 {
                     hole = true;
@@ -141,8 +146,8 @@ namespace Algorithm {
                 uint n = 1;
                 for (const HalfEdgeIdx& he_idx : v_he)
                 {
-                    const HalfEdge &he = heData[he_idx];
-                    const HalfEdge &he_pair = heData[he.m_pair];
+                    const HalfEdgeData::HalfEdge &he = heData[he_idx];
+                    const HalfEdgeData::HalfEdge &he_pair = heData[he.m_pair];
                     if (he.m_leftTriIdx != InvalidIdx && he_pair.m_leftTriIdx != InvalidIdx)
                     {
                         continue;
@@ -177,7 +182,7 @@ namespace Algorithm {
                 }
                 for (uint h = 0; h < n; ++h)
                 {
-                    const HalfEdge &he = heData[ v_he[h] ];
+                    const HalfEdgeData::HalfEdge &he = heData[ v_he[h] ];
                     F += mesh.m_vertices[ N + he.m_leftTriIdx ];
                     R += (mesh.m_vertices[ he.m_endVertexIdx ] +
                           mesh.m_vertices[ heData[he.m_pair].m_endVertexIdx ]);
@@ -197,6 +202,7 @@ namespace Algorithm {
                 operation->m_oldPointsOperations[ v ] = PO( v, cs );
             }
         }
+        #pragma omp parallel for
         for (VertexIdx v = 0; v < N; ++v)
         {
             mesh.m_vertices[ v ] = new_pos[ v ];
@@ -211,8 +217,8 @@ namespace Algorithm {
             uint fs = face.size();
             const VertexIdx fp  = N + f;
             HalfEdgeIdx he_idx = heData.getFirstTriangleHalfEdge( f );
-            HalfEdge cur_he = heData[ he_idx ];
-            for (int h = 0; h<fs; ++h)
+            HalfEdgeData::HalfEdge cur_he = heData[ he_idx ];
+            for (uint h = 0; h<fs; ++h)
             {
                 // prepare vertices indices
                 const VertexIdx p0 = edgePoints[ he_idx ];

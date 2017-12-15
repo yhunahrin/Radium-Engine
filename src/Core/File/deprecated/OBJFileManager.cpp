@@ -91,6 +91,7 @@ bool OBJFileManager::exportData( std::ostream& file, const TriangleMesh& data ) 
                            std::to_string( n[1] ) + " " +
                            std::to_string( n[2] ) + "\n";
     }
+#if 1
     // Face
     for( uint i = 0; i < data.m_faces.size(); ++i ) {
         const VectorNui f = data.m_faces.at( i );
@@ -101,6 +102,15 @@ bool OBJFileManager::exportData( std::ostream& file, const TriangleMesh& data ) 
         }
         content += "\n";
     }
+#else
+    // Triangle
+    for( uint i = 0; i < data.m_triangles.size(); ++i ) {
+        const Triangle f = data.m_triangles.at( i );
+        content += "f " + std::to_string( f[0] + 1 ) + " " +
+                          std::to_string( f[1] + 1 ) + " " +
+                          std::to_string( f[2] + 1 ) + "\n";
+    }
+#endif
     file << content;
     return true;
 }

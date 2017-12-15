@@ -219,7 +219,7 @@ protected:
     // this table is used, when not loading duplicates, to fix vertices indices in edges and faces.
     // Note: if loading duplicates this table is a 1-1 correspondance, i.e. m_duplicateTable[i] == i .
     std::vector<uint> m_duplicateTable;
-    bool                   m_loadDuplicates;
+    bool              m_loadDuplicates;
 };
 
 } // namespace Asset

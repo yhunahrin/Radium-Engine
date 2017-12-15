@@ -1,10 +1,9 @@
 #include <Core/Mesh/MeshUtils.hpp>
 
-
 #include <map>
 #include <set>
-#include <utility>
 #include <vector>
+#include <utility>
 
 #include <Core/Log/Log.hpp>
 #include <Core/Math/Math.hpp>

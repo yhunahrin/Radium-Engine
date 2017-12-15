@@ -144,7 +144,11 @@ class FILELog : public Log<Output2FILE> {};
     else if (level > FILELog::ReportingLevel() || !Output2FILE::Stream()) ; \
     else FILELog().Get(level)
 
-#define LOG(level) FILE_LOG(level)
+#ifdef NO_LOG
+    #define LOG(level) FILE_LOG( TLogLevel(FILELOG_MAX_LEVEL+1) )
+#else
+    #define LOG(level) FILE_LOG(level)
+#endif
 
 #include <ctime>
 

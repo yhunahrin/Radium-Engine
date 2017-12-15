@@ -29,11 +29,11 @@ namespace Ra
             /// @return true if the event has been taken into account, false otherwise
             virtual bool handleKeyReleaseEvent( QKeyEvent* event ) override;
 
-            virtual void save( std::ostream& out ) const override;
-            virtual void load( std::istream &in ) override;
-
             void setCameraRadius(Scalar rad);
             Scalar getCameraRadius();
+
+            virtual void save( std::ostream& out ) const override;
+            virtual void load( std::istream &in ) override;
 
         public slots:
             virtual void setCameraPosition( const Core::Vector3& position ) override;

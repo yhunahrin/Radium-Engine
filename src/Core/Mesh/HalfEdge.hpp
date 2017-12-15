@@ -13,15 +13,7 @@ namespace Ra
 {
     namespace Core
     {
-        /// A structure representing a Half edge (i.e. directed edge) of a mesh.
-        struct HalfEdge
-        {
-            HalfEdgeIdx m_prev; // Previous half edge along the face.
-            HalfEdgeIdx m_pair; // Oppositely oriented half-edge
-            HalfEdgeIdx m_next; // Next half edge around the face
-            TriangleIdx m_leftTriIdx; // Face the half-edge borders (may be invalid)
-            VertexIdx m_endVertexIdx; // Vertex at the end of the edge;
-        };
+        struct TriangleMesh;
 
         /// Structure holding the half-edge data of one mesh.
         /// Note on non manifold edges : if the mesh is non-closed, two half edges will be constructed
@@ -31,6 +23,17 @@ namespace Ra
         /// the call to build().
         class RA_CORE_API HalfEdgeData
         {
+        public:
+            /// A structure representing a Half edge (i.e. directed edge) of a mesh.
+            struct HalfEdge
+            {
+                HalfEdgeIdx m_prev; // Previous half edge along the face.
+                HalfEdgeIdx m_pair; // Oppositely oriented half-edge
+                HalfEdgeIdx m_next; // Next half edge around the face
+                TriangleIdx m_leftTriIdx; // Face the half-edge borders (may be invalid)
+                VertexIdx m_endVertexIdx; // Vertex at the end of the edge;
+            };
+
         public:
             /// Build the half edge data from a mesh.
             inline explicit HalfEdgeData( const TriangleMesh& mesh );

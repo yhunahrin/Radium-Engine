@@ -15,7 +15,7 @@ namespace Ra
             build( vertices, triangles );
         }
 
-        inline const HalfEdge& HalfEdgeData::operator[]( HalfEdgeIdx i ) const
+        inline const HalfEdgeData::HalfEdge& HalfEdgeData::operator[]( HalfEdgeIdx i ) const
         {
             CORE_ASSERT( i != InvalidIdx && i < m_halfEdgeList.size(), "Invalid Index" );
             return m_halfEdgeList[i];

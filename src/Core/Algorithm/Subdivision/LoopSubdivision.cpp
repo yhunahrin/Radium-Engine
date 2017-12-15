@@ -15,10 +15,10 @@ namespace Algorithm {
         void addEdgePoint( const HalfEdgeIdx& he_idx, const HalfEdgeData& heData,
                            TriangleMesh& mesh, EdgePointMap& edgePoints, uint N )
         {
-            const HalfEdge& he = heData[ he_idx ];
+            const HalfEdgeData::HalfEdge& he = heData[ he_idx ];
             if (edgePoints.find( he_idx ) == edgePoints.end())
             {
-                const HalfEdge& he_pair = heData[ he.m_pair ];
+                const HalfEdgeData::HalfEdge& he_pair = heData[ he.m_pair ];
                 Vector3 p;
                 Vector3 n;
                 if (he.m_leftTriIdx != InvalidIdx && he_pair.m_leftTriIdx != InvalidIdx)
@@ -69,7 +69,7 @@ namespace Algorithm {
             const auto& v_he = heData.getVertexHalfEdges(v);
             for (const HalfEdgeIdx& he_idx : v_he)
             {
-                const HalfEdge &he = heData[he_idx];
+                const HalfEdgeData::HalfEdge &he = heData[he_idx];
                 if (he.m_leftTriIdx == InvalidIdx)
                 {
                     hole = true;
@@ -82,8 +82,8 @@ namespace Algorithm {
                 uint n = 1;
                 for (const HalfEdgeIdx& he_idx : v_he)
                 {
-                    const HalfEdge &he = heData[he_idx];
-                    const HalfEdge &he_pair = heData[he.m_pair];
+                    const HalfEdgeData::HalfEdge &he = heData[he_idx];
+                    const HalfEdgeData::HalfEdge &he_pair = heData[he.m_pair];
                     if (he.m_leftTriIdx != InvalidIdx && he_pair.m_leftTriIdx != InvalidIdx)
                     {
                         continue;
@@ -99,7 +99,7 @@ namespace Algorithm {
             {
                 for (const HalfEdgeIdx& he_idx : v_he)
                 {
-                    const HalfEdge &he = heData[he_idx];
+                    const HalfEdgeData::HalfEdge &he = heData[he_idx];
                     R += mesh.m_vertices[ he.m_endVertexIdx ];
                     RN += mesh.m_normals[ he.m_endVertexIdx ];
                 }
@@ -127,7 +127,7 @@ namespace Algorithm {
             Triangle& tri3 = mesh.m_triangles[ t + T*3 ];
             // prepare vertices indices
             const HalfEdgeIdx he_idx = heData.getFirstTriangleHalfEdge( t );
-            const HalfEdge he = heData[ he_idx ];
+            const HalfEdgeData::HalfEdge he = heData[ he_idx ];
             const VertexIdx e0 = edgePoints[ he_idx ];
             const VertexIdx e1 = edgePoints[ he.m_next ];
             const VertexIdx e2 = edgePoints[ he.m_prev ];

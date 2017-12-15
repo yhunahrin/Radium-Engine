@@ -84,7 +84,6 @@ namespace Ra {
 
         }
 
-
         void Mesh::loadGeometry(const Core::Vector3Array &vertices, const std::vector<uint> &indices)
         {
             // TODO : remove this function and force everyone to use triangle mesh.

@@ -179,6 +179,13 @@ else()
     message(STATUS "${PROJECT_NAME} : PBRT loader disabled")
 endif()
 
+if (${RADIUM_QUIET})
+    add_definitions(-DNO_LOG)
+    message(STATUS "${PROJECT_NAME} : Radium Logs disabled")
+else()
+    message(STATUS "${PROJECT_NAME} : Radium Logs enabled")
+endif()
+
 
 
 # Additional flags depending on system        =================================

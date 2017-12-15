@@ -181,7 +181,7 @@ namespace Ra
                 }
             }
 
-            void corSkinning(const Vector3Array& input, const Animation::Pose& pose, const Animation::WeightMatrix& weight,
+            void corSkinning(const Vector3Array& input, const Pose& pose, const WeightMatrix& weight,
                              const Vector3Array& CoR, Vector3Array& output)
             {
                 const uint size = input.size();

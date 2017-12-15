@@ -11,11 +11,11 @@
 	</keymap>
 	<keymap>
 		<information id="type" modifier="NoModifier" type="mouse" value="MiddleClick"></information>
-		<information id="action" value="VIEWER_RIGHT_BUTTON_PICKING_QUERY"></information>
+		<information id="action" value="VIEWER_BUTTON_SELECT_PICKING_QUERY"></information>
 	</keymap>
 	<keymap>
 		<information id="type" modifier="NoModifier" type="mouse" value="RightButton"></information>
-		<information id="action" value="VIEWER_LEFT_BUTTON_PICKING_QUERY"></information>
+		<information id="action" value="VIEWER_BUTTON_MANIP_PICKING_QUERY"></information>
 	</keymap>
 	<keymap>
 		<information id="type" modifier="NoModifier" type="key" value="Key_Space"></information>

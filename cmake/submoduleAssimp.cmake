@@ -90,7 +90,7 @@ if( MSVC )
 		COMMENT "copy assimp dll to bin dir" VERBATIM
 		DEPENDS assimp_prerename_compiled_lib_and_dll
 	)
-	add_dependencies(assimp_lib assimp_install_compiled_dll )
+	add_dependencies( assimp_lib assimp_install_compiled_dll )
 endif()
 
 if( MINGW )

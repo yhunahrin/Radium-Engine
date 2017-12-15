@@ -24,7 +24,6 @@
 #include <Engine/Renderer/RenderObject/Primitives/DrawPrimitives.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderConfigFactory.hpp>
 
-
 #include <Core/Algorithm/Subdivision/CatmullClarkSubdivision.hpp>
 
 using Ra::Core::TriangleMesh;

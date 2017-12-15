@@ -480,7 +480,7 @@ namespace Ra
             {
                 if (light->getLight())
                 {
-                addLight( light->getLight() );
+                    addLight( light->getLight() );
                     ++i;
                 }
             }

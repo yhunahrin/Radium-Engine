@@ -328,10 +328,12 @@ namespace Ra
         keyReleased(event->key());
         m_camera->handleKeyReleaseEvent( event );
 
+        /*
         if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_TOGGLE_WIREFRAME ) && !event->isAutoRepeat())
         {
             m_currentRenderer->toggleWireframe();
         }
+        */
 
         // Do we need this ?
         //QWindow::keyReleaseEvent(event);
@@ -550,7 +552,9 @@ namespace Ra
 
     void Gui::Viewer::resetCamera()
     {
+        auto light = m_camera->getLight();
         m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
+        m_camera->attachLight( light );
     }
 
 } // namespace Ra

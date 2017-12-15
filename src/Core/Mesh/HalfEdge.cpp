@@ -315,7 +315,7 @@ namespace Ra
             HalfEdgeIdx currentHe =  heData.getFirstTriangleHalfEdge( triangle );
             for ( uint i = 0; i < 3 ; ++i )
             {
-                const HalfEdge& flipHe = heData[heData[currentHe].m_pair];
+                const HalfEdgeData::HalfEdge& flipHe = heData[heData[currentHe].m_pair];
                 adjOut[i] = flipHe.m_leftTriIdx;
                 currentHe = heData[currentHe].m_next;
             }
@@ -340,7 +340,7 @@ namespace Ra
             HalfEdgeIdx starterEdge = heData.getVertexHalfEdges( vertex ) [0];
             for ( auto heIdx : heData.getVertexHalfEdges( vertex ) )
             {
-                const HalfEdge& opposite = heData[heData[heIdx].m_pair];
+                const HalfEdgeData::HalfEdge& opposite = heData[heData[heIdx].m_pair];
                 if ( opposite.m_leftTriIdx == InvalidIdx )
                 {
                     starterEdge = heIdx;
@@ -366,8 +366,8 @@ namespace Ra
                 // half edge from current (which should point to the center vertex,
                 // take its pair half edge so we end up on the next triangle,
                 // and take the next half edge to advance.
-                const HalfEdge& next = heData[heData[currentEdgeIdx].m_next];
-                const HalfEdge& flip = heData[next.m_pair];
+                const HalfEdgeData::HalfEdge& next = heData[heData[currentEdgeIdx].m_next];
+                const HalfEdgeData::HalfEdge& flip = heData[next.m_pair];
                 currentEdgeIdx = flip.m_next;
 
                 // Some debug checks.

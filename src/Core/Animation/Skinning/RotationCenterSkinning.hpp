@@ -36,8 +36,8 @@ namespace Ra {
             void RA_CORE_API computeCoR(Skinning::RefData& dataInOut, Scalar sigma = 0.1f, Scalar weightEpsilon = 0.1f);
 
             /// Skin the vertices with the optimal centers of rotation.
-            void RA_CORE_API corSkinning(const Vector3Array& input, const Animation::Pose& pose,
-                                         const Animation::WeightMatrix& weight, const Vector3Array& CoR, Vector3Array& output);
+            void RA_CORE_API corSkinning(const Vector3Array& input, const Pose& pose,
+                                         const WeightMatrix& weight, const Vector3Array& CoR, Vector3Array& output);
 
 
         }

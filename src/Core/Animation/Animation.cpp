@@ -55,6 +55,11 @@ Scalar Animation::getTime( Scalar timestamp ) const
     return duration - std::abs(std::fmod(timestamp, 2 * duration) - duration);
 }
 
+Scalar Animation::getDuration() const
+{
+    return m_keys.back().first;
+}
+
 Pose Animation::getPose(Scalar timestamp) const
 {
     Scalar modifiedTime = getTime(timestamp);
