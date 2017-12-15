@@ -90,7 +90,7 @@ namespace Ra
 
             void notifyRenderObjectExpired( const Core::Index& idx );
 
-        protected:
+        //protected:
             /// Shortcut to access the render object manager.
             static RenderObjectManager* getRoMgr();
 

@@ -152,10 +152,11 @@ namespace FancyMeshPlugin
 
         m_texturedMat.reset( new Ra::Engine::Material( matName ) );
         auto m = data->getMaterial();
-        if ( m.hasDiffuse() )   m_texturedMat->m_kd    = m.m_diffuse;
-        if ( m.hasSpecular() )  m_texturedMat->m_ks    = m.m_specular;
-        if ( m.hasShininess() ) m_texturedMat->m_ns    = m.m_shininess;
-        if ( m.hasOpacity() )   m_texturedMat->m_alpha = m.m_opacity;
+//        if ( m.hasDiffuse() )   m_texturedMat->m_kd    = m.m_diffuse;
+//        if ( m.hasSpecular() )  m_texturedMat->m_ks    = m.m_specular;
+//        if ( m.hasShininess() ) m_texturedMat->m_ns    = m.m_shininess;
+//        if ( m.hasOpacity() )   m_texturedMat->m_alpha = m.m_opacity;
+        m_texturedMat->m_alpha = 0.8;
 
 #ifdef RADIUM_WITH_TEXTURES
         if ( m.hasDiffuseTexture() || m.hasSpecularTexture() || m.hasShininessTexture() || m.hasOpacityTexture() || m.hasNormalTexture() )
@@ -175,7 +176,7 @@ namespace FancyMeshPlugin
         m_subdivShader = Ra::Engine::ShaderConfigurationFactory::getConfiguration("BlinnPhong_wire");
 
         auto ro = Ra::Engine::RenderObject::createRenderObject( roName, this, Ra::Engine::RenderObjectType::Fancy, displayMesh, m_subdivShader, m_texturedMat );
-        ro->setTransparent( m_texturedMat->m_alpha < 1.0 );
+        ro->setTransparent( false );
 
         setupIO( data->getName());
         m_meshIndex = addRenderObject(ro);
