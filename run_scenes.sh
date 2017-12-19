@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# arguments : 0 1 2 : run scene
+# arguments : 0 1 2 etc. : run scene
 # t : run timings. f : make full video. c : copy to external drive
 
 ROOTDIR="/export/home/warhol/vroussel/code/git-clean/Radium-Engine"

@@ -71,6 +71,8 @@ Scalar g_collision_stiffness = 0.2f; // Stiffness of the collision vs implicit c
 Scalar g_keep_inside_stiffness = 1.5f; // Stiffness of the collision vs skin constraint (10.5f)
 Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
 
+Scalar g_physics_time_step = 0.001f; // Duration of the physics time step
+
 const uint * g_frame_num_ptr;
 
 std::string g_anat_file = "";
@@ -133,6 +135,11 @@ namespace Ra
         QCommandLineOption subdivOpt(QStringList{"subdiv"}, "run subdivision","","");
         QCommandLineOption autoplayOpt(QStringList{"autoplay"}, "autoplay animation","","");
         QCommandLineOption animSpeedOpt(QStringList{"animspeed"}, "autoplay animation","scalar","1.0");
+        QCommandLineOption timeStepOpt(QStringList{"timestep"}, "physics time step","scalar","0.001");
+        QCommandLineOption numParticlesOpt(QStringList{"numparticles"}, "number of particles","integer","30");
+
+
+
         QCommandLineOption saveMeshes(QStringList{"savemeshes"}, "save meshes","", "");
         QCommandLineOption saveFrames(QStringList{"saveframes"}, "save frames","", "");
 
@@ -160,7 +167,11 @@ namespace Ra
         if (parser.isSet(transISOpt))   g_is_trans      = true;
         if (parser.isSet(subdivOpt))    g_show_subdiv   = true;
         if (parser.isSet(autoplayOpt))  g_anim_autoplay = true;
-        if (parser.isSet(animSpeedOpt))  g_animation_speed = parser.value(animSpeedOpt).toDouble();
+        if (parser.isSet(animSpeedOpt)) g_animation_speed = parser.value(animSpeedOpt).toDouble();
+        if (parser.isSet(timeStepOpt))  g_physics_time_step = parser.value(timeStepOpt).toDouble();
+        if (parser.isSet(numParticlesOpt)) g_num_particles = parser.value(numParticlesOpt).toInt();
+
+
         if (parser.isSet(saveMeshes))   m_recordMeshes  = g_export_meshes = true;
         if (parser.isSet(saveFrames))   m_recordFrames  = true;
 
