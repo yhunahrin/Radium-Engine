@@ -336,13 +336,15 @@ namespace Ra
         return; // LALALA
         using namespace Engine::DrawPrimitives;
 
-        Engine::SystemEntity::uiCmp()->addRenderObject(
-            Primitive(Engine::SystemEntity::uiCmp(), Grid(
-                    Core::Vector3::Zero(), Core::Vector3::UnitX(),
-                    Core::Vector3::UnitZ(), Core::Colors::Grey(0.6f))));
+        auto grid = Primitive(Engine::SystemEntity::uiCmp(),
+                              Grid( Core::Vector3::Zero(), Core::Vector3::UnitX(),
+                                    Core::Vector3::UnitZ(), Core::Colors::Grey(0.6f) ));
+        grid->setPickable( false );
+        Engine::SystemEntity::uiCmp()->addRenderObject(grid);
 
-        Engine::SystemEntity::uiCmp()->addRenderObject(
-                    Primitive(Engine::SystemEntity::uiCmp(), Frame(Ra::Core::Transform::Identity(), 0.05f)));
+        auto frame = Primitive(Engine::SystemEntity::uiCmp(), Frame(Ra::Core::Transform::Identity(), 0.05f));
+        frame->setPickable( false );
+        Engine::SystemEntity::uiCmp()->addRenderObject(frame);
 
 
         auto em =  Ra::Engine::RadiumEngine::getInstance()->getEntityManager();

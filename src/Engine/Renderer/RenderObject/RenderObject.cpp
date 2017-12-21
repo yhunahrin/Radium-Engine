@@ -36,6 +36,7 @@ namespace Ra
             , m_mesh( nullptr )
             , m_lifetime( lifetime )
             , m_visible( true )
+            , m_pickable( true )
             , m_xray( false )
             , m_transparent( false )
             , m_dirty( true )
@@ -232,6 +233,21 @@ namespace Ra
         bool RenderObject::isVisible() const
         {
             return m_visible;
+        }
+
+        void RenderObject::setPickable( bool pickable )
+        {
+            m_pickable = pickable;
+        }
+
+        void RenderObject::togglePickable()
+        {
+            m_pickable = !m_pickable;
+        }
+
+        bool RenderObject::isPickable() const
+        {
+            return m_pickable;
         }
 
         void RenderObject::setXRay( bool xray )
