@@ -13,7 +13,7 @@
 
 #include <Core/Math/LinearAlgebra.hpp>
 #include <GuiBase/Viewer/Gizmo/GizmoManager.hpp>
-#include <GuiBase/Utils/FeaturePickingManager.hpp>
+#include <GuiBase/Utils/PickingManager.hpp>
 
 // Forward declarations
 class QOpenGLContext;
@@ -105,7 +105,7 @@ namespace Ra
             Engine::Renderer* getRenderer();
 
             /// Access to the feature picking manager
-            FeaturePickingManager* getFeaturePickingManager();
+            PickingManager* getPickingManager();
 
             //
             // Rendering management
@@ -140,6 +140,7 @@ namespace Ra
             void grabFrame( const std::string& filename );
 
             void enableDebug();
+
         signals:
             void glInitialized();               //! Emitted when GL context is ready. We except call to addRenderer here
             void rendererReady();               //! Emitted when the rendered is correctly initialized
@@ -237,7 +238,7 @@ namespace Ra
             Engine::Renderer* m_currentRenderer;
 
             /// Owning Pointer to the feature picking manager.
-            FeaturePickingManager* m_featurePickingManager;
+            PickingManager* m_pickingManager;
             bool m_isBrushPickingEnabled;
             float m_brushRadius;
 

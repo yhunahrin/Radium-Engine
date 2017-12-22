@@ -69,9 +69,6 @@ namespace Ra
 
         createConnections();
 
-        Qt_utils::rec_set_visible( *m_vertexIdx_layout, false );
-        Qt_utils::rec_set_visible( *m_triangleIdx_layout, false );
-
         mainApp->framesCountForStatsChanged((uint) m_avgFramesCount->value());
     }
 
@@ -270,18 +267,6 @@ namespace Ra
             {
                 Ra::Engine::Component* comp = ro->getComponent();
                 Ra::Engine::Entity* ent = comp->getEntity();
-                const auto& fdata = m_viewer->getFeaturePickingManager()->getFeatureData();
-
-                if (fdata.m_featureType == Ra::Engine::Renderer::VERTEX)
-                {
-                    m_vertexIdx->setValue(fdata.m_data[0]);
-                    m_vertexIdx->setMaximum(ro->getMesh()->getGeometry().m_vertices.size() - 1);
-                }
-                if (fdata.m_featureType == Ra::Engine::Renderer::TRIANGLE)
-                {
-                    m_triangleIdx->setValue(fdata.m_data[0]);
-                    m_triangleIdx->setMaximum(ro->getMesh()->getGeometry().m_triangles.size() - 1);
-                }
 
                 // For now we don't enable group selection.
                 m_selectionManager->setCurrentEntry( ItemEntry(ent, comp, roIndex),
@@ -480,12 +465,6 @@ namespace Ra
             }
             toolBar->addSeparator();
         }
-
-        // Add feature widget
-        if (plugin->doAddFeatureTrackingWidget())
-        {
-            tab_tracking_layout->addWidget( plugin->getFeatureTrackingWidget() );
-        }
     }
 
     void Gui::MainWindow::onRendererReady()
@@ -498,7 +477,6 @@ namespace Ra
     {
         tab_edition->updateValues();
         m_viewer->getGizmoManager()->updateValues();
-        updateTrackedFeatureInfo();
     }
 
     void Gui::MainWindow::addRenderer(std::string name,
@@ -588,32 +566,11 @@ namespace Ra
         m_viewer->fitCameraToScene(Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getSceneAabb());
     }
 
-    void Gui::MainWindow::on_m_vertexIdx_valueChanged(int arg1)
-    {
-        m_viewer->getFeaturePickingManager()->setVertexIndex(arg1);
-        m_selectionManager->setCurrentEntry( m_selectionManager->currentItem(),
-                                             QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
-    }
-
-    void Gui::MainWindow::on_m_triangleIdx_valueChanged(int arg1)
-    {
-        m_viewer->getFeaturePickingManager()->setTriangleIndex(arg1);
-        m_selectionManager->setCurrentEntry( m_selectionManager->currentItem(),
-                                             QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
-    }
-
     void Gui::MainWindow::onGLInitialized()
     {
         // set default renderer once OpenGL is configured
         std::shared_ptr<Engine::Renderer> e (new Engine::ForwardRenderer());
         addRenderer("Forward Renderer", e);
-    }
-
-    void Gui::MainWindow::updateTrackedFeatureInfo()
-    {
-        auto fdata = m_viewer->getFeaturePickingManager()->getFeatureData();
-        Qt_utils::rec_set_visible( *m_vertexIdx_layout, fdata.m_featureType == Engine::Renderer::VERTEX );
-        Qt_utils::rec_set_visible( *m_triangleIdx_layout, fdata.m_featureType == Engine::Renderer::TRIANGLE );
     }
 
 } // namespace Ra
