@@ -38,7 +38,7 @@
 
 #include <GuiBase/Viewer/TrackballCamera.hpp>
 
-#include <GuiBase/Utils/FeaturePickingManager.hpp>
+#include <GuiBase/Utils/PickingManager.hpp>
 #include <GuiBase/Utils/Keyboard.hpp>
 #include <GuiBase/Utils/KeyMappingManager.hpp>
 
@@ -48,7 +48,9 @@ namespace Ra
         : QWindow(screen)
         , m_context(nullptr)
         , m_currentRenderer( nullptr )
-        , m_featurePickingManager( nullptr )
+        , m_pickingManager( nullptr )
+        , m_isBrushPickingEnabled( false )
+        , m_brushRadius( 10 )
         , m_camera( nullptr )
         , m_gizmoManager( nullptr )
         , m_renderThread( nullptr )
@@ -57,10 +59,11 @@ namespace Ra
         setMinimumSize( QSize( 800, 600 ) );
 
         setSurfaceType(OpenGLSurface);
-        m_featurePickingManager = new FeaturePickingManager();
+        m_pickingManager = new PickingManager();
     }
 
-    Gui::Viewer::~Viewer(){
+    Gui::Viewer::~Viewer()
+    {
         if ( m_glInitStatus.load() )
         {
             m_context->makeCurrent( this );
@@ -87,7 +90,7 @@ namespace Ra
         if ( m_glInitStatus.load() )
         {
             m_context->makeCurrent( this );
-        intializeRenderer(e.get());
+            intializeRenderer(e.get());
             m_context->doneCurrent( );
         }
         else
@@ -160,7 +163,7 @@ namespace Ra
         if(m_renderers.empty())
         {
             LOG( logINFO )
-                    << "Renderers fallback: no renderer added, enabling default (Forward Renderer)";
+                << "Renderers fallback: no renderer added, enabling default (Forward Renderer)";
 
             m_context->makeCurrent(this);
             std::shared_ptr<Ra::Engine::Renderer> e (new Ra::Engine::ForwardRenderer());
@@ -195,9 +198,9 @@ namespace Ra
         return m_currentRenderer;
     }
 
-    Gui::FeaturePickingManager* Gui::Viewer::getFeaturePickingManager()
+    Gui::PickingManager* Gui::Viewer::getPickingManager()
     {
-        return m_featurePickingManager;
+        return m_pickingManager;
     }
 
     void Gui::Viewer::onAboutToCompose()
@@ -252,26 +255,26 @@ namespace Ra
 #ifndef OS_MACOS
             gl::glViewport(0, 0, width(), height());
 #endif
-            m_camera->resizeViewport( width_, height_ );
-            m_currentRenderer->resize( width_, height_ );
+            m_camera->resizeViewport(width_, height_);
+            m_currentRenderer->resize(width_, height_);
             m_context->doneCurrent();
         }
     }
 
-    Engine::Renderer::PickingMode getPickingMode()
+    Engine::Renderer::PickingMode Gui::Viewer::getPickingMode() const
     {
         auto keyMap = Gui::KeyMappingManager::getInstance();
         if( Gui::isKeyPressed( keyMap->getKeyFromAction( Gui::KeyMappingManager::FEATUREPICKING_VERTEX ) ) )
         {
-            return Engine::Renderer::VERTEX;
+            return m_isBrushPickingEnabled ? Engine::Renderer::C_VERTEX : Engine::Renderer::VERTEX;
         }
         if( Gui::isKeyPressed( keyMap->getKeyFromAction( Gui::KeyMappingManager::FEATUREPICKING_EDGE ) ) )
         {
-            return Engine::Renderer::EDGE;
+            return m_isBrushPickingEnabled ? Engine::Renderer::C_EDGE : Engine::Renderer::EDGE;
         }
         if( Gui::isKeyPressed( keyMap->getKeyFromAction( Gui::KeyMappingManager::FEATUREPICKING_TRIANGLE ) ) )
         {
-            return Engine::Renderer::TRIANGLE;
+            return m_isBrushPickingEnabled ? Engine::Renderer::C_TRIANGLE : Engine::Renderer::TRIANGLE;
         }
         return Engine::Renderer::RO;
     }
@@ -344,6 +347,8 @@ namespace Ra
             m_camera->handleMouseMoveEvent( event );
             if (m_gizmoManager != nullptr)
                 m_gizmoManager->handleMouseMoveEvent(event);
+            if (m_isBrushPickingEnabled)
+                m_currentRenderer->setMousePosition(Ra::Core::Vector2(event->x(), event->y()));
         }
         else
             event->ignore();
@@ -353,7 +358,16 @@ namespace Ra
     {
         if(m_glInitStatus.load())
         {
-            m_camera->handleWheelEvent(event);
+            if (m_isBrushPickingEnabled && isKeyPressed(Qt::Key_Shift))
+            {
+                m_brushRadius += (event->angleDelta().y() * 0.01 + event->angleDelta().x() * 0.01) > 0 ? 5 : -5 ;
+                m_brushRadius = std::max( m_brushRadius, Scalar(5) );
+                m_currentRenderer->setBrushRadius( m_brushRadius );
+            }
+            else
+            {
+                m_camera->handleWheelEvent(event);
+            }
         }
         else
         {
@@ -388,6 +402,12 @@ namespace Ra
             m_currentRenderer->toggleWireframe();
         }
         */
+        if (event->key() == Qt::Key_C && event->modifiers() == Qt::NoModifier)
+        {
+            m_isBrushPickingEnabled = !m_isBrushPickingEnabled;
+            m_currentRenderer->setBrushRadius( m_isBrushPickingEnabled ? m_brushRadius : 0 );
+            emit toggleBrushPicking( m_isBrushPickingEnabled );
+        }
 
         // Do we need this ?
         //QWindow::keyReleaseEvent(event);
@@ -497,6 +517,7 @@ namespace Ra
         CORE_ASSERT(m_currentRenderer != nullptr,
                     "No renderer found.");
 
+        m_pickingManager->clear();
         m_context->makeCurrent(this);
 
         // Move camera if needed. Disabled for now as it takes too long (see issue #69)
@@ -558,15 +579,13 @@ namespace Ra
             const Engine::Renderer::PickingQuery& query  = m_currentRenderer->getPickingQueries()[i];
             if ( query.m_button == Core::MouseButton::RA_MOUSE_LEFT_BUTTON)
             {
-                emit leftClickPicking(m_currentRenderer->getPickingResults()[i]);
+                emit leftClickPicking(m_currentRenderer->getPickingResults()[i].m_roIdx);
             }
             else if (query.m_button == Core::MouseButton::RA_MOUSE_RIGHT_BUTTON)
             {
-                const int roIdx = m_currentRenderer->getPickingResults()[i];
-                const Core::Ray ray = m_camera->getCamera()->getRayFromScreen({query.m_screenCoords(0), height()-query.m_screenCoords(1)});
-                // FIXME: this is safe as soon as there is no "queued connection" related to the signal
-                m_featurePickingManager->doPicking(roIdx, query, ray);
-                emit rightClickPicking(roIdx);
+                const auto& result = m_currentRenderer->getPickingResults()[i];
+                m_pickingManager->setCurrent( result );
+                emit rightClickPicking( result );
             }
         }
     }

@@ -13,7 +13,7 @@
 
 #include <Core/Math/LinearAlgebra.hpp>
 #include <GuiBase/Viewer/Gizmo/GizmoManager.hpp>
-#include <GuiBase/Utils/FeaturePickingManager.hpp>
+#include <GuiBase/Utils/PickingManager.hpp>
 
 // Forward declarations
 class QOpenGLContext;
@@ -105,7 +105,7 @@ namespace Ra
             Engine::Renderer* getRenderer();
 
             /// Access to the feature picking manager
-            FeaturePickingManager* getFeaturePickingManager();
+            PickingManager* getPickingManager();
 
             //
             // Rendering management
@@ -146,11 +146,14 @@ namespace Ra
             void grabFrame( const std::string& filename );
 
             void enableDebug();
+
         signals:
             void glInitialized();               //! Emitted when GL context is ready. We except call to addRenderer here
             void rendererReady();               //! Emitted when the rendered is correctly initialized
-            void leftClickPicking ( int id );   //! Emitted when the result of a left click picking is known
-            void rightClickPicking( int id );   //! Emitted when the resut of a right click picking is known
+            void leftClickPicking ( int id );   //! Emitted when the result of a left click picking is known (for gizmo manip)
+            void rightClickPicking( const Ra::Engine::Renderer::PickingResult& result ); //! Emitted when the resut of a right click picking is known (for selection)
+
+            void toggleBrushPicking( bool on ); //! Emitted when the corresponding key is released (see keyReleaseEvent)
 
         public slots:
             /// Tell the renderer to reload all shaders.
@@ -218,6 +221,7 @@ namespace Ra
             void keyPressEvent( QKeyEvent* event ) override;
             void keyReleaseEvent( QKeyEvent* event ) override;
 
+            Engine::Renderer::PickingMode getPickingMode() const;
             /// We intercept the mouse events in this widget to get the coordinates of the mouse
             /// in screen space.
             void mouseDoubleClickEvent( QMouseEvent* event ) override;
@@ -241,7 +245,9 @@ namespace Ra
             Engine::Renderer* m_currentRenderer;
 
             /// Owning Pointer to the feature picking manager.
-            FeaturePickingManager* m_featurePickingManager;
+            PickingManager* m_pickingManager;
+            bool m_isBrushPickingEnabled;
+            float m_brushRadius;
 
             /// Owning pointer to the camera.
             std::unique_ptr<CameraInterface> m_camera;
