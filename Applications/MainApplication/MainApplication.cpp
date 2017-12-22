@@ -144,6 +144,16 @@ namespace Ra
         LOG( logINFO ) << config.str();
 
         config.str( std::string() );
+        config << "Texture support : ";
+#if defined(RADIUM_WITH_TEXTURES)
+        config << "enabled";
+#else
+        config << "disabled" ;
+#endif
+
+        LOG( logINFO ) << config.str();
+
+        config.str( std::string() );
         config<<"core build: "<<Version::compiler<<" - "<<Version::compileDate<<" "<<Version::compileTime;
         LOG( logINFO ) << config.str();
 
@@ -173,15 +183,11 @@ namespace Ra
 #ifdef IO_USE_TINYPLY
         // Register before AssimpFileLoader, in order to ease override of such
         // custom loader (first loader able to load is taking the file)
-        m_engine->registerFileLoader( new IO::TinyPlyFileLoader() );
+        m_engine->registerFileLoader( std::shared_ptr<Asset::FileLoaderInterface>(new IO::TinyPlyFileLoader()) );
 #endif
 #ifdef IO_USE_ASSIMP
-        m_engine->registerFileLoader( new IO::AssimpFileLoader() );
+        m_engine->registerFileLoader( std::shared_ptr<Asset::FileLoaderInterface>(new IO::AssimpFileLoader()) );
 #endif
-#ifdef IO_USE_PBRT
-        m_engine->registerFileLoader( new IO::PbrtFileLoader() );
-#endif
-
         // Create main window.
         m_mainWindow.reset( new Gui::MainWindow );
         m_mainWindow->show();
@@ -191,8 +197,9 @@ namespace Ra
         CORE_ASSERT( m_viewer->getContext() != nullptr, "OpenGL context was not created" );
         CORE_ASSERT( m_viewer->getContext()->isValid(), "OpenGL was not initialized" );
 
-        // Allow all events to be processed (thus the viewer should have
-        // initialized the OpenGL context..)
+        // Connect the signals and allow all pending events to be processed
+        // (thus the viewer should have initialized the OpenGL context..)
+        createConnections();
         processEvents();
 
         Ra::Engine::RadiumEngine::getInstance()->getEntityManager()->createEntity("Test");
@@ -209,8 +216,6 @@ namespace Ra
             numThreads = m_maxThreads;
         }
         m_taskQueue.reset( new Core::TaskQueue(numThreads) );
-
-        createConnections();
 
         setupScene();
         emit starting();
@@ -237,6 +242,7 @@ namespace Ra
     void BaseApplication::createConnections()
     {
         connect( m_mainWindow.get(), &Gui::MainWindow::closed , this, &BaseApplication::appNeedsToQuit );
+        connect( m_viewer, &Gui::Viewer::glInitialized, this, &BaseApplication::initializeOpenGlPlugins );
     }
 
     void BaseApplication::setupScene()
@@ -252,7 +258,6 @@ namespace Ra
         auto frame = Primitive(Engine::SystemEntity::uiCmp(), Frame(Ra::Core::Transform::Identity(), 0.05f));
         frame->setPickable( false );
         Engine::SystemEntity::uiCmp()->addRenderObject(frame);
-
     }
 
     void BaseApplication::loadFile( QString path, bool fitCam )
@@ -331,7 +336,6 @@ namespace Ra
         const Scalar dt = m_realFrameRate ?
                     Core::Timer::getIntervalSeconds( m_lastFrameStart, timerData.frameStart ) :
                     1.f / Scalar(m_targetFPS);
-
         m_lastFrameStart = timerData.frameStart;
 
         timerData.eventsStart = Core::Timer::Clock::now();
@@ -415,6 +419,22 @@ namespace Ra
         m_isAboutToQuit = true;
     }
 
+    void BaseApplication::initializeOpenGlPlugins()
+    {
+        // Initialize plugins that depends on Initialized OpenGL (if any)
+        if (m_openGLPlugins.size() > 0) {
+            PluginContext context;
+            context.m_engine = m_engine.get();
+            context.m_selectionManager = m_mainWindow->getSelectionManager();
+            context.m_featureManager = m_viewer->getFeaturePickingManager();
+            for (auto plugin : m_openGLPlugins)
+            {
+                plugin->openGlInitialize( context, m_viewer->getContext() );
+            }
+            m_openGLPlugins.clear();
+        }
+    }
+
     void BaseApplication::setRealFrameRate(bool on)
     {
        m_realFrameRate = on;
@@ -444,10 +464,10 @@ namespace Ra
 
     BaseApplication::~BaseApplication()
     {
-        LOG( logINFO ) << "About to quit... Cleaning RadiumEngine memory";
         emit stopping();
         m_mainWindow->cleanup();
         m_engine->cleanup();
+
         // This will remove the directory if empty.
         QDir().rmdir( m_exportFolderName.c_str());
     }
@@ -530,6 +550,30 @@ namespace Ra
                                 std::string name = ptr->getRendererName()
                                         + "(" + filename.toStdString() +  ")";
                                 m_mainWindow->addRenderer(name, ptr);
+                            }
+                        }
+
+                        if(loadedPlugin->doAddFileLoader())
+                        {
+                            std::vector<std::shared_ptr<Asset::FileLoaderInterface>> tmpL;
+                            loadedPlugin->addFileLoaders(&tmpL);
+                            CORE_ASSERT(! tmpL.empty(), "This plugin is expected to add file loaders");
+                            for(auto ptr : tmpL){
+                                m_engine->registerFileLoader(ptr);
+                            }
+                        }
+
+                        if ( loadedPlugin->doAddROpenGLInitializer() )
+                        {
+                            if ( m_viewer->getContext() && m_viewer->getContext()->isValid() )
+                            {
+                                // OpenGL is ready, initialize openGL part of the plugin
+                                loadedPlugin->openGlInitialize( context, m_viewer->getContext() );
+                            }
+                            else
+                            {
+                                // Defer OpenGL initialisation
+                                m_openGLPlugins.push_back(loadedPlugin);
                             }
                         }
                     }

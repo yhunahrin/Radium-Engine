@@ -7,8 +7,6 @@
 #include <QToolButton>
 #include <QComboBox>
 
-#include <assimp/Importer.hpp>
-
 #include <Core/File/deprecated/OBJFileManager.hpp>
 
 #include <Engine/Managers/SignalManager/SignalManager.hpp>
@@ -47,6 +45,7 @@ namespace Ra
 
 
         m_viewer = new Ra::Gui::Viewer();
+        m_viewer->createGizmoManager();
         m_viewer->setObjectName(QStringLiteral("m_viewer"));
 
         QWidget * viewerwidget = QWidget::createWindowContainer(m_viewer);
@@ -143,7 +142,6 @@ namespace Ra
                 [=]( const QString& ) { this->onCurrentRenderChangedInUI(); } );
 
         connect(m_viewer, &Viewer::glInitialized, this, &MainWindow::onGLInitialized);
-        connect(m_viewer, SIGNAL(glInitialized()), this, SIGNAL(glInitialized()));
         connect(m_viewer, &Viewer::rendererReady, this, &MainWindow::onRendererReady);
 
         connect(m_displayedTextureCombo,
@@ -173,13 +171,21 @@ namespace Ra
 
     void Gui::MainWindow::loadFile()
     {
-        // Filter the files
-        aiString extList;
-        Assimp::Importer importer;
-        importer.GetExtensionList(extList);
-        std::string extListStd(extList.C_Str());
-        std::replace(extListStd.begin(), extListStd.end(), ';', ' ');
-        QString filter =""/* QString::fromStdString(extListStd)*/;
+
+        QString filter;
+
+        for ( const auto& loader : mainApp->m_engine->getFileLoaders() )
+        {
+            QString exts;
+            for (const auto& e : loader->getFileExtensions())
+                exts.append(QString::fromStdString(e) + tr(" "));
+            filter.append( QString::fromStdString(loader->name()) +
+                           tr(" (") +
+                           exts +
+                           tr(");;"));
+        }
+        // remove the last ";;" of the string
+        filter.remove(filter.size()-2, 2);
 
         QSettings settings;
         QString path = settings.value("files/load", QDir::homePath()).toString();
@@ -375,11 +381,13 @@ namespace Ra
     {
         // always restore displaytexture to 0 before switch to keep coherent renderer state
         m_displayedTextureCombo->setCurrentIndex(0);
-        m_viewer->changeRenderer(m_currentRendererCombo->currentIndex());
-        updateDisplayedTexture();
-        // in case the newly used renderer has not been set before and set another texture as its default,
-        // set displayTexture to 0 again ;)
-        m_displayedTextureCombo->setCurrentIndex(0);
+        if ( m_viewer->changeRenderer(m_currentRendererCombo->currentIndex()) )
+        {
+            updateDisplayedTexture();
+            // in case the newly used renderer has not been set before and set another texture as its default,
+            // set displayTexture to 0 again ;)
+            m_displayedTextureCombo->setCurrentIndex(0);
+        }
     }
 
     void Gui::MainWindow::updateDisplayedTexture()
@@ -650,7 +658,7 @@ namespace Ra
 
     void Gui::MainWindow::onGLInitialized()
     {
-        // set renderers once OpenGL is configured
+        // set default renderer once OpenGL is configured
         std::shared_ptr<Engine::Renderer> e (new Engine::ForwardRenderer());
         addRenderer("Forward Renderer", e);
     }

@@ -82,6 +82,8 @@ namespace Ra
             /// Destructor
             virtual ~Viewer();
 
+            /// create gizmos
+            void createGizmoManager();
             //
             // Accessors
             //
@@ -158,7 +160,7 @@ namespace Ra
             void displayTexture( const QString& tex );
 
             /// Set the renderer
-            void changeRenderer( int index );
+            bool changeRenderer( int index );
 
             /// Toggle the post-process effetcs
             void enablePostProcess(int enabled);
@@ -201,6 +203,8 @@ namespace Ra
             //
 
             /// Initialize openGL. Called on by the first "show" call to the main window.
+            /// \warning This function is NOT reentrant, and may behave incorrectly
+            /// if called at the same time than #intializeRenderer
             virtual void initializeGL();
 
             /// Resize the view port and the camera. Called by the resize event.

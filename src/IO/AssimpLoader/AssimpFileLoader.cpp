@@ -115,5 +115,10 @@ namespace Ra {
 
             return fileData;
         }
+
+        std::string AssimpFileLoader::name() const
+        {
+            return "Assimp";
+        }
     }
 }

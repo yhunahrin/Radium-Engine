@@ -12,9 +12,7 @@ if ( NOT MSVC )
     endif()
 endif()
 
-
-
-set(UNIX_DEFAULT_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions -fPIC")
+set(UNIX_DEFAULT_CXX_FLAGS                "-Wall -Wextra  -pthread -msse3 -Wno-sign-compare -Wno-unused-parameter -fno-exceptions")
 set(UNIX_DEFAULT_CXX_FLAGS_DEBUG          "-D_DEBUG -DCORE_DEBUG -g3 -ggdb")
 set(UNIX_DEFAULT_CXX_FLAGS_RELEASE        "-DNDEBUG -O3")
 set(UNIX_DEFAULT_CXX_FLAGS_RELWITHDEBINFO "-g3")
@@ -169,14 +167,6 @@ if (${RADIUM_TINYPLY_SUPPORT})
     message(STATUS "${PROJECT_NAME} : Using TinyPly loader")
 else()
     message(STATUS "${PROJECT_NAME} : TinyPly loader disabled")
-endif()
-
-
-if (${RADIUM_PBRT_SUPPORT})
-    add_definitions(-DIO_USE_PBRT)
-    message(STATUS "${PROJECT_NAME} : Using PBRT loader")
-else()
-    message(STATUS "${PROJECT_NAME} : PBRT loader disabled")
 endif()
 
 if (${RADIUM_QUIET})

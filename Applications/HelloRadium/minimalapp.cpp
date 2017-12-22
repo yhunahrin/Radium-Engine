@@ -1,5 +1,5 @@
 #include <minimalapp.hpp>
-
+#include <Engine/Renderer/Renderers/ForwardRenderer.hpp>
 #include <Engine/Renderer/RenderTechnique/ShaderConfigFactory.hpp>
 
 #include <GuiBase/Utils/KeyMappingManager.hpp>
@@ -11,7 +11,13 @@ MinimalApp::MinimalApp(int &argc, char** argv)
           m_frame_timer(nullptr),
           m_target_fps(60)
 {
-    LOG(logDEBUG) << "Initialize engine.";
+    // Set application and organization names in order to ensure uniform
+    // QSettings configurations.
+    // \see http://doc.qt.io/qt-5/qsettings.html#QSettings-4
+    QCoreApplication::setOrganizationName("STORM-IRIT");
+    QCoreApplication::setApplicationName("HelloRadium");
+
+    // Initialize Engine.
     m_engine.reset(Ra::Engine::RadiumEngine::createInstance());
     m_engine->initialize();
    
@@ -29,17 +35,17 @@ MinimalApp::MinimalApp(int &argc, char** argv)
 
     Ra::Gui::KeyMappingManager::createInstance();
 
-    LOG(logDEBUG) << "Initialize taskqueue.";
+    // Initialize taskqueue.
     m_task_queue.reset(new Ra::Core::TaskQueue(std::thread::hardware_concurrency() - 1));
-    LOG(logDEBUG) << "Initialize viewer.";
+    // Initialize viewer.
     m_viewer.reset(new Ra::Gui::Viewer);
 
     CORE_ASSERT( m_viewer != nullptr, "GUI was not initialized" );
+    connect(m_viewer.get(), &Ra::Gui::Viewer::glInitialized, this, &MinimalApp::onGLInitialized);
 
-    LOG(logDEBUG) << "Initialize timer.";
+    // Initialize timer for the spinning cube.
     m_frame_timer = new QTimer(this);
     m_frame_timer->setInterval(1000 / m_target_fps);
-    connect(m_frame_timer, &QTimer::timeout, this, &MinimalApp::frame);
 }
 
 MinimalApp::~MinimalApp()
@@ -47,7 +53,12 @@ MinimalApp::~MinimalApp()
     m_engine->cleanup();
 }
 
-
+void MinimalApp::onGLInitialized()
+{
+    std::shared_ptr<Ra::Engine::Renderer> e (new Ra::Engine::ForwardRenderer());
+    m_viewer->addRenderer(e);
+    connect(m_frame_timer, &QTimer::timeout, this, &MinimalApp::frame);
+}
 
 void MinimalApp::frame()
 {

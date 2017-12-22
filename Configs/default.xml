@@ -42,7 +42,7 @@
                 <information id="action" value="FEATUREPICKING_EDGE"></information>
         </keymap>
         <keymap>
-                <information id="type" modifier="NoModifier" type="key" value="Key_T"></information>
+                <information id="type" modifier="NoModifier" type="key" value="Key_F"></information>
                 <information id="action" value="FEATUREPICKING_TRIANGLE"></information>
         </keymap>
 </keymaps>

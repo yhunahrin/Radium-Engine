@@ -50,7 +50,7 @@ namespace Ra
         , m_currentRenderer( nullptr )
         , m_featurePickingManager( nullptr )
         , m_camera( nullptr )
-        , m_gizmoManager( new GizmoManager(this) )
+        , m_gizmoManager( nullptr )
         , m_renderThread( nullptr )
         , m_glInitStatus( false )
     {
@@ -61,16 +61,41 @@ namespace Ra
     }
 
     Gui::Viewer::~Viewer(){
-        delete m_gizmoManager;
+        if ( m_glInitStatus.load() )
+        {
+            m_context->makeCurrent( this );
+            m_renderers.clear();
+
+            if (m_gizmoManager != nullptr)
+            {
+                delete m_gizmoManager;
+            }
+            m_context->doneCurrent( );
+        }
     }
 
+    void Gui::Viewer::createGizmoManager()
+    {
+        if (m_gizmoManager == nullptr)
+        {
+            m_gizmoManager = new GizmoManager(this);
+        }
+    }
 
     int Gui::Viewer::addRenderer(std::shared_ptr<Engine::Renderer> e){
-        CORE_ASSERT(m_glInitStatus.load(),
-                    "OpenGL needs to be initialized to add renderers.");
-
-        // initial state and lighting
+        // initial state and lighting (deferred if GL is not ready yet)
+        if ( m_glInitStatus.load() )
+        {
+            m_context->makeCurrent( this );
         intializeRenderer(e.get());
+            m_context->doneCurrent( );
+        }
+        else
+        {
+            LOG( logINFO ) << "[Viewer] New Renderer ("
+                           << e->getRendererName()
+                           << ") added before GL being Ready: deferring initialization...";
+        }
 
         m_renderers.push_back(e);
 
@@ -88,22 +113,23 @@ namespace Ra
                                         {
                                             std::cerr << call.parameters[i]->asString();
                                             if (i < call.parameters.size() - 1)
+                                            {
                                                 std::cerr << ", ";
+                                            }
                                         }
                                         std::cerr << ")";
-
                                         if (call.returnValue)
+                                        {
                                             std::cerr << " -> " << call.returnValue->asString();
-
+                                        }
                                         std::cerr << std::endl;
-
                                     });
     }
 
     void Gui::Viewer::initializeGL()
     {
-//        LOG( logDEBUG ) << "Gui::Viewer::initializeGL : "  << width() << 'x' << height() << std::endl;
-        // verify if context is created ?
+        m_glInitStatus = true;
+
         m_context->makeCurrent(this);
 
         m_camera.reset( new Gui::TrackballCamera( width(), height() ) );
@@ -115,20 +141,38 @@ namespace Ra
         auto light = Ra::Core::make_shared<Engine::DirectionalLight>();
         m_camera->attachLight( light );
 
-        m_glInitStatus = true;
-        emit glInitialized();
+        // initialize renderers added before GL was ready
+        if( ! m_renderers.empty() )
+        {
+            for ( auto& rptr : m_renderers )
+            {
+                intializeRenderer( rptr.get() );
+                LOG( logINFO ) << "[Viewer] Deferred initialization of "
+                               << rptr->getRendererName();
+            }
+        }
 
-        if(m_renderers.empty()) {
-            LOG(logWARNING)
+        emit glInitialized();
+        m_context->doneCurrent();
+
+        // this code is usefull only if glInitialized() connected slot does not add a renderer
+        // On Windows, actually, the signal seems to be not fired (DLL_IMPORT/EXPORT problem ?
+        if(m_renderers.empty())
+        {
+            LOG( logINFO )
                     << "Renderers fallback: no renderer added, enabling default (Forward Renderer)";
+
+            m_context->makeCurrent(this);
             std::shared_ptr<Ra::Engine::Renderer> e (new Ra::Engine::ForwardRenderer());
+            m_context->doneCurrent();
+
             addRenderer(e);
         }
 
-        m_currentRenderer = m_renderers[0].get();
-
-        emit rendererReady();
-        m_context->doneCurrent();
+        if (m_currentRenderer == nullptr)
+        {
+            changeRenderer(0);
+        }
     }
 
     Gui::CameraInterface* Gui::Viewer::getCameraInterface()
@@ -184,38 +228,34 @@ namespace Ra
 
     void Gui::Viewer::intializeRenderer(Engine::Renderer *renderer)
     {
+        // see issue #261 Qt Event order and default viewport management (Viewer.cpp)
+        // https://github.com/STORM-IRIT/Radium-Engine/issues/261
+#ifndef OS_MACOS
+        gl::glViewport(0, 0, width(), height());
+#endif
         renderer->initialize(width(), height());
         if( m_camera->hasLightAttached() )
+        {
             renderer->addLight( m_camera->getLight() );
+        }
     }
 
     void Gui::Viewer::resizeGL( int width_, int height_ )
     {
-        // Renderer should have been locked by previous events.
-        m_context->makeCurrent(this);
+        if (isExposed())
+        {
+            // Renderer should have been locked by previous events.
+            m_context->makeCurrent(this);
 
-        // FIXME (Mathias) : try to understand the reasons of so different functionalities and how is managed the vieport size on MAcOs
-        // On MacOs, no need to define the initial viewport, as written in the glviewport documentation :
-        // "When a GL context is first attached to a window, width and height are set to the dimensions of that window.
-        // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml
-        // INFORMATION FOR MACOS WITH RETINA : on retina screens, the (QWindow) window report a size of wxh and the
-        // initial viewport of size of 2wx2h.
-        // It seems that this is not the case on Linux, where the (QWindow) window report a size of wxh and the
-        // initial viewport of size of 100x100. (at least on my Nvidia OpenGL 4.4 drivers)
-        // So we set here the initial viewport to the size of the window.
-        // Surprisingly, on MacOs, the wiewport follow the size of the window (I presume, as a consequence
-        // of the activation of the context by m_context->makeCurrent(this);). Not on Linux ... is it a Qt bunctionnality ?
-
-//        int qtViewport[4];
-//        glGetIntegerv(GL_VIEWPORT, qtViewport);
-//        LOG( logDEBUG ) << "Qt Viewport (Viewer/Qwindow): " << qtViewport[0] << '-' << qtViewport[1] << '+' << qtViewport[2] << '-' << qtViewport[3];
-
+            // see issue #261 Qt Event order and default viewport management (Viewer.cpp)
+            // https://github.com/STORM-IRIT/Radium-Engine/issues/261
 #ifndef OS_MACOS
-        gl::glViewport(0, 0, width(), height());
+            gl::glViewport(0, 0, width(), height());
 #endif
-        m_camera->resizeViewport( width_, height_ );
-        m_currentRenderer->resize( width_, height_ );
-        m_context->doneCurrent();
+            m_camera->resizeViewport( width_, height_ );
+            m_currentRenderer->resize( width_, height_ );
+            m_context->doneCurrent();
+        }
     }
 
     Engine::Renderer::PickingMode getPickingMode()
@@ -250,7 +290,8 @@ namespace Ra
 
     void Gui::Viewer::mousePressEvent( QMouseEvent* event )
     {
-        if(! m_glInitStatus) {
+        if(! m_glInitStatus.load())
+        {
             event->ignore();
             return;
         }
@@ -275,7 +316,10 @@ namespace Ra
                 m_currentRenderer->addPickingRequest({ Core::Vector2(event->x(), height() - event->y()),
                                                        Core::MouseButton::RA_MOUSE_LEFT_BUTTON,
                                                        Engine::Renderer::RO });
-                m_gizmoManager->handleMousePressEvent(event);
+                if (m_gizmoManager != nullptr)
+                {
+                    m_gizmoManager->handleMousePressEvent(event);
+                }
             }
         }
         else if ( keyMap->actionTriggered( event, Gui::KeyMappingManager::TRACKBALLCAMERA_MANIPULATION ) )
@@ -287,15 +331,19 @@ namespace Ra
     void Gui::Viewer::mouseReleaseEvent( QMouseEvent* event )
     {
         m_camera->handleMouseReleaseEvent( event );
-        m_gizmoManager->handleMouseReleaseEvent(event);
+        if (m_gizmoManager != nullptr)
+        {
+            m_gizmoManager->handleMouseReleaseEvent(event);
+        }
     }
 
     void Gui::Viewer::mouseMoveEvent( QMouseEvent* event )
     {
-        if(m_glInitStatus)
+        if(m_glInitStatus.load())
         {
             m_camera->handleMouseMoveEvent( event );
-            m_gizmoManager->handleMouseMoveEvent(event);
+            if (m_gizmoManager != nullptr)
+                m_gizmoManager->handleMouseMoveEvent(event);
         }
         else
             event->ignore();
@@ -303,21 +351,27 @@ namespace Ra
 
     void Gui::Viewer::wheelEvent( QWheelEvent* event )
     {
-        if(m_glInitStatus)
+        if(m_glInitStatus.load())
+        {
             m_camera->handleWheelEvent(event);
+        }
         else
+        {
             event->ignore();
+        }
     }
 
     void Gui::Viewer::keyPressEvent( QKeyEvent* event )
     {
-        if(m_glInitStatus)
+        if(m_glInitStatus.load())
         {
             keyPressed(event->key());
             m_camera->handleKeyPressEvent( event );
         }
         else
+        {
             event->ignore();
+        }
 
         // Do we need this ?
         //QWindow::keyPressEvent(event);
@@ -343,8 +397,10 @@ namespace Ra
     {
  //       LOG( logDEBUG ) << "Gui::Viewer --> Got resize event : "  << width() << 'x' << height();
 
-        if(!m_glInitStatus)
+        if(!m_glInitStatus.load())
+        {
             initializeGL();
+        }
 
         if (!m_currentRenderer || !m_camera)
             return;
@@ -355,7 +411,8 @@ namespace Ra
     void Gui::Viewer::showEvent(QShowEvent *ev)
     {
  //       LOG( logDEBUG ) << "Gui::Viewer --> Got show event : " << width() << 'x' << height();
-        if(!m_context) {
+        if(!m_context)
+        {
             m_context.reset(new QOpenGLContext());
             m_context->create();
             m_context->makeCurrent(this);
@@ -379,6 +436,9 @@ namespace Ra
 
     void Gui::Viewer::reloadShaders()
     {
+        CORE_ASSERT(m_glInitStatus.load(),
+                    "OpenGL needs to be initialized reload shaders.");
+
         // FIXME : check thread-saefty of this.
         m_currentRenderer->lockRendering();
 
@@ -391,25 +451,52 @@ namespace Ra
 
     void Gui::Viewer::displayTexture( const QString &tex )
     {
+        CORE_ASSERT(m_glInitStatus.load(),
+                    "OpenGL needs to be initialized to display textures.");
+        m_context->makeCurrent(this);
         m_currentRenderer->lockRendering();
         m_currentRenderer->displayTexture( tex.toStdString() );
         m_currentRenderer->unlockRendering();
+        m_context->doneCurrent();
     }
 
-    void Gui::Viewer::changeRenderer( int index )
+    bool Gui::Viewer::changeRenderer( int index )
     {
-        if (m_renderers[index]) {
-            if(m_currentRenderer != nullptr) m_currentRenderer->lockRendering();
+        if (m_glInitStatus.load() && m_renderers[index])
+        {
+            m_context->makeCurrent(this);
+
+            if(m_currentRenderer != nullptr)
+            {
+                m_currentRenderer->lockRendering();
+            }
+
             m_currentRenderer = m_renderers[index].get();
             m_currentRenderer->resize( width(), height() );
             m_currentRenderer->unlockRendering();
+
+            LOG( logINFO ) << "[Viewer] Set active renderer: "
+                           << m_currentRenderer->getRendererName();
+
+            m_context->doneCurrent();
+
+            emit rendererReady();
+
+            return true;
         }
+        return false;
     }
 
     // Asynchronous rendering implementation
 
     void Gui::Viewer::startRendering( const Scalar dt )
     {
+        CORE_ASSERT(m_glInitStatus.load(),
+                    "OpenGL needs to be initialized before rendering.");
+
+        CORE_ASSERT(m_currentRenderer != nullptr,
+                    "No renderer found.");
+
         m_context->makeCurrent(this);
 
         // Move camera if needed. Disabled for now as it takes too long (see issue #69)
@@ -421,12 +508,15 @@ namespace Ra
         data.viewMatrix = m_camera->getViewMatrix();
 
         m_currentRenderer->render( data );
+
     }
 
     void Gui::Viewer::waitForRendering()
     {
         if (isExposed())
+        {
             m_context->swapBuffers(this);
+        }
 
         m_context->doneCurrent();
     }
@@ -454,6 +544,12 @@ namespace Ra
 
     void Gui::Viewer::processPicking()
     {
+        CORE_ASSERT(m_glInitStatus.load(),
+                    "OpenGL needs to be initialized before rendering.");
+
+        CORE_ASSERT(m_currentRenderer != nullptr,
+                    "No renderer found.");
+
         CORE_ASSERT( m_currentRenderer->getPickingQueries().size() == m_currentRenderer->getPickingResults().size(),
                     "There should be one result per query." );
 
@@ -479,6 +575,7 @@ namespace Ra
     {
         if (!aabb.isEmpty())
         {
+            CORE_ASSERT(m_camera != nullptr, "No camera found.");
             m_camera->fitScene(aabb);
         }
         else

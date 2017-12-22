@@ -34,6 +34,14 @@ namespace Ra
     }
 }
 
+namespace Ra
+{
+    namespace Plugins
+    {
+        class RadiumPluginInterface;
+    }
+}
+
 /// Allow singleton-like access to the main app à la qApp.
 #if defined(mainApp)
 #undef mainApp
@@ -83,6 +91,8 @@ namespace Ra
         void loadFile( QString path, bool fitCam = true );
         void framesCountForStatsChanged( uint count );
         void appNeedsToQuit();
+        void initializeOpenGlPlugins();
+
         void setRealFrameRate( bool on );
         void setRecordFrames( bool on );
         void setRecordTimings( bool on );
@@ -122,6 +132,9 @@ namespace Ra
         uint m_targetFPS;
 
     private:
+        /// Plugins that need to be initialized once OpenGL is ready
+        std::vector<Ra::Plugins::RadiumPluginInterface*> m_openGLPlugins;
+
         /// Pointer to OpenGL Viewer for render call (belongs to MainWindow).
         Gui::Viewer* m_viewer;
 
