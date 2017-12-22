@@ -429,47 +429,135 @@ namespace Ra
             for ( const auto& query : m_pickingQueries )
             {
                 PickingResult result;
-                result.m_mode = query.m_mode;
                 // fill picking result according to picking mode
                 if (query.m_mode < C_VERTEX)
                 {
+                    if (query.m_screenCoords.x() < 0 || query.m_screenCoords.x() > m_width-1 ||
+                        query.m_screenCoords.y() < 0 || query.m_screenCoords.y() > m_height-1 )
+                    {
+                        result.m_roIdx = -1;
+                        m_pickingResults.push_back( result );
+                        continue;
+                    }
                     GL_ASSERT( glReadPixels( query.m_screenCoords.x(), query.m_screenCoords.y(),
                                              1, 1, GL_RGBA_INTEGER, GL_INT, pick ) );
                     result.m_roIdx = pick[0];                   // RO idx
                     result.m_vertexIdx.emplace_back( pick[1] ); // vertex idx in the element
                     result.m_elementIdx.emplace_back( pick[2] ); // element idx
                     result.m_edgeIdx.emplace_back( pick[3] ); // edge opposite idx for triangles
+                    result.m_weights.emplace_back( 1.0 );
                 }
                 else
                 {
                     // select the results for the RO with the most representatives
                     // (or first to come if same amount)
-                    std::map<int,PickingResult> resultPerRO;
+                    std::map<int, std::vector< std::pair<std::tuple<int,int,int>,Scalar> >> resultPerRO;
+                    const Scalar r2 = m_brushRadius*m_brushRadius;
+                    const Scalar pr = 0.1*m_brushRadius;
                     for(int i=-m_brushRadius; i<=m_brushRadius; i+=3)
                     {
                         int h = std::round( std::sqrt( m_brushRadius*m_brushRadius - i*i ) );
                         for(int j=-h; j<=+h; j+=3)
                         {
-                            GL_ASSERT( glReadPixels(query.m_screenCoords.x()+i, m_height-query.m_screenCoords.y()-j,
-                                                    1, 1, GL_RGBA_INTEGER, GL_INT, pick ) );
-                            resultPerRO[ pick[0] ].m_roIdx = pick[0];
-                            resultPerRO[ pick[0] ].m_vertexIdx.emplace_back( pick[1] );
-                            resultPerRO[ pick[0] ].m_elementIdx.emplace_back( pick[2] );
-                            resultPerRO[ pick[0] ].m_edgeIdx.emplace_back( pick[3] );
+                            const int x = query.m_screenCoords.x()+i;
+                            const int y = query.m_screenCoords.y()+j;
+                            if (x < 0 || x > m_width-1 || y < 0 || y > m_height-1)
+                            {
+                                continue;
+                            }
+                            GL_ASSERT( glReadPixels( x, y, 1, 1, GL_RGBA_INTEGER, GL_INT, pick ) );
+                            //  w = (1 - ((d-0.1r)/r)^2 )^3  if  d > 0.1r
+                            //      1                        otherwise
+                            const Scalar d = sqrt(i*i+j*j);
+                            Scalar w;
+                            if (d<pr)
+                            {
+                                w = 1.0;
+                            }
+                            else
+                            {
+                                const Scalar x = (d-pr);
+                                const Scalar y = (1 - x*x/r2);
+                                w = y*y*y;
+                            }
+                            resultPerRO[ pick[0] ].emplace_back( std::make_pair( std::make_tuple( pick[1], pick[2], pick[3] ), w ) );
                         }
                     }
+                    // get the RO with the max number of picks
                     int maxRO = -1;
                     int nbMax = 0;
                     for (const auto& res : resultPerRO)
                     {
-                        if (res.second.m_vertexIdx.size() > nbMax)
+                        if (res.first == -1)
+                        {
+                            continue;
+                        }
+                        if (res.second.size() > nbMax)
                         {
                             maxRO = res.first;
-                            nbMax = res.second.m_vertexIdx.size();
+                            nbMax = res.second.size();
                         }
                     }
-                    result = resultPerRO[ maxRO ];
+                    result.m_roIdx = maxRO;
+                    if (maxRO != -1)
+                    {
+                        // make picks unique w.r.t. indices, ignoring weights
+                        const auto &mesh = RadiumEngine::getInstance()->getRenderObjectManager()
+                                               ->getRenderObject(maxRO)->getMesh()->getGeometry();
+                        std::sort( resultPerRO[ maxRO ].begin(), resultPerRO[ maxRO ].end(),
+                                   [&query, &mesh](const std::pair<std::tuple<int,int,int>,Scalar> &a,
+                                                   const std::pair<std::tuple<int,int,int>,Scalar> &b)
+                                   {
+                                       switch (query.m_mode)
+                                       {
+                                       case C_VERTEX: // ignore edgeIdx
+                                           return mesh.m_triangles[ std::get<1>(a.first) ]( std::get<0>(a.first) ) <
+                                                  mesh.m_triangles[ std::get<1>(b.first) ]( std::get<0>(b.first) ) ;
+                                       case C_EDGE: // ignore vertexIdx
+                                           return std::get<1>(a.first) < std::get<1>(b.first) ||    // lower TriangleIdx OR
+                                                  ( std::get<1>(a.first) == std::get<1>(b.first) && // ( same TriangleIdx and
+                                                    std::get<2>(a.first) < std::get<2>(b.first) );  //   lower EdgeIdx )
+                                       case C_TRIANGLE: // ignore both
+                                           return std::get<1>(a.first) < std::get<1>(b.first); // lower TriangleIdx
+                                       default: // shouldn't come here, but do something just in case...
+                                           return a.first < b.first;
+                                       }
+                                   } );
+                        auto last = std::unique( resultPerRO[ maxRO ].begin(), resultPerRO[ maxRO ].end(),
+                                                 [&query, &mesh](const std::pair<std::tuple<int,int,int>,Scalar> &a,
+                                                                 const std::pair<std::tuple<int,int,int>,Scalar> &b)
+                                                 {
+                                                     switch (query.m_mode)
+                                                     {
+                                                     case C_VERTEX: // ignore edgeIdx
+                                                         return mesh.m_triangles[ std::get<1>(a.first) ]( std::get<0>(a.first) ) ==
+                                                                mesh.m_triangles[ std::get<1>(b.first) ]( std::get<0>(b.first) ) ;
+                                                     case C_EDGE: // ignore vertexIdx
+                                                         return std::get<1>(a.first) == std::get<1>(b.first) && // same TriangleIdx and
+                                                                std::get<2>(a.first) == std::get<2>(b.first);   // same EdgeIdx
+                                                     case C_TRIANGLE: // ignore both
+                                                         return std::get<1>(a.first) == std::get<1>(b.first); // same TriangleIdx
+                                                     default: // shouldn't come here, but do something just in case...
+                                                         return a.first < b.first;
+                                                     }
+                                                 } );
+                        resultPerRO[ maxRO ].erase( last, resultPerRO[ maxRO ].end() );
+                        // save into result
+                        const auto size = resultPerRO[maxRO].size();
+                        result.m_vertexIdx.resize( size );
+                        result.m_elementIdx.resize( size );
+                        result.m_edgeIdx.resize( size );
+                        result.m_weights.resize( size );
+                        for (uint i=0; i<size; ++i)
+                        {
+                            result.m_vertexIdx[i]  = std::get<0>( resultPerRO[maxRO][i].first );
+                            result.m_elementIdx[i] = std::get<1>( resultPerRO[maxRO][i].first );
+                            result.m_edgeIdx[i]    = std::get<2>( resultPerRO[maxRO][i].first );
+                            result.m_weights[i]    = resultPerRO[maxRO][i].second;
+                        }
+                    }
                 }
+                result.m_mode = query.m_mode;
                 m_pickingResults.push_back( result );
             }
 

@@ -349,6 +349,14 @@ namespace Ra
                 m_gizmoManager->handleMouseMoveEvent(event);
             if (m_isBrushPickingEnabled)
                 m_currentRenderer->setMousePosition(Ra::Core::Vector2(event->x(), event->y()));
+            if ( event->buttons() & Gui::KeyMappingManager::getInstance()->getKeyFromAction( Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
+            {
+                // Check picking
+                Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x(), (height() - event->y())),
+                                                          Core::MouseButton::RA_MOUSE_RIGHT_BUTTON,
+                                                          getPickingMode() };
+                m_currentRenderer->addPickingRequest(query);
+            }
         }
         else
             event->ignore();
@@ -396,12 +404,12 @@ namespace Ra
         keyReleased(event->key());
         m_camera->handleKeyReleaseEvent( event );
 
-        /*
+
         if ( Gui::KeyMappingManager::getInstance()->actionTriggered( event, Gui::KeyMappingManager::VIEWER_TOGGLE_WIREFRAME ) && !event->isAutoRepeat())
         {
             m_currentRenderer->toggleWireframe();
         }
-        */
+
         if (event->key() == Qt::Key_C && event->modifiers() == Qt::NoModifier)
         {
             m_isBrushPickingEnabled = !m_isBrushPickingEnabled;

@@ -32,7 +32,7 @@ option(RADIUM_FORCE_ASSERTS         "Enable asserts regardless of build type" OF
 option(RADIUM_ASSIMP_SUPPORT        "Enable assimp loader" ON)
 option(RADIUM_TINYPLY_SUPPORT       "Enable TinyPly loader" ON)
 option(RADIUM_BUILD_APPS            "Choose to build or not radium applications" ON)
-option(RADIUM_QUIET                 "Make Radium quiet regarding Logs." ON)
+option(RADIUM_QUIET                 "Make Radium quiet regarding Logs." OFF)
 option(RADIUM_FAST_MATH             "Enable Fast Math optimizations in Release Mode (ignored with MVSC)" OFF)
 
 if ( NOT CMAKE_BUILD_TYPE )
