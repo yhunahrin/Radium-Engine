@@ -16,6 +16,7 @@
 
 
 extern bool g_debug_physics;
+extern bool g_anim_autoplay;
 
 namespace AnimationPlugin
 {

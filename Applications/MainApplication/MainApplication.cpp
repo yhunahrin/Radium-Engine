@@ -49,7 +49,7 @@ bool g_run_anat = false ;
 bool g_is_trans = false ;
 bool g_show_subdiv = false ;
 bool g_anim_autoplay = false;
-bool g_force_IS = false;
+bool g_force_IS = true;
 bool g_export_meshes = false;
 
 

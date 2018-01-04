@@ -123,8 +123,11 @@ function run_scene()
 
     local out="$SCRIPTDIR/scene$num"
 
-    echo "   Export meshes..."
-    run_scene_exportmesh "$in" "$out/meshes" "$scene"
+    if $(contains "$args" "m")
+    then
+        echo "   Export meshes..."
+        run_scene_exportmesh "$in" "$out/meshes" "$scene"
+    fi
 
     echo "   Export frames..."
     run_scene_video "$in" "$out/frames" "$scene"
@@ -137,10 +140,18 @@ function run_scene()
 
 
 args="'$*'"
+
+if $(contains "$args" "c")
+then
+    slackbot.py "msg" "#sa2017paper" "Script started with args $args"
+fi
+
 echo "Starting script"
 cd $WORKDIR
 
+rm latest
 mkdir -p $SCRIPTDIR
+ln -s $SCRIPTDIR latest
 
 if $(contains "$args" "0")
 then
@@ -201,4 +212,5 @@ if $(contains "$args" "c")
 then
     echo "Copying"
     cp -a $SCRIPTDIR $COPYDIR
+    slackbot.py "msg" "#sa2017paper" "Script finished and copied in $COPYDIR"
 fi
