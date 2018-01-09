@@ -69,9 +69,10 @@ Scalar g_tendon_rest_length = -1.f; // Rest length of srping of tendon section (
 
 Scalar g_collision_stiffness = 0.2f; // Stiffness of the collision vs implicit constraint (10.f)
 Scalar g_keep_inside_stiffness = 1.5f; // Stiffness of the collision vs skin constraint (10.5f)
-Scalar g_iso_inside = 0.01f; // Target iso of the inside constraint (0.01f)
+Scalar g_iso_inside = 1.f; // Target iso of the inside constraint (0.01f)
 
-Scalar g_physics_time_step = 0.001f; // Duration of the physics time step
+//Scalar g_physics_time_step = 0.001f; // Duration of the physics time step
+Scalar g_physics_time_step = 0.005f; // Duration of the physics time step
 
 const uint * g_frame_num_ptr;
 
@@ -151,7 +152,7 @@ namespace Ra
 
 
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt, exportOpt,timingsOpt });
-        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt });
+        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt, timeStepOpt, numParticlesOpt });
         parser.addOptions({anatFile, kfFile, physFile});
         parser.process(*this);
 
