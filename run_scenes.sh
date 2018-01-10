@@ -41,6 +41,7 @@ function run_scene_exportmesh()
     --anatfile $infolder/$anatfile \
     --kffile $infolder/$kffile \
     --phyfile $infolder/$phyfile \
+    --timestep $timestep \
     --subdiv --showanat --savemeshes --runanat >& $outfolder/log.txt
 
     cp $infolder/$camfile $outfolder/camera.cam
@@ -65,6 +66,7 @@ function run_scene_video()
     --anatfile $infolder/$anatfile \
     --kffile $infolder/$kffile \
     --phyfile $infolder/$phyfile \
+    --timestep $timestep \
     --trans --showanat --saveframes --runanat >& $outfolder/log.txt
 }
 
@@ -88,6 +90,7 @@ function run_scene_timings()
     --anatfile $infolder/$anatfile \
     --kffile $infolder/$kffile \
     --phyfile $infolder/$phyfile \
+    --timestep $timestep \
     --runanat >& "$outfolder/on/log.txt"
 
     #run without anatomy
@@ -98,6 +101,7 @@ function run_scene_timings()
     -c $infolder/$camfile \
     --anatfile $infolder/$anatfile \
     --kffile $infolder/$kffile \
+    --timestep $timestep \
     --phyfile $infolder/$phyfile  >& "$outfolder/off/log.txt"
 }
 
@@ -127,6 +131,7 @@ function run_scene()
     then
         echo "   Export meshes..."
         run_scene_exportmesh "$in" "$out/meshes" "$scene"
+        cp $in/desc.txt $out/meshes/scene.txt
     fi
 
     echo "   Export frames..."
@@ -135,7 +140,6 @@ function run_scene()
     echo "   Making video from frames..."
     make_video "$out/frames" "scene$num" "30"
 
-    cp $in/desc.txt $out/meshes/scene.txt
 }
 
 
