@@ -78,16 +78,21 @@ namespace AnimationPlugin
 
 
         auto pbdSys = Ra::Engine::RadiumEngine::getInstance()->getSystem("PbdSystem");
-        pbdSys->step();
+        if (pbdSys)
+        {
+            pbdSys->step();
+        }
     }
 
     void AnimationSystem::play( bool isPlaying )
     {
-        RA_CLEAR_DEBUG_DISPLAY();
         m_isPlaying = isPlaying;
 
         auto pbdSys = Ra::Engine::RadiumEngine::getInstance()->getSystem("PbdSystem");
-        pbdSys->play(isPlaying);
+        if (pbdSys)
+        {
+            pbdSys->play(isPlaying);
+        }
     }
 
 

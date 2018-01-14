@@ -67,6 +67,8 @@ Scalar g_rest_length= 0.02f;        // Rest length fraction of the spring constr
 Scalar g_tendon_stiffness = 1.f;   // Stiffness of spring for tendon sections (1.f)
 Scalar g_tendon_rest_length = -1.f; // Rest length of srping of tendon section (-1.f)
 
+Scalar g_damping = 1.f; // damping
+
 Scalar g_collision_stiffness = 0.2f; // Stiffness of the collision vs implicit constraint (10.f)
 Scalar g_keep_inside_stiffness = 1.5f; // Stiffness of the collision vs skin constraint (10.5f)
 Scalar g_iso_inside = 1.f; // Target iso of the inside constraint (0.01f)
