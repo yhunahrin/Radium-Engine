@@ -76,6 +76,10 @@ namespace Ra
             template <typename T>
             inline constexpr T lerp( const T& a, const T&b, Scalar t);
 
+            /// Fast-inverse square root (a.k.a Carmack's Function)
+            /// returns a (surprisingly accurate) approximation of 1/sqrt(x)
+            inline Scalar fastInvSqrt( Scalar x );
+
         } // namespace Math
     }
 }

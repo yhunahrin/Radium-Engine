@@ -188,6 +188,12 @@ then
     run_scene 4 "/home/vroussel/Downloads/GEOM/boss_jump" "scenefile"
 fi
 
+if $(contains "$args" "5")
+then
+    echo "Running scene 5 (Boss Run)"
+    run_scene 5 "/home/vroussel/Downloads/GEOM/boss_run" "scenefile"
+fi
+
 
 if $(contains "$args" "f")
 then

@@ -1,5 +1,5 @@
 #include <Core/Math/Math.hpp>
-
+#include <cstring>
 namespace Ra
 {
     namespace Core
@@ -125,6 +125,46 @@ namespace Ra
             {
                 return (1-t) * a + t * b;
             }
+
+            // Magic constants for fast inverse square root.
+            // Reference  : Fast Inverse Square Root, C. Lomont, 2003 Tech.Rep (Purdue)
+
+            template< typename T> struct FastInvSqrt {};
+            // Quake 3's constant for float. Lomont also recommends 0x5f375a86
+            template<> struct FastInvSqrt<float>
+            {
+                static constexpr std::uint32_t magic{ 0x5f3759df };
+                inline static void doMagic( float* RESTRICT x )
+                {
+                    static_assert(sizeof(float) == sizeof(std::uint32_t));
+                    std::uint32_t i;
+                    // Use memcpy instead of a cast (it's the C++ way !)
+                    std::memcpy(&i, x, sizeof(float));
+                    i = magic - (i >>1);
+                    std::memcpy(x, &i, sizeof(float));
+                }
+            };
+            template<> struct FastInvSqrt<double>
+            {
+                // Lomont's constant for double
+                static constexpr std::uint64_t magic{ 0x5fe6ec85e7de30da };
+                inline static void doMagic( double* RESTRICT x )
+                {
+                    static_assert(sizeof(double) == sizeof(std::uint64_t));
+                    std::uint64_t i;
+                    std::memcpy(&i, x, sizeof(double));
+                    i = magic - (i >>1);
+                    std::memcpy(x, &i, sizeof(double));
+                }
+            };
+
+            inline Scalar fastInvSqrt(Scalar x)
+            {
+                const Scalar x2 = x * Scalar(0.5);
+                FastInvSqrt<Scalar>::doMagic(&x); // Carmack's Magic Trick !
+                return x* (Scalar(1.5) - x2*x*x); // Newton iteration
+            }
+
         }
     }
 }

@@ -51,7 +51,7 @@ bool g_show_subdiv = false ;
 bool g_anim_autoplay = false;
 bool g_force_IS = true;
 bool g_export_meshes = false;
-
+bool g_no_IS = false;
 
 Scalar g_animation_speed = 1.f;
 
@@ -142,6 +142,7 @@ namespace Ra
         QCommandLineOption numParticlesOpt(QStringList{"numparticles"}, "number of particles","integer","30");
 
 
+        QCommandLineOption noISOpt(QStringList{"nois"}, "disable implicit skinning","","");
 
         QCommandLineOption saveMeshes(QStringList{"savemeshes"}, "save meshes","", "");
         QCommandLineOption saveFrames(QStringList{"saveframes"}, "save frames","", "");
@@ -154,7 +155,7 @@ namespace Ra
 
 
         parser.addOptions({fpsOpt, pluginOpt, pluginLoadOpt, pluginIgnoreOpt, fileOpt, camOpt, maxThreadsOpt, numFramesOpt, exportOpt,timingsOpt });
-        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt, timeStepOpt, numParticlesOpt });
+        parser.addOptions({ showAnatOpt, runAnatOpt, transISOpt, subdivOpt, saveMeshes, saveFrames, autoplayOpt, animSpeedOpt, timeStepOpt, numParticlesOpt, noISOpt });
         parser.addOptions({anatFile, kfFile, physFile});
         parser.process(*this);
 
@@ -174,6 +175,8 @@ namespace Ra
         if (parser.isSet(timeStepOpt))  g_physics_time_step = parser.value(timeStepOpt).toDouble();
         if (parser.isSet(numParticlesOpt)) g_num_particles = parser.value(numParticlesOpt).toInt();
 
+
+        if (parser.isSet(noISOpt)) g_no_IS = true;
 
         if (parser.isSet(saveMeshes))   m_recordMeshes  = g_export_meshes = true;
         if (parser.isSet(saveFrames))   m_recordFrames  = true;

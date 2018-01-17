@@ -87,7 +87,7 @@ Scalar PolyLine::project( const Vector3& p ) const
     // But if any of the next or previous segment also has a
     // projected point inside the segment, we are in the "inner"
     // case and thus rescale the projection using cotangent weights.
-    if ( t > 0 && t < 1)
+    if ( t > 0 && t < 1 )
     {
         bool prev = segment > 0 && ts[segment - 1] > 0 && ts[segment - 1] < 1;
         bool next = segment < m_ptsDiff.size() - 1 && ts[segment + 1] > 0 && ts[segment + 1] < 1;

@@ -211,6 +211,9 @@
 #   define STDCALL __stdcall
 #   define CDECL __cdecl
 #   define FASTCALL __fastcall
+
+#   define RESTRICT __restrict
+
 #elif defined(COMPILER_GCC) || defined (COMPILER_CLANG) // ------- GCC and CLang
 
 #   define ALIGN_OF(X) __alignof__(X)
@@ -231,6 +234,8 @@
 #   define STDCALL  __attribute__((stdcall))
 #   define CDECL /* default */
 #   define FASTCALL __attribute__((fastcall))
+
+#   define RESTRICT __restrict__
 #else
 #   error unsupported platform
 #endif
