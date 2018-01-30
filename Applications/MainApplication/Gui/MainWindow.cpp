@@ -1,4 +1,5 @@
 #include <Engine/Renderer/Renderers/ForwardRenderer.hpp>
+#include <Engine/Renderer/Renderers/TempRenderer.hpp>
 
 #include <Gui/MainWindow.hpp>
 
@@ -601,6 +602,9 @@ namespace Ra
         // set default renderer once OpenGL is configured
         std::shared_ptr<Engine::Renderer> e (new Engine::ForwardRenderer());
         addRenderer("Forward Renderer", e);
+        std::shared_ptr<Engine::Renderer> f (new Engine::ForwardRenderer());
+        addRenderer("Arezou Renderer", f);
+
     }
 
     void Gui::MainWindow::updateTrackedFeatureInfo()
