@@ -314,7 +314,7 @@ namespace Ra
                     e->rayCastQuery(r);
                 }
             }
-            else
+            else if (getPickingMode() == Ra::Engine::Renderer::RO)
             {
                 m_currentRenderer->addPickingRequest({ Core::Vector2(event->x(), height() - event->y()),
                                                        Core::MouseButton::RA_MOUSE_LEFT_BUTTON,
@@ -344,12 +344,15 @@ namespace Ra
     {
         if(m_glInitStatus.load())
         {
+            auto keyMap = Gui::KeyMappingManager::getInstance();
             m_camera->handleMouseMoveEvent( event );
             if (m_gizmoManager != nullptr)
+            {
                 m_gizmoManager->handleMouseMoveEvent(event);
-            if (m_isBrushPickingEnabled)
-                m_currentRenderer->setMousePosition(Ra::Core::Vector2(event->x(), event->y()));
-            if ( event->buttons() & Gui::KeyMappingManager::getInstance()->getKeyFromAction( Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) )
+            }
+            m_currentRenderer->setMousePosition(Ra::Core::Vector2(event->x(), event->y()));
+            if ( event->buttons() & keyMap->getKeyFromAction( Gui::KeyMappingManager::VIEWER_BUTTON_SELECT_PICKING_QUERY ) &&
+                 getPickingMode() != Engine::Renderer::RO ) // only if not RO picking (e.g. not gizmo manip)
             {
                 // Check picking
                 Engine::Renderer::PickingQuery query  = { Core::Vector2(event->x(), (height() - event->y())),

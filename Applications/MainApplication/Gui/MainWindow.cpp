@@ -118,7 +118,6 @@ namespace Ra
         // Make selected item event visible to plugins
         connect(this, &MainWindow::selectedItem, mainApp, &MainApplication::onSelectedItem);
         connect(this, &MainWindow::selectedItem, m_viewer->getGizmoManager(), &GizmoManager::setEditable);
-        connect(this, &MainWindow::selectedItem, m_viewer->getGizmoManager(), &GizmoManager::setEditable);
 
         // Enable changing shaders
         connect(m_currentShaderBox, static_cast<void (QComboBox::*)(const QString&)>( &QComboBox::currentIndexChanged ),
