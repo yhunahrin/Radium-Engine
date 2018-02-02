@@ -197,8 +197,8 @@ namespace FancyMeshPlugin
         ComponentMessenger::CallbackTypes<TriangleMesh>::Getter cbOut = std::bind( &FancyMeshComponent::getMeshOutput, this );
         ComponentMessenger::getInstance()->registerOutput<TriangleMesh>( getEntity(), this, id, cbOut);
 
-        ComponentMessenger::CallbackTypes<std::vector<uint>>::Getter dtOut = std::bind( &FancyMeshComponent::getDuplicateTableOutput, this );
-        ComponentMessenger::getInstance()->registerOutput<std::vector<uint>>( getEntity(), this, id, dtOut);
+        ComponentMessenger::CallbackTypes<FancyMeshComponent::DuplicateTable>::Getter dtOut = std::bind( &FancyMeshComponent::getDuplicateTableOutput, this );
+        ComponentMessenger::getInstance()->registerOutput<FancyMeshComponent::DuplicateTable>( getEntity(), this, id, dtOut);
 
         ComponentMessenger::CallbackTypes<TriangleMesh>::ReadWrite cbRw = std::bind( &FancyMeshComponent::getMeshRw, this );
         ComponentMessenger::getInstance()->registerReadWrite<TriangleMesh>( getEntity(), this, id, cbRw);
@@ -237,7 +237,7 @@ namespace FancyMeshPlugin
         return &(getMesh());
     }
 
-    const std::vector<uint>* FancyMeshComponent::getDuplicateTableOutput() const
+    const FancyMeshComponent::DuplicateTable* FancyMeshComponent::getDuplicateTableOutput() const
     {
         return &m_duplicateTable;
     }
