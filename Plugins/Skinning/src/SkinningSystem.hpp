@@ -28,20 +28,15 @@ namespace SkinningPlugin
             for (const auto& compEntry : m_components)
             {
                 SkinningComponent* comp = static_cast<SkinningComponent*>( compEntry.second );
-                Ra::Core::FunctionTask* skinTask = new Ra::Core::FunctionTask(
-                        std::bind(&SkinningComponent::skin, comp),
-                        "SkinnerTask"
-                );
-
-                Ra::Core::FunctionTask* endTask = new Ra::Core::FunctionTask(
-                        std::bind(&SkinningComponent::endSkinning, comp),
-                        "SkinnerEndTask"
-                );
-
-                Ra::Core::TaskQueue::TaskId skinTaskId = taskQueue->registerTask( skinTask );
-                Ra::Core::TaskQueue::TaskId endTaskId = taskQueue->registerTask( endTask );
+                auto skinFunc = std::bind( &SkinningComponent::skin, comp );
+                auto skinTask = new Ra::Core::FunctionTask( skinFunc, "SkinnerTask" );
+                auto skinTaskId = taskQueue->registerTask( skinTask );
                 taskQueue->addPendingDependency( "AnimatorTask", skinTaskId );
-                taskQueue->addDependency( skinTaskId, endTaskId);
+
+                auto endFunc = std::bind( &SkinningComponent::endSkinning, comp );
+                auto endTask = new Ra::Core::FunctionTask( endFunc, "SkinnerEndTask" );
+                auto endTaskId = taskQueue->registerTask( endTask );
+                taskQueue->addDependency( skinTaskId, endTaskId );
             }
 
         }

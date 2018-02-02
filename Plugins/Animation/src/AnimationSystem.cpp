@@ -31,10 +31,9 @@ namespace AnimationPlugin
         for (auto compEntry : this->m_components)
         {
             AnimationComponent* component = static_cast<AnimationComponent*>(compEntry.second);
-            Ra::Core::FunctionTask* task = new Ra::Core::FunctionTask(
-                    std::bind(&AnimationComponent::update, component, currentDelta),
-                    "AnimatorTask");
-            taskQueue->registerTask( task );
+            auto animFunc = std::bind( &AnimationComponent::update, component, currentDelta );
+            auto animTask = new Ra::Core::FunctionTask( animFunc, "AnimatorTask" );
+            taskQueue->registerTask( animTask );
         }
 
         m_oneStep = false;
