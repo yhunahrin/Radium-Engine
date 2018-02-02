@@ -98,6 +98,7 @@ namespace Ra
                            << ") added before GL being Ready: deferring initialization...";
         }
 
+        e->setFBOMaxSize( 1500, 1500 );
         m_renderers.push_back(e);
 
         return m_renderers.size()-1;
