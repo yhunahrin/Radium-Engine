@@ -28,8 +28,9 @@ using Ra::Engine::ItemEntry;
 
 namespace Ra
 {
+namespace Gui{
 
-    Gui::MainWindow::MainWindow(QWidget* parent)
+    MainWindow::MainWindow(QWidget* parent)
             : MainWindowInterface(parent)
     {
         // Note : at this point most of the components (including the Engine) are
@@ -38,7 +39,7 @@ namespace Ra
         setupUi(this);
 
 
-        m_viewer = new Ra::Gui::Viewer();
+        m_viewer = new Viewer();
         m_viewer->createGizmoManager();
         m_viewer->setObjectName(QStringLiteral("m_viewer"));
 
@@ -68,17 +69,17 @@ namespace Ra
         mainApp->framesCountForStatsChanged((uint) m_avgFramesCount->value());
     }
 
-    Gui::MainWindow::~MainWindow()
+    MainWindow::~MainWindow()
     {
         // Child QObjects will automatically be deleted
     }
 
-    void Gui::MainWindow::cleanup()
+    void MainWindow::cleanup()
     {
         m_viewer->getGizmoManager()->cleanup();
     }
 
-    void Gui::MainWindow::createConnections()
+    void MainWindow::createConnections()
     {
         connect(actionOpenMesh, &QAction::triggered, this, &MainWindow::loadFile);
         connect(actionReload_Shaders, &QAction::triggered, m_viewer, &Viewer::reloadShaders);
@@ -96,15 +97,15 @@ namespace Ra
         connect(actionLoad_configuration_file, &QAction::triggered, this, &MainWindow::loadConfiguration);
 
         // Loading setup.
-        connect(this, &MainWindow::fileLoading, mainApp, &BaseApplication::loadFile);
+        connect(this, &MainWindow::fileLoading, mainApp, &Ra::GuiBase::BaseApplication::loadFile);
 
         // Connect picking results (TODO Val : use events to dispatch picking directly)
         connect(m_viewer, &Viewer::rightClickPicking, this, &MainWindow::handlePicking);
         connect(m_viewer, &Viewer::leftClickPicking, m_viewer->getGizmoManager(), &GizmoManager::handlePickingResult);
 
         connect(m_avgFramesCount, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-                mainApp, &BaseApplication::framesCountForStatsChanged);
-        connect(mainApp, &BaseApplication::updateFrameStats, this, &MainWindow::onUpdateFramestats);
+                mainApp, &Ra::GuiBase::BaseApplication::framesCountForStatsChanged);
+        connect(mainApp, &Ra::GuiBase::BaseApplication::updateFrameStats, this, &MainWindow::onUpdateFramestats);
 
         // Inform property editors of new selections
         connect(m_selectionManager, &GuiBase::SelectionManager::selectionChanged, this, &MainWindow::onSelectionChanged);
@@ -141,10 +142,10 @@ namespace Ra
 
         connect(m_enablePostProcess, &QCheckBox::stateChanged, m_viewer, &Viewer::enablePostProcess);
         connect(m_enableDebugDraw,   &QCheckBox::stateChanged, m_viewer, &Viewer::enableDebugDraw);
-        connect(m_realFrameRate,     &QCheckBox::stateChanged, mainApp,  &BaseApplication::setRealFrameRate);
+        connect(m_realFrameRate,     &QCheckBox::stateChanged, mainApp,  &Ra::GuiBase::BaseApplication::setRealFrameRate);
 
-        connect(m_printGraph,       &QCheckBox::stateChanged, mainApp,  &BaseApplication::setRecordGraph);
-        connect(m_printTimings,     &QCheckBox::stateChanged, mainApp,  &BaseApplication::setRecordTimings);
+        connect(m_printGraph,       &QCheckBox::stateChanged, mainApp,  &Ra::GuiBase::BaseApplication::setRecordGraph);
+        connect(m_printTimings,     &QCheckBox::stateChanged, mainApp,  &Ra::GuiBase::BaseApplication::setRecordTimings);
 
         // Connect engine signals to the appropriate callbacks
         std::function<void(const Engine::ItemEntry&)> add = std::bind(&MainWindow::onItemAdded, this, std::placeholders::_1);
@@ -160,7 +161,7 @@ namespace Ra
 
     }
 
-    void Gui::MainWindow::loadFile()
+    void MainWindow::loadFile()
     {
 
         QString filter;
@@ -196,7 +197,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::onUpdateFramestats(const std::vector<FrameTimerData>& stats)
+    void MainWindow::onUpdateFramestats(const std::vector<FrameTimerData>& stats)
     {
         QString framesA2B = QString("Frames #%1 to #%2 stats :")
                 .arg(stats.front().numFrame).arg(stats.back().numFrame);
@@ -244,17 +245,17 @@ namespace Ra
         m_avgFramerate->setNum(int((N - 1) * Scalar(1000000.0 / sumInterFrame)));
     }
 
-    Gui::Viewer* Gui::MainWindow::getViewer()
+    Viewer* MainWindow::getViewer()
     {
         return m_viewer;
     }
 
-    GuiBase::SelectionManager* Gui::MainWindow::getSelectionManager()
+    GuiBase::SelectionManager* MainWindow::getSelectionManager()
     {
         return m_selectionManager;
     }
 
-    void Gui::MainWindow::handlePicking(int pickingResult)
+    void MainWindow::handlePicking(int pickingResult)
     {
         Ra::Core::Index roIndex(pickingResult);
         Ra::Engine::RadiumEngine* engine = Ra::Engine::RadiumEngine::getInstance();
@@ -289,7 +290,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+    void MainWindow::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
     {
         if (m_selectionManager->hasSelection())
         {
@@ -329,33 +330,33 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::closeEvent(QCloseEvent* event)
+    void MainWindow::closeEvent(QCloseEvent* event)
     {
         emit closed();
         event->accept();
     }
 
-    void Gui::MainWindow::gizmoShowNone()
+    void MainWindow::gizmoShowNone()
     {
         m_viewer->getGizmoManager()->changeGizmoType(GizmoManager::NONE);
     }
 
-    void Gui::MainWindow::gizmoShowTranslate()
+    void MainWindow::gizmoShowTranslate()
     {
         m_viewer->getGizmoManager()->changeGizmoType(GizmoManager::TRANSLATION);
     }
 
-    void Gui::MainWindow::gizmoShowRotate()
+    void MainWindow::gizmoShowRotate()
     {
         m_viewer->getGizmoManager()->changeGizmoType(GizmoManager::ROTATION);
     }
 
-    void Gui::MainWindow::reloadConfiguration()
+    void MainWindow::reloadConfiguration()
     {
         KeyMappingManager::getInstance()->reloadConfiguration();
     }
 
-    void Gui::MainWindow::loadConfiguration()
+    void MainWindow::loadConfiguration()
     {
         QSettings settings;
         QString path = settings.value("configs/load", QDir::homePath()).toString();
@@ -368,7 +369,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::onCurrentRenderChangedInUI()
+    void MainWindow::onCurrentRenderChangedInUI()
     {
         // always restore displaytexture to 0 before switch to keep coherent renderer state
         m_displayedTextureCombo->setCurrentIndex(0);
@@ -381,7 +382,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::updateDisplayedTexture()
+    void MainWindow::updateDisplayedTexture()
     {
         QSignalBlocker blockTextures(m_displayedTextureCombo);
 
@@ -394,7 +395,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::changeRenderObjectShader(const QString& shaderName)
+    void MainWindow::changeRenderObjectShader(const QString& shaderName)
     {
         std::string name = shaderName.toStdString();
         if (name == "")
@@ -415,7 +416,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::toggleVisisbleRO()
+    void MainWindow::toggleVisisbleRO()
     {
         const ItemEntry& item = m_selectionManager->currentItem();
         // If at least one RO is visible, turn them off.
@@ -434,7 +435,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::editRO()
+    void MainWindow::editRO()
     {
         ItemEntry item = m_selectionManager->currentItem();
         if (item.isRoNode())
@@ -444,12 +445,12 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::openMaterialEditor()
+    void MainWindow::openMaterialEditor()
     {
         m_materialEditor->show();
     }
 
-    void Gui::MainWindow::updateUi(Plugins::RadiumPluginInterface* plugin)
+    void MainWindow::updateUi(Plugins::RadiumPluginInterface* plugin)
     {
         QString tabName;
 
@@ -483,20 +484,20 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::onRendererReady()
+    void MainWindow::onRendererReady()
     {
         m_viewer->getCameraInterface()->resetCamera();
         updateDisplayedTexture();
     }
 
-    void Gui::MainWindow::onFrameComplete()
+    void MainWindow::onFrameComplete()
     {
         tab_edition->updateValues();
         m_viewer->getGizmoManager()->updateValues();
         updateTrackedFeatureInfo();
     }
 
-    void Gui::MainWindow::addRenderer(std::string name,
+    void MainWindow::addRenderer(std::string name,
                                       std::shared_ptr<Engine::Renderer> e)
     {
         int id = m_viewer->addRenderer(e);
@@ -505,17 +506,17 @@ namespace Ra
         m_currentRendererCombo->addItem(QString::fromStdString(name));
     }
 
-    void Gui::MainWindow::onItemAdded(const Engine::ItemEntry& ent)
+    void MainWindow::onItemAdded(const Engine::ItemEntry& ent)
     {
         m_itemModel->addItem(ent);
     }
 
-    void Gui::MainWindow::onItemRemoved(const Engine::ItemEntry& ent)
+    void MainWindow::onItemRemoved(const Engine::ItemEntry& ent)
     {
         m_itemModel->removeItem(ent) ;
     }
 
-    void Gui::MainWindow::exportCurrentMesh()
+    void MainWindow::exportCurrentMesh()
     {
         std::string filename;
         Ra::Core::StringUtils::stringPrintf(filename, "radiummesh_%06u", mainApp->getFrameCount());
@@ -544,7 +545,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::deleteCurrentItem()
+    void MainWindow::deleteCurrentItem()
     {
         ItemEntry e = m_selectionManager->currentItem();
 
@@ -570,7 +571,7 @@ namespace Ra
         }
     }
 
-    void Gui::MainWindow::resetScene()
+    void MainWindow::resetScene()
     {
         // To see why this call is important, please see deleteCurrentItem().
         m_selectionManager->clearSelection();
@@ -578,37 +579,37 @@ namespace Ra
         m_viewer->resetCamera();
     }
 
-    void Gui::MainWindow::fitCamera()
+    void MainWindow::fitCamera()
     {
         m_viewer->fitCameraToScene(Engine::RadiumEngine::getInstance()->getRenderObjectManager()->getSceneAabb());
     }
 
-    void Gui::MainWindow::on_m_vertexIdx_valueChanged(int arg1)
+    void MainWindow::on_m_vertexIdx_valueChanged(int arg1)
     {
         m_viewer->getFeaturePickingManager()->setVertexIndex(arg1);
         m_selectionManager->setCurrentEntry( m_selectionManager->currentItem(),
                                              QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
     }
 
-    void Gui::MainWindow::on_m_triangleIdx_valueChanged(int arg1)
+    void MainWindow::on_m_triangleIdx_valueChanged(int arg1)
     {
         m_viewer->getFeaturePickingManager()->setTriangleIndex(arg1);
         m_selectionManager->setCurrentEntry( m_selectionManager->currentItem(),
                                              QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
     }
 
-    void Gui::MainWindow::onGLInitialized()
+    void MainWindow::onGLInitialized()
     {
         // set default renderer once OpenGL is configured
         std::shared_ptr<Engine::Renderer> e (new Engine::ForwardRenderer());
         addRenderer("Forward Renderer", e);
     }
 
-    void Gui::MainWindow::updateTrackedFeatureInfo()
+    void MainWindow::updateTrackedFeatureInfo()
     {
         auto fdata = m_viewer->getFeaturePickingManager()->getFeatureData();
         Qt_utils::rec_set_visible( *m_vertexIdx_layout, fdata.m_featureType == Engine::Renderer::VERTEX );
         Qt_utils::rec_set_visible( *m_triangleIdx_layout, fdata.m_featureType == Engine::Renderer::TRIANGLE );
     }
-
+}
 } // namespace Ra
