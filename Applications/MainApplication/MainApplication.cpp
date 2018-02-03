@@ -226,7 +226,7 @@ namespace Ra
 
     void BaseApplication::createConnections()
     {
-        connect( m_mainWindow.get(), &Gui::MainWindow::closed , this, &BaseApplication::appNeedsToQuit );
+        connect( m_mainWindow.get(), &Gui::MainWindowInterface::closed , this, &BaseApplication::appNeedsToQuit );
         connect( m_viewer, &Gui::Viewer::glInitialized, this, &BaseApplication::initializeOpenGlPlugins );
     }
 
@@ -275,7 +275,7 @@ namespace Ra
 
         m_engine->releaseFile();
 
-        m_mainWindow->fitCamera();
+        m_mainWindow->postLoadFile();
 
         emit loadComplete();
     }
