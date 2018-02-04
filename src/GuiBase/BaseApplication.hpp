@@ -64,8 +64,11 @@ namespace GuiBase{
             virtual  Ra::GuiBase::MainWindowInterface *createMainWindow() const =0;
         };
 
-        
-        BaseApplication( int argc, char** argv, const WindowFactory &f, QString applicationName = "RadiumEngine", QString organizationName = "STORM-IRIT");
+        /// Setup the application, create main window and main connections.
+        ///\param argc from main()
+        ///\param argv from main()
+        ///\param factory : a functor that instanciate the mainWindow
+        BaseApplication( int argc, char** argv, const WindowFactory &factory, QString applicationName = "RadiumEngine", QString organizationName = "STORM-IRIT");
         ~BaseApplication();
 
         /// Advance the engine for one frame.
@@ -135,7 +138,7 @@ namespace GuiBase{
         /// Number of frames per second to generate.
         uint m_targetFPS;
 
-    private:
+    protected:
         /// Plugins that need to be initialized once OpenGL is ready
         std::vector<Ra::Plugins::RadiumPluginInterface*> m_openGLPlugins;
 
