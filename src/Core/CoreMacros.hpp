@@ -10,7 +10,7 @@
 // code when possible.
 
 // A good reference : http://sourceforge.net/p/predef/
-
+// clang-format off
 #ifndef RADIUMENGINE_CORE_HPP
 #define RADIUMENGINE_CORE_HPP
 
@@ -372,5 +372,5 @@ MACRO_END
 #endif
 
 #define eigen_assert(XXX) CORE_ASSERT(XXX, "Eigen Assert");
-
+// clang-format on
 #endif // RADIUMENGINE_CORE_HPP
